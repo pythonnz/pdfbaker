@@ -1,0 +1,19 @@
+# Python generated files
+__pycache__/
+*.py[cod]
+wheels/
+*.egg-info
+
+# Cache
+/.pytest_cache
+/.ruff_cache
+
+# venv
+/.venv
+
+# PyCharm
+.idea/
+
+# Backup files
+**.~
+*.swp

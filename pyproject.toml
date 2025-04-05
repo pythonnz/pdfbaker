@@ -1,0 +1,35 @@
+[project]
+name = "pdfbaker"
+version = "0.1.0"
+description = "SVG Jinja templates + YAML config = PDF documents"
+authors = [
+    { name = "Danny W. Adair", email = "danny.adair@unfold.nz" }
+]
+dependencies = [
+    "pyyaml",
+    "jinja2",
+    "pypdf",
+]
+readme = "README.md"
+requires-python = ">= 3.11"
+
+[project.optional-dependencies]
+cairosvg = ["cairosvg"]
+all = ["cairosvg"]
+
+[project.scripts]
+pdfbaker = "pdfbaker.__main__:main"
+
+[build-system]
+requires = ["hatchling==1.26.3"]  # https://github.com/astral-sh/rye/issues/1446
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pdfbaker"]

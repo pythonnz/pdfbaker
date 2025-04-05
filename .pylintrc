@@ -1,0 +1,12 @@
+[MASTER]
+score=n
+generated-members=PyPDF2.*
+ignored-modules=jinja2,pypdf,yaml
+
+[REPORTS]
+msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
+output-format=colorized
+reports=no
+
+[MESSAGES CONTROL]
+disable=W0511  # Disable TODO/FIXME warnings
