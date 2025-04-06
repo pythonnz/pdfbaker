@@ -1,65 +1,71 @@
-# kpc-sponsorship
+# pdfbaker
 
-Creates a [Kiwi PyCon](https://kiwipycon.nz/) sponsorship prospectus and material specs
-documents for different sponsorship tiers in PDF format.
-
-The main branch has a year tag for the version that is/was used for that particular
-year's conference, like
-"[2025](https://github.com/pythonnz/kpc-sponsorship/releases/tag/2025)".
+Creates PDF documents from YAML-configured SVG templates.
 
 ## Requirements
 
-- [Roboto fonts](https://fonts.google.com/specimen/Roboto) - the font we use
-- [Jinja2](https://jinja.palletsprojects.com/en/stable/) (>=3.1.3) - to render the SVG
-  templates
-- [Inkscape](https://inkscape.org/) - to convert SVG to PDF
-- [pypdf](https://pypdf.readthedocs.io/en/stable/index.html) (>=4.3.1) - to assemble PDF
-  pages to a document
-- [Ghostscript](https://www.ghostscript.com/) - for PDF compression
+For the conversion from SVG to PDF you need to install either
+
+- [CairoSVG](https://cairosvg.org/)<br>
+  ```
+  sudo apt install python3-cairosvg
+  ```
+
+or
+
+- [Inkscape](https://inkscape.org/)<br>
+  ```
+  sudo apt install inkscape
+  ```
+
+If you want to compress your PDFs, you will also need to install
+
+- [Ghostscript](https://www.ghostscript.com/)
+  ```
+  sudo apt install ghostscript
+  ```
+
+## Installation
+
+pdfbaker is on [PyPI](https://pypi.org/project/pdfbaker/) and we reommend installing it
+using [pipx](https://github.com/pypa/pipx):
 
 ```
-sudo apt install fonts-roboto
-sudo apt install python3-jinja2
-sudo apt install inkscape
-sudo apt install python3-pypdf
-sudo apt install ghostscript
+pipx install pdfbaker
 ```
 
-The two Python dependencies can also be installed with pip:
+If you don't yet have pipx,
+[install it first](https://pipx.pypa.io/latest/installation/):
 
 ```
-pip install -r requirements.txt
+sudo apt install pipx
+pipx ensurepath
 ```
-
-The requirements file installs at least the versions that currently get installed by the
-above system packages on Ubuntu 24.10.
 
 ## Usage
 
-Generate all documents with:
+Generate your documents with:
 
 ```
-python3 -m generate
+pdfbaker <path_to_config_file>
 ```
 
 This will create a `build/` directory and a `dist/` directory (both ignored by git).<br>
 It will produce your PDF files in the `dist/` directory (and leave some artifacts in the
 `build/` directory, mainly for debugging).
 
-## Structure and Workflow
+## Configuration
 
-A total of 6 documents are generated:
-
-- Sponsorship Prospectus
-- Material Specs - Diamond
-- Material Specs - Platinum
-- Material Specs - Gold
-- Material Specs - Silver
-- Material Specs - Bronze
+**FIXME: This is hard to find useful without seeing an example.**
 
 A **document** is made up of **pages**.<br> Pages take their layout from **templates**,
 and their specific content from your **configuration**. They may also include
 **images**.
+
+Your configuration file can describe multiple documents, each having further
+configuration and files in their own directory next to the configuration.
+
+Each document directory consists of:
 
 - `templates/`<br> contains `.svg.j2` files describing the layout of a page. These are
   Jinja2 templates which are used to render pages in SVG format, which then gets
@@ -76,27 +82,21 @@ and their specific content from your **configuration**. They may also include
 - `images/`<br> contains the actual image files referenced in the `.yml` files for
   pages.
 
-- `config/`<br> contains the configuration of all documents. It describes which pages
-  make up a document and in which order, and what specific content to insert. Common
-  configuration is in `common.yml`, document-specific configuration in their respective
-  files.<br> You will at the very least need to to adjust the year for your next
-  conference in `common.yml`.
+- `config.yml`<br> contains the configuration of the document (and possibly its
+  variants). It describes which pages make up the document and in which order, and what
+  specific content to insert. When your templates are processed, this document-specific
+  configuration will be merged with your main configuration file, so you can keep
+  settings in the latter to share between different documents.
 
-- `generate/`<br> Contains the code for generating documents.<br> The main entry point
-  for invoking the generator is in `__main__.py`. Common functionality is in
-  `common.py`. Helper functions for rendering the SVGs with Jinja are in `render.py`.
-  Each document gets its own separate module under `documents/`.<br> Documents are
-  generated using the above framework. A top-level `build/` working directory and a
-  `dist/` directory for the final results will be created. If they already exist they
-  will be wiped clean.<br> In the `build/` directory, it will create individual `.svg`
-  files for each page, convert them to `.pdf` files, and then combine them into a single
-  `.pdf` file for each document and place them in the `dist/` directory. The prospectus
-  PDF will also be compressed.
+- `bake.py`<br> Contains the code for generating your documents.<br> It will create
+  individual `.svg` files for each page, convert them to `.pdf` files, and then combine
+  them into a single `.pdf` file for each document and place those in the `dist/`
+  directory. Where configured to do so, your PDF will also be compressed.
 
-Note: You need to follow a consistent naming convention.
-`generate/documents/prospectus.py` will be given the combined configuration of
-`config/common.yml` and `config/prospectus.yml`. It will take its pages from
-`pages/prospectus/`. Do the same for any new documents you may add.
+While you have to write the document generation yourself in `bake.py`, it is little code
+and gives you full control - for example, one document may create just one PDF file but
+another might creates half a dozen variations of itself. All that logic is in your
+`bake.py`.
 
 ## Development
 
@@ -112,5 +112,4 @@ commit.
 
 ## Known Issues
 
-See [Github Issues](https://github.com/pythonnz/kpc-sponsorship/issues) for known
-issues.
+See [Github Issues](https://github.com/pythonnz/pdfbaker/issues) for known issues.
