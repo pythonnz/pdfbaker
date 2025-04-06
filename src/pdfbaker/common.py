@@ -28,7 +28,7 @@ def load_pages(pages_dir):
     return pages
 
 
-def compress_pdf(input_pdf, output_pdf):
+def compress_pdf(input_pdf, output_pdf, dpi=300):
     """Compress a PDF file using Ghostscript."""
     subprocess.run(
         [
@@ -36,11 +36,11 @@ def compress_pdf(input_pdf, output_pdf):
             "-sDEVICE=pdfwrite",
             "-dCompatibilityLevel=1.7",
             "-dPDFSETTINGS=/printer",
-            "-r300",
+            f"-r{dpi}",
             "-dNOPAUSE",
             "-dQUIET",
             "-dBATCH",
-            "-sOutputFile=" + output_pdf,
+            f"-sOutputFile={output_pdf}",
             input_pdf,
         ],
         check=True,
@@ -55,8 +55,18 @@ def combine_pdfs(pdf_files, output_file):
         for pdf_file in pdf_files:
             with open(pdf_file, "rb") as file_obj:
                 pdf_reader = pypdf.PdfReader(file_obj)
-                for page in pdf_reader.pages:
-                    pdf_writer.add_page(page)
+                try:
+                    # The proper method to append PDFs
+                    pdf_writer.append(pdf_reader)
+                except KeyError as exc:
+                    # PDF has broken annotations with missing /Subtype
+                    if str(exc) == "'/Subtype'":
+                        print(f"Warning: PDF {pdf_file} has broken annotations. Falling back to page-by-page method.")
+                        for page in pdf_reader.pages:
+                            pdf_writer.add_page(page)
+                    else:
+                        # Re-raise unexpected KeyError
+                        raise
         pdf_writer.write(output_stream)
 
 
