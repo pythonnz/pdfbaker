@@ -59,7 +59,7 @@ def _setup_output_directories(base_dir):
     return build_dir, dist_dir
 
 
-def _resolve_document_paths(base_dir, documents):
+def _get_document_paths(base_dir, documents):
     """Resolve document paths to absolute paths."""
     document_paths = {}
 
@@ -77,23 +77,20 @@ def _resolve_document_paths(base_dir, documents):
     return document_paths
 
 
-def _validate_document(doc_name, doc_path):
+def _validate_document_path(doc_name, doc_path):
     """Validate that a document has all required files."""
     if not doc_path.is_dir():
-        print(
-            f'Warning: Directory missing for document "{doc_name}" '
-            f"at {doc_path} - skipping"
-        )
+        print(f'Warning: Directory missing for document "{doc_name}" ' f"at {doc_path}")
         return False
 
     bake_path = doc_path / "bake.py"
     if not bake_path.exists():
-        print(f'Warning: bake.py missing for document "{doc_name}" - skipping')
+        print(f'Warning: bake.py missing for document "{doc_name}"')
         return False
 
     config_yml_path = doc_path / "config.yml"
     if not config_yml_path.exists():
-        print(f'Warning: config.yml missing for document "{doc_name}" - skipping')
+        print(f'Warning: config.yml missing for document "{doc_name}"')
         return False
 
     return bake_path, config_yml_path
@@ -109,14 +106,13 @@ def _load_document_bake_module(doc_name, bake_path):
     return module
 
 
-def _setup_document_directories(build_dir, dist_dir, doc_name):
+def _setup_document_output_directories(build_dir, dist_dir, doc_name):
     """Set up and clean document-specific build and dist directories."""
     doc_build_dir = build_dir / doc_name
     doc_dist_dir = dist_dir / doc_name
     os.makedirs(doc_build_dir, exist_ok=True)
     os.makedirs(doc_dist_dir, exist_ok=True)
 
-    # Clean document-specific output directories
     for dir_path in [doc_build_dir, doc_dist_dir]:
         for file in os.listdir(dir_path):
             file_path = dir_path / file
@@ -128,8 +124,9 @@ def _setup_document_directories(build_dir, dist_dir, doc_name):
 
 def _process_document(doc_name, doc_path, config, build_dir, dist_dir):
     """Process an individual document."""
-    validation_result = _validate_document(doc_name, doc_path)
+    validation_result = _validate_document_path(doc_name, doc_path)
     if not validation_result:
+        print(f'Warning: Document "{doc_name}" at {doc_path} is invalid - skipping')
         return
 
     print(f'Processing document "{doc_name}" from {doc_path}...')
@@ -138,7 +135,7 @@ def _process_document(doc_name, doc_path, config, build_dir, dist_dir):
     with open(config_yml_path, encoding="utf-8") as f:
         doc_config = yaml.safe_load(f)
 
-    doc_build_dir, doc_dist_dir = _setup_document_directories(
+    doc_build_dir, doc_dist_dir = _setup_document_output_directories(
         build_dir, dist_dir, doc_name
     )
     paths = {
@@ -164,16 +161,14 @@ def main(config_path=None):
         return 1
 
     config = _load_config(config_path)
-
     base_dir = config_path.parent
+    document_paths = _get_document_paths(base_dir, config.get("documents", []))
     build_dir, dist_dir = _setup_output_directories(base_dir)
-
-    documents = config.get("documents", [])
-    document_paths = _resolve_document_paths(base_dir, documents)
 
     for doc_name, doc_path in document_paths.items():
         _process_document(doc_name, doc_path, config, build_dir, dist_dir)
 
+    print("Done.")
     return 0
 
 
