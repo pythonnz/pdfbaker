@@ -56,12 +56,15 @@ def combine_pdfs(pdf_files, output_file):
             with open(pdf_file, "rb") as file_obj:
                 pdf_reader = pypdf.PdfReader(file_obj)
                 try:
-                    # The proper method to append PDFs
+                    # The proper method to assemble PDFs
                     pdf_writer.append(pdf_reader)
                 except KeyError as exc:
                     # PDF has broken annotations with missing /Subtype
                     if str(exc) == "'/Subtype'":
-                        print(f"Warning: PDF {pdf_file} has broken annotations. Falling back to page-by-page method.")
+                        print(
+                            f"Warning: PDF {pdf_file} has broken annotations. "
+                            f"Falling back to page-by-page method."
+                        )
                         for page in pdf_reader.pages:
                             pdf_writer.add_page(page)
                     else:
