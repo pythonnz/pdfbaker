@@ -50,13 +50,13 @@ Generate your documents with:
 pdfbaker <path_to_config_file>
 ```
 
-This will create a `build/` directory and a `dist/` directory (both ignored by git).<br>
+This will create a `build/` directory and a `dist/` directory where your configuration file lives.<br>
 It will produce your PDF files in the `dist/` directory (and leave some artifacts in the
-`build/` directory, mainly for debugging).
+`build/` directory to aid debugging).
 
 ## Configuration
 
-**FIXME: This is hard to find useful without seeing an example.**
+**FIXME: This is hard to find useful without seeing an example or the required settings to e.g. enable compression.**
 
 A **document** is made up of **pages**.<br> Pages take their layout from **templates**,
 and their specific content from your **configuration**. They may also include
@@ -99,6 +99,8 @@ another might creates half a dozen variations of itself. All that logic is in yo
 `bake.py`.
 
 ## Development
+
+The source code of pdfbaker lives [on github](https://github.com/pythonnz/pdfbaker).
 
 Your changes will be rejected by github if the linters throw warnings. You should
 install [pre-commmit](https://pre-commit.com) and run
