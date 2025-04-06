@@ -1,13 +1,16 @@
 """Common functionality for document generation."""
 
 import subprocess
-from pathlib import Path
 
-# TODO: Switch to CairoSVG (Ubuntu installs 2.7.1)
-# as soon as the SVG templates are tidied up (update README)
-# from cairosvg import svg2pdf
 import pypdf
 import yaml
+
+try:
+    from cairosvg import svg2pdf
+
+    CAIROSVG_AVAILABLE = True
+except ImportError:
+    CAIROSVG_AVAILABLE = False
 
 
 def load_pages(pages_dir):
@@ -70,25 +73,21 @@ def convert_svg_to_pdf(svg_path, pdf_path, backend="cairosvg"):
     """
     if backend == "inkscape":
         return _convert_with_inkscape(svg_path, pdf_path)
-    else:  # Default to cairosvg
-        return _convert_with_cairosvg(svg_path, pdf_path)
+    return _convert_with_cairosvg(svg_path, pdf_path)
 
 
 def _convert_with_cairosvg(svg_path, pdf_path):
     """Convert SVG to PDF using CairoSVG."""
-    try:
-        # Only import cairosvg when needed
-        from cairosvg import svg2pdf
-        
-        with open(svg_path, 'rb') as svg_file:
-            svg2pdf(file_obj=svg_file, write_to=pdf_path)
-        
-        return pdf_path
-    except ImportError:
+    if not CAIROSVG_AVAILABLE:
         raise ImportError(
             "CairoSVG is not installed. Please install it with 'pip install cairosvg' "
             "or set svg2pdf_backend to 'inkscape' in your config."
         )
+
+    with open(svg_path, "rb") as svg_file:
+        svg2pdf(file_obj=svg_file, write_to=pdf_path)
+
+    return pdf_path
 
 
 def _convert_with_inkscape(svg_path, pdf_path):
@@ -103,8 +102,8 @@ def _convert_with_inkscape(svg_path, pdf_path):
             check=True,
         )
         return pdf_path
-    except (subprocess.SubprocessError, FileNotFoundError):
+    except (subprocess.SubprocessError, FileNotFoundError) as exc:
         raise RuntimeError(
-            "Inkscape command failed. Please ensure Inkscape is installed and in your PATH "
-            "or set svg2pdf_backend to 'cairosvg' in your config."
-        )
+            "Inkscape command failed. Please ensure Inkscape is installed "
+            "and in your PATH or set svg2pdf_backend to 'cairosvg' in your config."
+        ) from exc

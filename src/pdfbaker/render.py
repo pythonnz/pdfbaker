@@ -152,7 +152,7 @@ def encode_image(filename, images_dir):
     image_path = os.path.join(images_dir, filename)
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"Image not found: {image_path}")
-        
+
     with open(image_path, "rb") as f:
         binary_fc = f.read()
         base64_utf8_str = base64.b64encode(binary_fc).decode("utf-8")
