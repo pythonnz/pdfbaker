@@ -50,13 +50,14 @@ Generate your documents with:
 pdfbaker <path_to_config_file>
 ```
 
-This will create a `build/` directory and a `dist/` directory where your configuration file lives.<br>
-It will produce your PDF files in the `dist/` directory (and leave some artifacts in the
-`build/` directory to aid debugging).
+This will create a `build/` directory and a `dist/` directory where your configuration
+file lives.<br> It will produce your PDF files in the `dist/` directory (and leave some
+artifacts in the `build/` directory to aid debugging).
 
 ## Configuration
 
-**FIXME: This is hard to find useful without seeing an example or the required settings to e.g. enable compression.**
+**FIXME: This is hard to find useful without seeing an example or the required settings
+to e.g. enable compression.**
 
 A **document** is made up of **pages**.<br> Pages take their layout from **templates**,
 and their specific content from your **configuration**. They may also include
