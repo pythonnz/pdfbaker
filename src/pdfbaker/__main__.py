@@ -7,24 +7,8 @@ from pathlib import Path
 
 import yaml
 
+from .common import deep_merge
 from .render import create_env
-
-
-def _deep_merge(base, update):
-    """Recursively merge two dictionaries.
-
-    Values in update will override those in base, except for dictionaries
-    which will be merged recursively.
-    """
-    merged = base.copy()
-
-    for key, value in update.items():
-        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
-            merged[key] = _deep_merge(merged[key], value)
-        else:
-            merged[key] = value
-
-    return merged
 
 
 def _get_config_path(config_path=None):
@@ -149,7 +133,7 @@ def _process_document(doc_name, doc_path, config, build_dir, dist_dir):
 
     bake_module.process_document(
         paths=paths,
-        config=_deep_merge(config, doc_config),
+        config=deep_merge(config, doc_config),
         jinja_env=create_env(paths["templates_dir"]),
     )
 

@@ -13,6 +13,21 @@ except ImportError:
     CAIROSVG_AVAILABLE = False
 
 
+def deep_merge(base, update):
+    """Recursively merge two dictionaries.
+
+    Values in update will override those in base, except for dictionaries
+    which will be merged recursively.
+    """
+    merged = base.copy()
+    for key, value in update.items():
+        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
+            merged[key] = deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
 def load_pages(pages_dir):
     """Load page configurations from a specific subdirectory."""
     pages = {}
