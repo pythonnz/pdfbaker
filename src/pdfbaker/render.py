@@ -7,27 +7,12 @@ import re
 import jinja2
 
 __all__ = [
-    "process_template_data",
     "create_env",
+    "process_template_data",
 ]
 
-
-def highlight(text, style=None):
-    """Replaces <highlight>text</highlight> with highlighted tspan elements."""
-    if not text:
-        return text
-
-    if not style or "highlight_colour" not in style:
-        raise ValueError(
-            "highlight_colour must be configured in style to use <highlight> tags"
-        )
-
-    def replacer(match):
-        return (
-            f'<tspan style="fill:{style["highlight_colour"]}">{match.group(1)}</tspan>'
-        )
-
-    return re.sub(r"<highlight>(.*?)</highlight>", replacer, text)
+# Fields that need line counting for positioning
+LINE_COUNT_FIELDS = {"text", "title"}
 
 
 def process_style(style, theme):
@@ -39,36 +24,98 @@ def process_style(style, theme):
 
 
 def process_text_with_jinja(env, text, template_data):
-    """Process text through Jinja templating."""
+    """Process text through Jinja templating and apply highlighting."""
     if text is None:
         return None
 
     template = env.from_string(text)
     processed = template.render(**template_data)
-    if "style" in template_data:
-        processed = highlight(processed, template_data["style"])
+
+    if "style" in template_data and "highlight_colour" in template_data["style"]:
+
+        def replacer(match):
+            return (
+                f'<tspan style="fill:{template_data["style"]["highlight_colour"]}">'
+                f"{match.group(1)}</tspan>"
+            )
+
+        processed = re.sub(r"<highlight>(.*?)</highlight>", replacer, processed)
+
     return processed
 
 
-def process_list_item_texts(env, items, template_data):
-    """Process text fields in list items through Jinja."""
-    for item in items:
+def process_list_items(list_items, template_data):
+    """Process a list of text items.
+
+    Applies Jinja templating and calculates positions for SVG layout.
+    """
+    env = jinja2.Environment()
+    previous_lines = 0
+
+    for i, item in enumerate(list_items):
+        # Process text fields
         if "text" in item:
             item["text"] = process_text_with_jinja(env, item["text"], template_data)
         if "title" in item:
             item["title"] = process_text_with_jinja(env, item["title"], template_data)
-    return items
 
-
-def process_list_items(list_items):
-    """Process a list of text items to calculate line positions."""
-    previous_lines = 0
-    for i, item in enumerate(list_items):
+        # Calculate positions for SVG layout
         item["lines"] = previous_lines
         item["position"] = i
-        if item.get("text") is not None:
-            previous_lines = item["text"].count("\n") + previous_lines + 1
+        # Count lines from both text and title fields
+        for field in LINE_COUNT_FIELDS:
+            if item.get(field) is not None:
+                previous_lines = item[field].count("\n") + previous_lines + 1
+
     return list_items
+
+
+def process_nested_text(template, data=None):
+    """Process text fields in any nested dictionary or list structure.
+
+    Args:
+        template: The template structure to process
+        data: Optional data to use for rendering. If None, uses template as data.
+    """
+    env = jinja2.Environment()
+    render_data = data if data is not None else template
+
+    if isinstance(template, dict):
+        return {
+            key: process_nested_text(value, render_data)
+            if isinstance(value, dict | list)
+            else process_text_with_jinja(env, value, render_data)
+            if isinstance(value, str)
+            else value
+            for key, value in template.items()
+        }
+    if isinstance(template, list):
+        return [
+            process_nested_text(item, render_data)
+            if isinstance(item, dict | list)
+            else process_text_with_jinja(env, item, render_data)
+            if isinstance(item, str)
+            else item
+            for item in template
+        ]
+
+    return template
+
+
+def process_nested_lists(data, template_data):
+    """Process any nested lists of items that have text fields."""
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, list) and value and isinstance(value[0], dict):
+                # Check if any item in the list has text or title fields
+                if any("text" in item or "title" in item for item in value):
+                    data[key] = process_list_items(value, template_data)
+            elif isinstance(value, dict | list):
+                process_nested_lists(value, template_data)
+    elif isinstance(data, list):
+        for item in data:
+            if isinstance(item, dict | list):
+                process_nested_lists(item, template_data)
 
 
 def process_template_data(template_data, defaults, images_dir=None):
@@ -83,30 +130,11 @@ def process_template_data(template_data, defaults, images_dir=None):
 
     template_data["style"] = process_style(template_data["style"], defaults["theme"])
 
-    # Create single Jinja environment for all text processing
-    env = jinja2.Environment()
-
     # Process all text fields through Jinja
-    for key in template_data:
-        if (key == "text" or key.startswith("text_")) and template_data[
-            key
-        ] is not None:
-            template_data[key] = process_text_with_jinja(
-                env, template_data[key], template_data
-            )
+    template_data = process_nested_text(template_data)
 
-    # Process list items
-    if template_data.get("list_items") is not None:
-        template_data["list_items"] = process_list_item_texts(
-            env, template_data["list_items"], template_data
-        )
-        template_data["list_items"] = process_list_items(template_data["list_items"])
-
-    if template_data.get("specs_items") is not None:
-        template_data["specs_items"] = process_list_item_texts(
-            env, template_data["specs_items"], template_data
-        )
-        template_data["specs_items"] = process_list_items(template_data["specs_items"])
+    # Process any nested lists of items that have text fields
+    process_nested_lists(template_data, template_data)
 
     # Process images
     if template_data.get("images") is not None:
@@ -124,27 +152,7 @@ def create_env(templates_dir=None):
         loader=jinja2.FileSystemLoader(str(templates_dir)),
         autoescape=jinja2.select_autoescape(),
     )
-    env.filters["space_bullets"] = space_bullets
     return env
-
-
-def space_bullets(text):
-    """Add spacing after each bullet point while preserving line formatting."""
-    if not text:
-        return text
-
-    lines = text.split("\n")
-    result = []
-
-    for i, line in enumerate(lines):
-        if line.strip().startswith("•"):
-            if i > 0 and not lines[i - 1].strip() == "":
-                result.append("")
-            result.append(line)
-        else:
-            result.append(line)
-
-    return "\n".join(result)
 
 
 def encode_image(filename, images_dir):
