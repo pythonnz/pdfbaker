@@ -40,7 +40,7 @@ pipx ensurepath
 Generate your documents with:
 
 ```
-pdfbaker <path_to_config_file>
+pdfbaker bake <path_to_config_file>
 ```
 
 This will create a `build/` directory and a `dist/` directory where your configuration

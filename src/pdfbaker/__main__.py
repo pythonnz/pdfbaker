@@ -6,30 +6,53 @@ import os
 import sys
 from pathlib import Path
 
+import click
 import yaml
 
 from .common import deep_merge
 from .render import create_env
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s: %(message)s"
+)
 logger = logging.getLogger(__name__)
 
+@click.group()
+@click.option(
+    "-v", "--verbose", is_flag=True,
+    help="Show debug information"
+)
+@click.option(
+    "-q", "--quiet", is_flag=True,
+    help="Show errors only"
+)
+def cli(verbose, quiet):
+    """PDF document generator from YAML-configured SVG templates."""
+    if quiet:
+        logging.getLogger().setLevel(logging.ERROR)
+    elif verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
 
-def _get_config_path(config_path=None):
-    """Get and validate the configuration file path."""
-    if config_path is None:
-        if len(sys.argv) < 2:
-            logger.error("Config file path is required")
-            logger.error("Usage: python -m pdfbaker <config_file_path>")
-            return None
-        config_path = sys.argv[1]
+@cli.command()
+@click.argument("config_path", type=click.Path(exists=True, path_type=Path))
+def bake(config_path):
+    """Generate PDF documents from YAML-configured SVG templates.
 
-    config_path = Path(config_path).resolve()
-    if not config_path.exists():
-        logger.error("Configuration file not found: %s", config_path)
-        return None
+    CONFIG_PATH is the path to your configuration YAML file.
+    """
+    config = _load_config(config_path)
+    base_dir = config_path.parent
+    document_paths = _get_document_paths(base_dir, config.get("documents", []))
+    build_dir, dist_dir = _setup_output_directories(base_dir)
 
-    return config_path
+    for doc_name, doc_path in document_paths.items():
+        _process_document(doc_name, doc_path, config, build_dir, dist_dir)
+
+    logger.info("Done.")
+    return 0
 
 
 def _load_config(config_path):
@@ -84,32 +107,6 @@ def _validate_document_path(doc_name, doc_path):
     return bake_path, config_yml_path
 
 
-def _load_document_bake_module(doc_name, bake_path):
-    """Load the document's bake.py module."""
-    doc_bake = importlib.util.spec_from_file_location(
-        f"documents.{doc_name}.bake", bake_path
-    )
-    module = importlib.util.module_from_spec(doc_bake)
-    doc_bake.loader.exec_module(module)
-    return module
-
-
-def _setup_document_output_directories(build_dir, dist_dir, doc_name):
-    """Set up and clean document-specific build and dist directories."""
-    doc_build_dir = build_dir / doc_name
-    doc_dist_dir = dist_dir / doc_name
-    os.makedirs(doc_build_dir, exist_ok=True)
-    os.makedirs(doc_dist_dir, exist_ok=True)
-
-    for dir_path in [doc_build_dir, doc_dist_dir]:
-        for file in os.listdir(dir_path):
-            file_path = dir_path / file
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-
-    return doc_build_dir, doc_dist_dir
-
-
 def _process_document(doc_name, doc_path, config, build_dir, dist_dir):
     """Process an individual document."""
     validation_result = _validate_document_path(doc_name, doc_path)
@@ -142,23 +139,31 @@ def _process_document(doc_name, doc_path, config, build_dir, dist_dir):
     )
 
 
-def main(config_path=None):
-    """Main function for the document generator."""
-    config_path = _get_config_path(config_path)
-    if config_path is None:
-        return 1
+def _load_document_bake_module(doc_name, bake_path):
+    """Load the document's bake.py module."""
+    doc_bake = importlib.util.spec_from_file_location(
+        f"documents.{doc_name}.bake", bake_path
+    )
+    module = importlib.util.module_from_spec(doc_bake)
+    doc_bake.loader.exec_module(module)
+    return module
 
-    config = _load_config(config_path)
-    base_dir = config_path.parent
-    document_paths = _get_document_paths(base_dir, config.get("documents", []))
-    build_dir, dist_dir = _setup_output_directories(base_dir)
 
-    for doc_name, doc_path in document_paths.items():
-        _process_document(doc_name, doc_path, config, build_dir, dist_dir)
+def _setup_document_output_directories(build_dir, dist_dir, doc_name):
+    """Set up and clean document-specific build and dist directories."""
+    doc_build_dir = build_dir / doc_name
+    doc_dist_dir = dist_dir / doc_name
+    os.makedirs(doc_build_dir, exist_ok=True)
+    os.makedirs(doc_dist_dir, exist_ok=True)
 
-    logger.info("Done.")
-    return 0
+    for dir_path in [doc_build_dir, doc_dist_dir]:
+        for file in os.listdir(dir_path):
+            file_path = dir_path / file
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
+    return doc_build_dir, doc_dist_dir
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(cli())

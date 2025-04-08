@@ -1,7 +1,7 @@
 [MASTER]
 score=n
 generated-members=PyPDF2.*
-ignored-modules=cairosvg,jinja2,pypdf,yaml
+ignored-modules=cairosvg,click,jinja2,pypdf,yaml
 
 [REPORTS]
 msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
