@@ -1,10 +1,13 @@
 """Common functionality for document generation."""
 
+import logging
 import subprocess
 
 import pypdf
 import yaml
 from cairosvg import svg2pdf
+
+logger = logging.getLogger(__name__)
 
 
 def deep_merge(base, update):
@@ -70,9 +73,10 @@ def combine_pdfs(pdf_files, output_file):
                 except KeyError as exc:
                     # PDF has broken annotations with missing /Subtype
                     if str(exc) == "'/Subtype'":
-                        print(
-                            f"Warning: PDF {pdf_file} has broken annotations. "
-                            f"Falling back to page-by-page method."
+                        logger.warning(
+                            "PDF %s has broken annotations. "
+                            "Falling back to page-by-page method.",
+                            pdf_file,
                         )
                         for page in pdf_reader.pages:
                             pdf_writer.add_page(page)

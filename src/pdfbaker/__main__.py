@@ -1,6 +1,7 @@
 """Main entry point for the document generator."""
 
 import importlib
+import logging
 import os
 import sys
 from pathlib import Path
@@ -10,19 +11,22 @@ import yaml
 from .common import deep_merge
 from .render import create_env
 
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
+
 
 def _get_config_path(config_path=None):
     """Get and validate the configuration file path."""
     if config_path is None:
         if len(sys.argv) < 2:
-            print("Error: Config file path is required")
-            print("Usage: python -m pdfbaker <config_file_path>")
+            logger.error("Config file path is required")
+            logger.error("Usage: python -m pdfbaker <config_file_path>")
             return None
         config_path = sys.argv[1]
 
     config_path = Path(config_path).resolve()
     if not config_path.exists():
-        print(f"Error: Configuration file not found: {config_path}")
+        logger.error("Configuration file not found: %s", config_path)
         return None
 
     return config_path
@@ -64,17 +68,17 @@ def _get_document_paths(base_dir, documents):
 def _validate_document_path(doc_name, doc_path):
     """Validate that a document has all required files."""
     if not doc_path.is_dir():
-        print(f'Warning: Directory missing for document "{doc_name}" ' f"at {doc_path}")
+        logger.warning('Directory missing for document "%s" at %s', doc_name, doc_path)
         return False
 
     bake_path = doc_path / "bake.py"
     if not bake_path.exists():
-        print(f'Warning: bake.py missing for document "{doc_name}"')
+        logger.warning('bake.py missing for document "%s"', doc_name)
         return False
 
     config_yml_path = doc_path / "config.yml"
     if not config_yml_path.exists():
-        print(f'Warning: config.yml missing for document "{doc_name}"')
+        logger.warning('config.yml missing for document "%s"', doc_name)
         return False
 
     return bake_path, config_yml_path
@@ -110,10 +114,10 @@ def _process_document(doc_name, doc_path, config, build_dir, dist_dir):
     """Process an individual document."""
     validation_result = _validate_document_path(doc_name, doc_path)
     if not validation_result:
-        print(f'Warning: Document "{doc_name}" at {doc_path} is invalid - skipping')
+        logger.warning('Document "%s" at %s is invalid - skipping', doc_name, doc_path)
         return
 
-    print(f'Processing document "{doc_name}" from {doc_path}...')
+    logger.info('Processing document "%s" from %s...', doc_name, doc_path)
     bake_path, config_yml_path = validation_result
     bake_module = _load_document_bake_module(doc_name, bake_path)
     with open(config_yml_path, encoding="utf-8") as f:
@@ -152,7 +156,7 @@ def main(config_path=None):
     for doc_name, doc_path in document_paths.items():
         _process_document(doc_name, doc_path, config, build_dir, dist_dir)
 
-    print("Done.")
+    logger.info("Done.")
     return 0
 
 
