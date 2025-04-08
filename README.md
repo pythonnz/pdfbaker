@@ -28,7 +28,7 @@ pipx ensurepath
   sudo apt install inkscape
   ```
 
-- If you want to compress your PDFs, you will need to install
+- If you want to compress any of your PDFs, you will need to install
   [Ghostscript](https://www.ghostscript.com/):
 
   ```
@@ -94,7 +94,7 @@ another might creates half a dozen variations of itself. All that logic is in yo
 
 ## Development
 
-The source code of pdfbaker lives [on github](https://github.com/pythonnz/pdfbaker).
+The source code of pdfbaker [lives on github](https://github.com/pythonnz/pdfbaker).
 
 Your changes will be rejected by github if the linters throw warnings. You should
 install [pre-commmit](https://pre-commit.com) and run
