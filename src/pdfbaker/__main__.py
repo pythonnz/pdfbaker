@@ -12,22 +12,14 @@ import yaml
 from .common import deep_merge
 from .render import create_env
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s: %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
+
 @click.group()
-@click.option(
-    "-v", "--verbose", is_flag=True,
-    help="Show debug information"
-)
-@click.option(
-    "-q", "--quiet", is_flag=True,
-    help="Show errors only"
-)
-def cli(verbose, quiet):
+@click.option("-v", "--verbose", is_flag=True, help="Show debug information")
+@click.option("-q", "--quiet", is_flag=True, help="Show errors only")
+def cli(quiet=False, verbose=False):
     """PDF document generator from YAML-configured SVG templates."""
     if quiet:
         logging.getLogger().setLevel(logging.ERROR)
@@ -35,6 +27,7 @@ def cli(verbose, quiet):
         logging.getLogger().setLevel(logging.DEBUG)
     else:
         logging.getLogger().setLevel(logging.INFO)
+
 
 @cli.command()
 @click.argument("config_path", type=click.Path(exists=True, path_type=Path))
