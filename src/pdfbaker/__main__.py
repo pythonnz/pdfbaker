@@ -17,10 +17,22 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option("-v", "--verbose", is_flag=True, help="Show debug information")
-@click.option("-q", "--quiet", is_flag=True, help="Show errors only")
-def cli(quiet=False, verbose=False):
-    """PDF document generator from YAML-configured SVG templates."""
+def cli():
+    """Generate PDF documents from YAML-configured SVG templates."""
+
+
+@cli.command()
+@click.argument("config_file", metavar="<config_file>", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "-v", "--verbose", is_flag=True,
+    help="Show debug information"
+)
+@click.option(
+    "-q", "--quiet", is_flag=True,
+    help="Show errors only"
+)
+def bake(config_file, verbose=False, quiet=False):
+    """Parse config file and bake PDFs."""
     if quiet:
         logging.getLogger().setLevel(logging.ERROR)
     elif verbose:
@@ -28,16 +40,8 @@ def cli(quiet=False, verbose=False):
     else:
         logging.getLogger().setLevel(logging.INFO)
 
-
-@cli.command()
-@click.argument("config_path", type=click.Path(exists=True, path_type=Path))
-def bake(config_path):
-    """Generate PDF documents from YAML-configured SVG templates.
-
-    CONFIG_PATH is the path to your configuration YAML file.
-    """
-    config = _load_config(config_path)
-    base_dir = config_path.parent
+    config = _load_config(config_file)
+    base_dir = config_file.parent
     document_paths = _get_document_paths(base_dir, config.get("documents", []))
     build_dir, dist_dir = _setup_output_directories(base_dir)
 
@@ -48,9 +52,9 @@ def bake(config_path):
     return 0
 
 
-def _load_config(config_path):
+def _load_config(config_file):
     """Load configuration from a YAML file."""
-    with open(config_path, encoding="utf-8") as f:
+    with open(config_file, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
