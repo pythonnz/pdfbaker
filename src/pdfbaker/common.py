@@ -1,6 +1,8 @@
 """Common functionality for document generation."""
 
 import logging
+import os
+import select
 import subprocess
 
 import pypdf
@@ -40,9 +42,59 @@ def load_pages(pages_dir):
     return pages
 
 
+def _run_subprocess_logged(cmd, check=True, env=None):
+    """Run a subprocess with output redirected to logging.
+
+    Args:
+        cmd: Command and arguments to run
+        check: If True, raise CalledProcessError on non-zero exit
+        env: Optional environment variables to set
+
+    Returns:
+        Return code from process
+    """
+    env = env or os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "True"
+
+    with subprocess.Popen(
+        cmd,
+        bufsize=1,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    ) as proc:
+        # Set up select for both pipes
+        readable = {
+            proc.stdout.fileno(): (proc.stdout, logger.info),
+            proc.stderr.fileno(): (proc.stderr, logger.warning),
+        }
+
+        while (ret_code := proc.poll()) is None:
+            # Wait for output on either pipe
+            ready, _, _ = select.select(readable.keys(), [], [])
+
+            for fd in ready:
+                stream, log = readable[fd]
+                line = stream.readline()
+                if line:
+                    log(line.rstrip())
+
+        # Read any remaining output after process exits
+        for stream, log in readable.values():
+            for line in stream:
+                if line.strip():
+                    log(line.rstrip())
+
+    if ret_code != 0 and check:
+        raise subprocess.CalledProcessError(ret_code, cmd)
+
+    return ret_code
+
+
 def compress_pdf(input_pdf, output_pdf, dpi=300):
     """Compress a PDF file using Ghostscript."""
-    subprocess.run(
+    _run_subprocess_logged(
         [
             "gs",
             "-sDEVICE=pdfwrite",
@@ -54,9 +106,9 @@ def compress_pdf(input_pdf, output_pdf, dpi=300):
             "-dBATCH",
             f"-sOutputFile={output_pdf}",
             input_pdf,
-        ],
-        check=True,
+        ]
     )
+    return output_pdf
 
 
 def combine_pdfs(pdf_files, output_file):
@@ -68,11 +120,10 @@ def combine_pdfs(pdf_files, output_file):
             with open(pdf_file, "rb") as file_obj:
                 pdf_reader = pypdf.PdfReader(file_obj)
                 try:
-                    # The proper method to assemble PDFs
                     pdf_writer.append(pdf_reader)
                 except KeyError as exc:
-                    # PDF has broken annotations with missing /Subtype
                     if str(exc) == "'/Subtype'":
+                        # PDF has broken annotations with missing /Subtype
                         logger.warning(
                             "PDF %s has broken annotations. "
                             "Falling back to page-by-page method.",
@@ -81,33 +132,24 @@ def combine_pdfs(pdf_files, output_file):
                         for page in pdf_reader.pages:
                             pdf_writer.add_page(page)
                     else:
-                        # Re-raise unexpected KeyError
                         raise
         pdf_writer.write(output_stream)
 
+    return output_file
+
 
 def convert_svg_to_pdf(svg_path, pdf_path, backend="cairosvg"):
-    """Convert an SVG file to PDF.
-
-    Args:
-        svg_path: Path to input SVG file
-        pdf_path: Path to output PDF file
-        backend: Conversion backend to use (cairosvg or inkscape)
-
-    Returns:
-        Path to the generated PDF file
-    """
+    """Convert an SVG file to PDF."""
     if backend == "inkscape":
         try:
-            subprocess.run(
+            _run_subprocess_logged(
                 [
                     "inkscape",
                     f"--export-filename={pdf_path}",
                     svg_path,
-                ],
-                check=True,
+                ]
             )
-        except (subprocess.SubprocessError, FileNotFoundError) as exc:
+        except subprocess.SubprocessError as exc:
             raise RuntimeError(
                 "Inkscape command failed. Please ensure Inkscape is installed "
                 'and in your PATH or set svg2pdf_backend to "cairosvg" in your config.'
