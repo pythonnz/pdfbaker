@@ -1,6 +1,6 @@
 # pdfbaker
 
-Creates PDF documents from YAML-configured SVG templates.
+Create PDF documents from YAML-configured SVG templates.
 
 ## Installation
 
@@ -30,7 +30,6 @@ pipx ensurepath
 
 - If you want to compress any of your PDFs, you will need to install
   [Ghostscript](https://www.ghostscript.com/):
-
   ```
   sudo apt install ghostscript
   ```
@@ -40,7 +39,7 @@ pipx ensurepath
 Generate your documents with:
 
 ```
-pdfbaker bake <path_to_config_file>
+pdfbaker bake <config_file>
 ```
 
 This will create a `build/` directory and a `dist/` directory where your configuration

@@ -22,15 +22,11 @@ def cli():
 
 
 @cli.command()
-@click.argument("config_file", metavar="<config_file>", type=click.Path(exists=True, path_type=Path))
-@click.option(
-    "-v", "--verbose", is_flag=True,
-    help="Show debug information"
+@click.argument(
+    "config_file", metavar="<config_file>", type=click.Path(exists=True, path_type=Path)
 )
-@click.option(
-    "-q", "--quiet", is_flag=True,
-    help="Show errors only"
-)
+@click.option("-v", "--verbose", is_flag=True, help="Show debug information")
+@click.option("-q", "--quiet", is_flag=True, help="Show errors only")
 def bake(config_file, verbose=False, quiet=False):
     """Parse config file and bake PDFs."""
     if quiet:
