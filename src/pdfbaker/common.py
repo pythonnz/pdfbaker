@@ -4,13 +4,7 @@ import subprocess
 
 import pypdf
 import yaml
-
-try:
-    from cairosvg import svg2pdf
-
-    CAIROSVG_AVAILABLE = True
-except ImportError:
-    CAIROSVG_AVAILABLE = False
+from cairosvg import svg2pdf
 
 
 def deep_merge(base, update):
@@ -100,38 +94,22 @@ def convert_svg_to_pdf(svg_path, pdf_path, backend="cairosvg"):
         Path to the generated PDF file
     """
     if backend == "inkscape":
-        return _convert_with_inkscape(svg_path, pdf_path)
-    return _convert_with_cairosvg(svg_path, pdf_path)
-
-
-def _convert_with_cairosvg(svg_path, pdf_path):
-    """Convert SVG to PDF using CairoSVG."""
-    if not CAIROSVG_AVAILABLE:
-        raise ImportError(
-            "CairoSVG is not installed. Please install it with 'pip install cairosvg' "
-            "or set svg2pdf_backend to 'inkscape' in your config."
-        )
-
-    with open(svg_path, "rb") as svg_file:
-        svg2pdf(file_obj=svg_file, write_to=pdf_path)
+        try:
+            subprocess.run(
+                [
+                    "inkscape",
+                    f"--export-filename={pdf_path}",
+                    svg_path,
+                ],
+                check=True,
+            )
+        except (subprocess.SubprocessError, FileNotFoundError) as exc:
+            raise RuntimeError(
+                "Inkscape command failed. Please ensure Inkscape is installed "
+                'and in your PATH or set svg2pdf_backend to "cairosvg" in your config.'
+            ) from exc
+    else:
+        with open(svg_path, "rb") as svg_file:
+            svg2pdf(file_obj=svg_file, write_to=pdf_path)
 
     return pdf_path
-
-
-def _convert_with_inkscape(svg_path, pdf_path):
-    """Convert SVG to PDF using Inkscape."""
-    try:
-        subprocess.run(
-            [
-                "inkscape",
-                f"--export-filename={pdf_path}",
-                svg_path,
-            ],
-            check=True,
-        )
-        return pdf_path
-    except (subprocess.SubprocessError, FileNotFoundError) as exc:
-        raise RuntimeError(
-            "Inkscape command failed. Please ensure Inkscape is installed "
-            "and in your PATH or set svg2pdf_backend to 'cairosvg' in your config."
-        ) from exc

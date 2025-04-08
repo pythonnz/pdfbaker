@@ -6,16 +6,13 @@ authors = [
     { name = "Danny W. Adair", email = "danny.adair@unfold.nz" }
 ]
 dependencies = [
-    "pyyaml",
+    "cairosvg",
     "jinja2",
     "pypdf",
+    "pyyaml",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
-
-[project.optional-dependencies]
-cairosvg = ["cairosvg"]
-all = ["cairosvg"]
 
 [project.scripts]
 pdfbaker = "pdfbaker.__main__:main"

@@ -2,29 +2,6 @@
 
 Creates PDF documents from YAML-configured SVG templates.
 
-## Requirements
-
-For the conversion from SVG to PDF you need to install either
-
-- [CairoSVG](https://cairosvg.org/)<br>
-  ```
-  sudo apt install python3-cairosvg
-  ```
-
-or
-
-- [Inkscape](https://inkscape.org/)<br>
-  ```
-  sudo apt install inkscape
-  ```
-
-If you want to compress your PDFs, you will also need to install
-
-- [Ghostscript](https://www.ghostscript.com/)
-  ```
-  sudo apt install ghostscript
-  ```
-
 ## Installation
 
 pdfbaker is on [PyPI](https://pypi.org/project/pdfbaker/) and we reommend installing it
@@ -35,12 +12,28 @@ pipx install pdfbaker
 ```
 
 If you don't yet have pipx,
-[install it first](https://pipx.pypa.io/latest/installation/):
+[install pipx first](https://pipx.pypa.io/latest/installation/):
 
 ```
 sudo apt install pipx
 pipx ensurepath
 ```
+
+## Optional Dependencies
+
+- SVG to PDF conversion uses [CairoSVG](https://cairosvg.org/) by default. For documents
+  requiring [Inkscape](https://inkscape.org/) instead, install it first:
+
+  ```
+  sudo apt install inkscape
+  ```
+
+- If you want to compress your PDFs, you will need to install
+  [Ghostscript](https://www.ghostscript.com/):
+
+  ```
+  sudo apt install ghostscript
+  ```
 
 ## Usage
 
