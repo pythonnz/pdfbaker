@@ -4,10 +4,15 @@ import logging
 import os
 import select
 import subprocess
+from collections.abc import Sequence
+from pathlib import Path
+from typing import Any
 
 import pypdf
 import yaml
 from cairosvg import svg2pdf
+
+from .types import PageConfig
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +24,9 @@ class PDFBakeError(Exception):
 class SVGConversionError(PDFBakeError):
     """Failed to convert SVG to PDF."""
 
-    def __init__(self, svg_path, backend, cause=None):
+    def __init__(
+        self, svg_path: str | Path, backend: str, cause: str | None = None
+    ) -> None:
         self.svg_path = svg_path
         self.backend = backend
         self.cause = cause
@@ -34,7 +41,7 @@ class PDFCompressionError(PDFBakeError):
     """Failed to compress PDF."""
 
 
-def deep_merge(base, update):
+def deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
     """Recursively merge two dictionaries.
 
     Values in update will override those in base, except for dictionaries
@@ -49,22 +56,24 @@ def deep_merge(base, update):
     return merged
 
 
-def load_pages(pages_dir):
+def load_pages(pages_dir: Path) -> dict[str, dict[str, Any]]:
     """Load page configurations from a specific subdirectory."""
-    pages = {}
+    pages: dict[str, dict[str, Any]] = {}
 
     if pages_dir.exists():
         for page in pages_dir.iterdir():
             if not page.name.endswith(".yml"):
                 continue
             with open(page, encoding="utf-8") as f:
-                yaml_config = yaml.safe_load(f)
+                yaml_config: PageConfig = yaml.safe_load(f)
                 pages[yaml_config["name"]] = yaml_config["config"]
 
     return pages
 
 
-def combine_pdfs(pdf_files, output_file):
+def combine_pdfs(
+    pdf_files: Sequence[Path], output_file: Path
+) -> Path | PDFCombineError:
     """Combine multiple PDF files into a single PDF.
 
     Args:
@@ -108,7 +117,7 @@ def combine_pdfs(pdf_files, output_file):
     return output_file
 
 
-def _run_subprocess_logged(cmd, env=None):
+def _run_subprocess_logged(cmd: list[str], env: dict[str, str] | None = None) -> int:
     """Run a subprocess with output redirected to logging.
 
     Args:
@@ -157,7 +166,9 @@ def _run_subprocess_logged(cmd, env=None):
     return 0
 
 
-def compress_pdf(input_pdf, output_pdf, dpi=300):
+def compress_pdf(
+    input_pdf: Path, output_pdf: Path, dpi: int = 300
+) -> Path | PDFCompressionError:
     """Compress a PDF file using Ghostscript.
 
     Args:
@@ -183,7 +194,7 @@ def compress_pdf(input_pdf, output_pdf, dpi=300):
                 "-dQUIET",
                 "-dBATCH",
                 f"-sOutputFile={output_pdf}",
-                input_pdf,
+                str(input_pdf),
             ]
         )
         return output_pdf
@@ -191,7 +202,11 @@ def compress_pdf(input_pdf, output_pdf, dpi=300):
         raise PDFCompressionError(f"Ghostscript compression failed: {exc}") from exc
 
 
-def convert_svg_to_pdf(svg_path, pdf_path, backend="cairosvg"):
+def convert_svg_to_pdf(
+    svg_path: Path,
+    pdf_path: Path,
+    backend: str = "cairosvg",
+) -> Path | SVGConversionError:
     """Convert an SVG file to PDF.
 
     Args:
@@ -213,7 +228,7 @@ def convert_svg_to_pdf(svg_path, pdf_path, backend="cairosvg"):
                     [
                         "inkscape",
                         f"--export-filename={pdf_path}",
-                        svg_path,
+                        str(svg_path),
                     ]
                 )
             except subprocess.SubprocessError as exc:

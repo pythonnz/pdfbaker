@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 import yaml
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-def cli():
+def cli() -> None:
     """Generate PDF documents from YAML-configured SVG templates."""
 
 
@@ -33,7 +34,9 @@ def cli():
     is_flag=True,
     help="Debug mode (implies --verbose, keeps build files)",
 )
-def bake(config_file, verbose=False, quiet=False, debug=False):
+def bake(
+    config_file: Path, verbose: bool = False, quiet: bool = False, debug: bool = False
+) -> int:
     """Parse config file and bake PDFs."""
     if debug:
         verbose = True
@@ -59,13 +62,13 @@ def bake(config_file, verbose=False, quiet=False, debug=False):
     return 0
 
 
-def _load_config(config_file):
+def _load_config(config_file: Path) -> dict[str, Any]:
     """Load configuration from a YAML file."""
     with open(config_file, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
-def _setup_output_directories(base_dir):
+def _setup_output_directories(base_dir: Path) -> tuple[Path, Path]:
     """Create and return build and dist directories."""
     build_dir = base_dir / "build"
     dist_dir = base_dir / "dist"
@@ -74,9 +77,11 @@ def _setup_output_directories(base_dir):
     return build_dir, dist_dir
 
 
-def _get_document_paths(base_dir, documents):
+def _get_document_paths(
+    base_dir: Path, documents: list[dict[str, str] | str]
+) -> dict[str, Path]:
     """Resolve document paths to absolute paths."""
-    document_paths = {}
+    document_paths: dict[str, Path] = {}
 
     for doc_name in documents:
         if isinstance(doc_name, dict):
@@ -92,7 +97,7 @@ def _get_document_paths(base_dir, documents):
     return document_paths
 
 
-def _validate_document_path(doc_name, doc_path):
+def _validate_document_path(doc_name: str, doc_path: Path) -> tuple[Path, Path] | bool:
     """Validate that a document has all required files."""
     if not doc_path.is_dir():
         logger.warning('Directory missing for document "%s" at %s', doc_name, doc_path)
@@ -111,7 +116,13 @@ def _validate_document_path(doc_name, doc_path):
     return bake_path, config_yml_path
 
 
-def _process_document(doc_name, doc_path, config, build_dir, dist_dir):
+def _process_document(
+    doc_name: str,
+    doc_path: Path,
+    config: dict[str, Any],
+    build_dir: Path,
+    dist_dir: Path,
+) -> None:
     """Process an individual document."""
     validation_result = _validate_document_path(doc_name, doc_path)
     if not validation_result:
@@ -143,7 +154,7 @@ def _process_document(doc_name, doc_path, config, build_dir, dist_dir):
     )
 
 
-def _load_document_bake_module(doc_name, bake_path):
+def _load_document_bake_module(doc_name: str, bake_path: Path) -> Any:
     """Load the document's bake.py module."""
     doc_bake = importlib.util.spec_from_file_location(
         f"documents.{doc_name}.bake", bake_path
@@ -153,7 +164,9 @@ def _load_document_bake_module(doc_name, bake_path):
     return module
 
 
-def _setup_document_output_directories(build_dir, dist_dir, doc_name):
+def _setup_document_output_directories(
+    build_dir: Path, dist_dir: Path, doc_name: str
+) -> tuple[Path, Path]:
     """Set up and clean document-specific build and dist directories."""
     doc_build_dir = build_dir / doc_name
     doc_dist_dir = dist_dir / doc_name
@@ -169,7 +182,7 @@ def _setup_document_output_directories(build_dir, dist_dir, doc_name):
     return doc_build_dir, doc_dist_dir
 
 
-def _teardown_build_directories(build_dir, doc_names):
+def _teardown_build_directories(build_dir: Path, doc_names: list[str]) -> None:
     """Clean up build directories after successful processing.
 
     Args:

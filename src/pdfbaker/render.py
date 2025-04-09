@@ -1,10 +1,14 @@
 """Helper functions for rendering with Jinja"""
 
 import base64
-import os
 import re
+from collections.abc import Sequence
+from pathlib import Path
+from typing import Any, TypeVar
 
 import jinja2
+
+from .types import ImageSpec, StyleDict, ThemeDict
 
 __all__ = [
     "create_env",
@@ -12,18 +16,22 @@ __all__ = [
 ]
 
 # Fields that need line counting for positioning
-LINE_COUNT_FIELDS = {"text", "title"}
+LINE_COUNT_FIELDS: set[str] = {"text", "title"}
+
+T = TypeVar("T")
 
 
-def process_style(style, theme):
+def process_style(style: StyleDict, theme: ThemeDict) -> StyleDict:
     """Convert style references to actual color values from theme."""
-    return_dict = {}
+    return_dict: StyleDict = {}
     for key in style:
         return_dict[key] = theme[style[key]]
     return return_dict
 
 
-def process_text_with_jinja(env, text, template_data):
+def process_text_with_jinja(
+    env: jinja2.Environment, text: str | None, template_data: dict[str, Any]
+) -> str | None:
     """Process text through Jinja templating and apply highlighting."""
     if text is None:
         return None
@@ -33,7 +41,7 @@ def process_text_with_jinja(env, text, template_data):
 
     if "style" in template_data and "highlight_colour" in template_data["style"]:
 
-        def replacer(match):
+        def replacer(match: re.Match[str]) -> str:
             return (
                 f'<tspan style="fill:{template_data["style"]["highlight_colour"]}">'
                 f"{match.group(1)}</tspan>"
@@ -44,7 +52,9 @@ def process_text_with_jinja(env, text, template_data):
     return processed
 
 
-def process_list_items(list_items, template_data):
+def process_list_items(
+    list_items: list[dict[str, Any]], template_data: dict[str, Any]
+) -> list[dict[str, Any]]:
     """Process a list of text items.
 
     Applies Jinja templating and calculates positions for SVG layout.
@@ -70,7 +80,7 @@ def process_list_items(list_items, template_data):
     return list_items
 
 
-def process_nested_text(template, data=None):
+def process_nested_text(template: T, data: dict[str, Any] | None = None) -> T:
     """Process text fields in any nested dictionary or list structure.
 
     Args:
@@ -88,7 +98,7 @@ def process_nested_text(template, data=None):
             if isinstance(value, str)
             else value
             for key, value in template.items()
-        }
+        }  # type: ignore
     if isinstance(template, list):
         return [
             process_nested_text(item, render_data)
@@ -97,12 +107,14 @@ def process_nested_text(template, data=None):
             if isinstance(item, str)
             else item
             for item in template
-        ]
+        ]  # type: ignore
 
     return template
 
 
-def process_nested_lists(data, template_data):
+def process_nested_lists(
+    data: dict[str, Any] | list[Any], template_data: dict[str, Any]
+) -> None:
     """Process any nested lists of items that have text fields."""
     if isinstance(data, dict):
         for key, value in data.items():
@@ -118,7 +130,11 @@ def process_nested_lists(data, template_data):
                 process_nested_lists(item, template_data)
 
 
-def process_template_data(template_data, defaults, images_dir=None):
+def process_template_data(
+    template_data: dict[str, Any],
+    defaults: dict[str, Any],
+    images_dir: Path | None = None,
+) -> dict[str, Any]:
     """Process and enhance template data with images, list items, and styling."""
     # Process style first
     if template_data.get("style") is not None:
@@ -143,7 +159,7 @@ def process_template_data(template_data, defaults, images_dir=None):
     return template_data
 
 
-def create_env(templates_dir=None):
+def create_env(templates_dir: Path | None = None) -> jinja2.Environment:
     """Create and configure the Jinja environment."""
     if templates_dir is None:
         raise ValueError("templates_dir is required")
@@ -155,10 +171,10 @@ def create_env(templates_dir=None):
     return env
 
 
-def encode_image(filename, images_dir):
+def encode_image(filename: str, images_dir: Path) -> str:
     """Encode an image file to a base64 data URI."""
-    image_path = os.path.join(images_dir, filename)
-    if not os.path.exists(image_path):
+    image_path = images_dir / filename
+    if not image_path.exists():
         raise FileNotFoundError(f"Image not found: {image_path}")
 
     with open(image_path, "rb") as f:
@@ -168,10 +184,18 @@ def encode_image(filename, images_dir):
         return f"data:image/{ext};base64,{base64_utf8_str}"
 
 
-def encode_images(images, images_dir):
+def encode_images(
+    images: Sequence[ImageSpec], images_dir: Path | None
+) -> list[ImageSpec]:
     """Encode a list of image specifications to include base64 data."""
+    if images_dir is None:
+        raise ValueError("images_dir is required when processing images")
+
+    result = []
     for image in images:
-        if image.get("type") is None:
-            image["type"] = "default"
-        image["data"] = encode_image(image["name"], images_dir)
-    return images
+        img: ImageSpec = image.copy()
+        if img.get("type") is None:
+            img["type"] = "default"
+        img["data"] = encode_image(img["name"], images_dir)
+        result.append(img)
+    return result
