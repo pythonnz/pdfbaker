@@ -12,6 +12,28 @@ from cairosvg import svg2pdf
 logger = logging.getLogger(__name__)
 
 
+class PDFBakeError(Exception):
+    """Base exception for PDF baking errors."""
+
+
+class SVGConversionError(PDFBakeError):
+    """Failed to convert SVG to PDF."""
+
+    def __init__(self, svg_path, backend, cause=None):
+        self.svg_path = svg_path
+        self.backend = backend
+        self.cause = cause
+        super().__init__(f"Failed to convert {svg_path} using {backend}: {cause}")
+
+
+class PDFCombineError(PDFBakeError):
+    """Failed to combine PDFs."""
+
+
+class PDFCompressionError(PDFBakeError):
+    """Failed to compress PDF."""
+
+
 def deep_merge(base, update):
     """Recursively merge two dictionaries.
 
@@ -42,16 +64,59 @@ def load_pages(pages_dir):
     return pages
 
 
-def _run_subprocess_logged(cmd, check=True, env=None):
+def combine_pdfs(pdf_files, output_file):
+    """Combine multiple PDF files into a single PDF.
+
+    Args:
+        pdf_files: List of paths to PDF files to combine
+        output_file: Path where the combined PDF will be written
+
+    Returns:
+        Path to the combined PDF file
+
+    Raises:
+        PDFCombineError: If no PDF files provided or if combining fails
+    """
+    if not pdf_files:
+        raise PDFCombineError("No PDF files provided to combine")
+
+    pdf_writer = pypdf.PdfWriter()
+
+    with open(output_file, "wb") as output_stream:
+        for pdf_file in pdf_files:
+            with open(pdf_file, "rb") as file_obj:
+                try:
+                    pdf_reader = pypdf.PdfReader(file_obj)
+                    try:
+                        pdf_writer.append(pdf_reader)
+                    except KeyError as exc:
+                        if str(exc) == "'/Subtype'":
+                            # PDF has broken annotations with missing /Subtype
+                            logger.warning(
+                                "PDF %s has broken annotations. "
+                                "Falling back to page-by-page method.",
+                                pdf_file,
+                            )
+                            for page in pdf_reader.pages:
+                                pdf_writer.add_page(page)
+                        else:
+                            raise
+                except Exception as exc:
+                    raise PDFCombineError(f"Failed to combine PDFs: {exc}") from exc
+        pdf_writer.write(output_stream)
+
+    return output_file
+
+
+def _run_subprocess_logged(cmd, env=None):
     """Run a subprocess with output redirected to logging.
 
     Args:
         cmd: Command and arguments to run
-        check: If True, raise CalledProcessError on non-zero exit
         env: Optional environment variables to set
 
     Returns:
-        Return code from process
+        0 if successful, otherwise raises CalledProcessError
     """
     env = env or os.environ.copy()
     env["PYTHONUNBUFFERED"] = "True"
@@ -86,76 +151,80 @@ def _run_subprocess_logged(cmd, check=True, env=None):
                 if line.strip():
                     log(line.rstrip())
 
-    if ret_code != 0 and check:
+    if ret_code != 0:
         raise subprocess.CalledProcessError(ret_code, cmd)
 
-    return ret_code
+    return 0
 
 
 def compress_pdf(input_pdf, output_pdf, dpi=300):
-    """Compress a PDF file using Ghostscript."""
-    _run_subprocess_logged(
-        [
-            "gs",
-            "-sDEVICE=pdfwrite",
-            "-dCompatibilityLevel=1.7",
-            "-dPDFSETTINGS=/printer",
-            f"-r{dpi}",
-            "-dNOPAUSE",
-            "-dQUIET",
-            "-dBATCH",
-            f"-sOutputFile={output_pdf}",
-            input_pdf,
-        ]
-    )
-    return output_pdf
+    """Compress a PDF file using Ghostscript.
 
+    Args:
+        input_pdf: Path to the input PDF file
+        output_pdf: Path where the compressed PDF will be written
+        dpi: Resolution in dots per inch (default: 300)
 
-def combine_pdfs(pdf_files, output_file):
-    """Combine multiple PDF files into a single PDF."""
-    pdf_writer = pypdf.PdfWriter()
+    Returns:
+        Path to the compressed PDF file
 
-    with open(output_file, "wb") as output_stream:
-        for pdf_file in pdf_files:
-            with open(pdf_file, "rb") as file_obj:
-                pdf_reader = pypdf.PdfReader(file_obj)
-                try:
-                    pdf_writer.append(pdf_reader)
-                except KeyError as exc:
-                    if str(exc) == "'/Subtype'":
-                        # PDF has broken annotations with missing /Subtype
-                        logger.warning(
-                            "PDF %s has broken annotations. "
-                            "Falling back to page-by-page method.",
-                            pdf_file,
-                        )
-                        for page in pdf_reader.pages:
-                            pdf_writer.add_page(page)
-                    else:
-                        raise
-        pdf_writer.write(output_stream)
-
-    return output_file
+    Raises:
+        PDFCompressionError: If Ghostscript compression fails
+    """
+    try:
+        _run_subprocess_logged(
+            [
+                "gs",
+                "-sDEVICE=pdfwrite",
+                "-dCompatibilityLevel=1.7",
+                "-dPDFSETTINGS=/printer",
+                f"-r{dpi}",
+                "-dNOPAUSE",
+                "-dQUIET",
+                "-dBATCH",
+                f"-sOutputFile={output_pdf}",
+                input_pdf,
+            ]
+        )
+        return output_pdf
+    except subprocess.SubprocessError as exc:
+        raise PDFCompressionError(f"Ghostscript compression failed: {exc}") from exc
 
 
 def convert_svg_to_pdf(svg_path, pdf_path, backend="cairosvg"):
-    """Convert an SVG file to PDF."""
-    if backend == "inkscape":
-        try:
-            _run_subprocess_logged(
-                [
-                    "inkscape",
-                    f"--export-filename={pdf_path}",
-                    svg_path,
-                ]
-            )
-        except subprocess.SubprocessError as exc:
-            raise RuntimeError(
-                "Inkscape command failed. Please ensure Inkscape is installed "
-                'and in your PATH or set svg2pdf_backend to "cairosvg" in your config.'
-            ) from exc
-    else:
-        with open(svg_path, "rb") as svg_file:
-            svg2pdf(file_obj=svg_file, write_to=pdf_path)
+    """Convert an SVG file to PDF.
 
-    return pdf_path
+    Args:
+        svg_path: Path to the input SVG file
+        pdf_path: Path where the PDF will be written
+        backend: Conversion backend to use, either "cairosvg" or "inkscape"
+            (default: "cairosvg")
+
+    Returns:
+        Path to the converted PDF file
+
+    Raises:
+        SVGConversionError: If SVG conversion fails, includes the backend used and cause
+    """
+    try:
+        if backend == "inkscape":
+            try:
+                _run_subprocess_logged(
+                    [
+                        "inkscape",
+                        f"--export-filename={pdf_path}",
+                        svg_path,
+                    ]
+                )
+            except subprocess.SubprocessError as exc:
+                raise SVGConversionError(svg_path, backend, str(exc)) from exc
+        else:
+            try:
+                with open(svg_path, "rb") as svg_file:
+                    svg2pdf(file_obj=svg_file, write_to=pdf_path)
+            except Exception as exc:
+                raise SVGConversionError(svg_path, backend, str(exc)) from exc
+
+        return pdf_path
+    except Exception as exc:
+        raise SVGConversionError(svg_path, backend, str(exc)) from exc
