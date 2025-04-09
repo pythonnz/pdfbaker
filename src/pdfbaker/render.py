@@ -4,7 +4,7 @@ import base64
 import re
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any
 
 import jinja2
 
@@ -15,119 +15,13 @@ __all__ = [
     "process_template_data",
 ]
 
-# Fields that need line counting for positioning
-LINE_COUNT_FIELDS: set[str] = {"text", "title"}
-
-T = TypeVar("T")
-
 
 def process_style(style: StyleDict, theme: ThemeDict) -> StyleDict:
     """Convert style references to actual color values from theme."""
     return_dict: StyleDict = {}
-    for key in style:
-        return_dict[key] = theme[style[key]]
+    for key, value in style.items():
+        return_dict[key] = theme[value]
     return return_dict
-
-
-def process_text_with_jinja(
-    env: jinja2.Environment, text: str | None, template_data: dict[str, Any]
-) -> str | None:
-    """Process text through Jinja templating and apply highlighting."""
-    if text is None:
-        return None
-
-    template = env.from_string(text)
-    processed = template.render(**template_data)
-
-    if "style" in template_data and "highlight_colour" in template_data["style"]:
-
-        def replacer(match: re.Match[str]) -> str:
-            return (
-                f'<tspan style="fill:{template_data["style"]["highlight_colour"]}">'
-                f"{match.group(1)}</tspan>"
-            )
-
-        processed = re.sub(r"<highlight>(.*?)</highlight>", replacer, processed)
-
-    return processed
-
-
-def process_list_items(
-    list_items: list[dict[str, Any]], template_data: dict[str, Any]
-) -> list[dict[str, Any]]:
-    """Process a list of text items.
-
-    Applies Jinja templating and calculates positions for SVG layout.
-    """
-    env = jinja2.Environment()
-    previous_lines = 0
-
-    for i, item in enumerate(list_items):
-        # Process text fields
-        if "text" in item:
-            item["text"] = process_text_with_jinja(env, item["text"], template_data)
-        if "title" in item:
-            item["title"] = process_text_with_jinja(env, item["title"], template_data)
-
-        # Calculate positions for SVG layout
-        item["lines"] = previous_lines
-        item["position"] = i
-        # Count lines from both text and title fields
-        for field in LINE_COUNT_FIELDS:
-            if item.get(field) is not None:
-                previous_lines = item[field].count("\n") + previous_lines + 1
-
-    return list_items
-
-
-def process_nested_text(template: T, data: dict[str, Any] | None = None) -> T:
-    """Process text fields in any nested dictionary or list structure.
-
-    Args:
-        template: The template structure to process
-        data: Optional data to use for rendering. If None, uses template as data.
-    """
-    env = jinja2.Environment()
-    render_data = data if data is not None else template
-
-    if isinstance(template, dict):
-        return {
-            key: process_nested_text(value, render_data)
-            if isinstance(value, dict | list)
-            else process_text_with_jinja(env, value, render_data)
-            if isinstance(value, str)
-            else value
-            for key, value in template.items()
-        }  # type: ignore
-    if isinstance(template, list):
-        return [
-            process_nested_text(item, render_data)
-            if isinstance(item, dict | list)
-            else process_text_with_jinja(env, item, render_data)
-            if isinstance(item, str)
-            else item
-            for item in template
-        ]  # type: ignore
-
-    return template
-
-
-def process_nested_lists(
-    data: dict[str, Any] | list[Any], template_data: dict[str, Any]
-) -> None:
-    """Process any nested lists of items that have text fields."""
-    if isinstance(data, dict):
-        for key, value in data.items():
-            if isinstance(value, list) and value and isinstance(value[0], dict):
-                # Check if any item in the list has text or title fields
-                if any("text" in item or "title" in item for item in value):
-                    data[key] = process_list_items(value, template_data)
-            elif isinstance(value, dict | list):
-                process_nested_lists(value, template_data)
-    elif isinstance(data, list):
-        for item in data:
-            if isinstance(item, dict | list):
-                process_nested_lists(item, template_data)
 
 
 def process_template_data(
@@ -135,7 +29,7 @@ def process_template_data(
     defaults: dict[str, Any],
     images_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Process and enhance template data with images, list items, and styling."""
+    """Process and enhance template data with styling and images."""
     # Process style first
     if template_data.get("style") is not None:
         default_style = dict(defaults["style"])
@@ -146,17 +40,35 @@ def process_template_data(
 
     template_data["style"] = process_style(template_data["style"], defaults["theme"])
 
-    # Process all text fields through Jinja
-    template_data = process_nested_text(template_data)
-
-    # Process any nested lists of items that have text fields
-    process_nested_lists(template_data, template_data)
-
     # Process images
     if template_data.get("images") is not None:
         template_data["images"] = encode_images(template_data["images"], images_dir)
 
     return template_data
+
+
+class HighlightingTemplate(jinja2.Template):  # pylint: disable=too-few-public-methods
+    """A Jinja template that automatically applies highlighting to text.
+
+    This template class extends the base Jinja template to automatically
+    process <highlight> tags in the rendered output, converting them to
+    styled <tspan> elements with the highlight color.
+    """
+
+    def render(self, *args: Any, **kwargs: Any) -> str:
+        """Render the template and apply highlighting to the result."""
+        rendered = super().render(*args, **kwargs)
+
+        if "style" in kwargs and "highlight_colour" in kwargs["style"]:
+            highlight_colour = kwargs["style"]["highlight_colour"]
+
+            def replacer(match: re.Match[str]) -> str:
+                content = match.group(1)
+                return f'<tspan style="fill:{highlight_colour}">{content}</tspan>'
+
+            rendered = re.sub(r"<highlight>(.*?)</highlight>", replacer, rendered)
+
+        return rendered
 
 
 def create_env(templates_dir: Path | None = None) -> jinja2.Environment:
@@ -167,7 +79,9 @@ def create_env(templates_dir: Path | None = None) -> jinja2.Environment:
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(templates_dir)),
         autoescape=jinja2.select_autoescape(),
+        extensions=["jinja2.ext.do"],
     )
+    env.template_class = HighlightingTemplate
     return env
 
 
