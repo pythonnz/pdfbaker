@@ -42,9 +42,9 @@ Generate your documents with:
 pdfbaker bake <config_file>
 ```
 
-This will create a `build/` directory and a `dist/` directory where your configuration
-file lives.<br> It will produce your PDF files in the `dist/` directory (and leave some
-artifacts in the `build/` directory to aid debugging).
+This will produce your PDF files in a `dist/` directory where you configuration file
+lives. It will also create a `build/` directory with artifacts but only keeps it if you
+specify `--debug`.
 
 ## Configuration
 
