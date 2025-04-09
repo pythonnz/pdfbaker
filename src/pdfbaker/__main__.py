@@ -27,8 +27,16 @@ def cli():
 )
 @click.option("-v", "--verbose", is_flag=True, help="Show debug information")
 @click.option("-q", "--quiet", is_flag=True, help="Show errors only")
-def bake(config_file, verbose=False, quiet=False):
+@click.option(
+    "-d",
+    "--debug",
+    is_flag=True,
+    help="Debug mode (implies --verbose, keeps build files)",
+)
+def bake(config_file, verbose=False, quiet=False, debug=False):
     """Parse config file and bake PDFs."""
+    if debug:
+        verbose = True
     if quiet:
         logging.getLogger().setLevel(logging.ERROR)
     elif verbose:
@@ -43,6 +51,9 @@ def bake(config_file, verbose=False, quiet=False):
 
     for doc_name, doc_path in document_paths.items():
         _process_document(doc_name, doc_path, config, build_dir, dist_dir)
+
+    if not debug:
+        _teardown_build_directories(build_dir, document_paths.keys())
 
     logger.info("Done.")
     return 0
@@ -156,6 +167,38 @@ def _setup_document_output_directories(build_dir, dist_dir, doc_name):
                 os.remove(file_path)
 
     return doc_build_dir, doc_dist_dir
+
+
+def _teardown_build_directories(build_dir, doc_names):
+    """Clean up build directories after successful processing.
+
+    Args:
+        build_dir: Base build directory
+        doc_names: Names of processed documents
+    """
+    for doc_name in doc_names:
+        doc_build_dir = build_dir / doc_name
+        if doc_build_dir.exists():
+            # Remove all files in the document's build directory
+            for file_path in doc_build_dir.iterdir():
+                if file_path.is_file():
+                    file_path.unlink()
+
+            # Try to remove the document's build directory if empty
+            try:
+                doc_build_dir.rmdir()
+            except OSError:
+                # Directory not empty (might contain subdirectories)
+                logger.warning(
+                    "Build directory of document not empty, keeping: %s", doc_build_dir
+                )
+
+    # Try to remove the base build directory if empty
+    try:
+        build_dir.rmdir()
+    except OSError:
+        # Directory not empty
+        logger.warning("Build directory not empty, keeping: %s", build_dir)
 
 
 if __name__ == "__main__":
