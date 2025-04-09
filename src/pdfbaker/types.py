@@ -39,4 +39,4 @@ class PathsDict(TypedDict):
     pages_dir: Path
     images_dir: Path
     build_dir: Path
-    dist_dir: Path 
+    dist_dir: Path
