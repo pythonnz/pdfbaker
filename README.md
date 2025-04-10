@@ -108,8 +108,10 @@ and gives you full control - for example, one document may create just one PDF f
 another might creates half a dozen variations of itself. All that logic is in your
 `bake.py`.
 
-Start by designing a page in your favourite SVG editor, then use Jinja2 notation to replace text with variables, use conditions, loops etc..<br>
-Your entire configuration will be available in the context of each page - the main config file merged with the document config file merged with the page config file.
+Start by designing a page in your favourite SVG editor, then use Jinja2 notation to
+replace text with variables, use conditions, loops etc..<br> Your entire configuration
+will be available in the context of each page - the main config file merged with the
+document config file merged with the page config file.
 
 ## Development
 
