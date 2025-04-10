@@ -58,6 +58,23 @@ and their specific content from your **configuration**. They may also include
 Your configuration file can describe multiple documents, each having further
 configuration and files in their own directory next to the configuration.
 
+```text
+kiwipycon.yml
+prospectus/
+├── bake.py
+├── config.yml
+├── images/
+│   ├── banner_stage1.jpg
+│   └── conference.jpg
+├── pages/
+│   ├── conference_overview.yml
+│   ├── conference_schedule.yml
+│   └── cover.yml
+└── templates/
+    ├── cover.svg.j2
+    └── list_section.svg.j2
+```
+
 Each document directory consists of:
 
 - `templates/`<br> contains `.svg.j2` files describing the layout of a page. These are
