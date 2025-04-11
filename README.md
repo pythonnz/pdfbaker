@@ -54,38 +54,3 @@ kept if you specify `--debug`.
 
 For detailed documentation, see the [Configuration](docs/configuration.md) guide.
 
-## Development
-
-### Setup
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/pythonnz/pdfbaker.git
-   cd pdfbaker
-   ```
-
-2. Create a virtual environment:
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. Install dependencies:
-   ```bash
-   pip install -e .
-   ```
-
-### Testing
-
-Run the test suite:
-
-```bash
-pytest
-```
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for
-details.
