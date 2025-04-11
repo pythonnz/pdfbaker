@@ -123,10 +123,10 @@ images:
 heading_1: Conference overview
 heading_2: Outline of the conference schedule
 text_1: |-
-  Kiwi PyCon has been Python New
+  <highlight>Kiwi PyCon</highlight> has been Python New
   Zealand's premier Python event
   since 2009.
-  Now is the best time to contribute
+  Now is the <highlight>best time</highlight> to contribute
   to the advancement of Aotearoa
   New Zealand's Python community
   and to invest in its growth.
