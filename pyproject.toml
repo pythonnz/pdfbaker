@@ -1,6 +1,6 @@
 [project]
 name = "pdfbaker"
-version = "0.3.5"
+version = "0.3.6"
 description = "SVG Jinja templates + YAML config = PDF documents"
 authors = [
     { name = "Danny W. Adair", email = "danny.adair@unfold.nz" }
