@@ -1,11 +1,9 @@
-# Python/Rye generated files
+# Python/uv generated files
 __pycache__/
 *.py[cod]
 wheels/
 *.egg-info
 /dist/
-requirements.lock
-requirements-dev.lock
 
 # Cache
 /.pytest_cache
