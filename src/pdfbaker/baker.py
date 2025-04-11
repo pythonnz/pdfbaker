@@ -72,7 +72,12 @@ class PDFBaker:
         """Load configuration from YAML file."""
         try:
             with open(config_file, encoding="utf-8") as f:
-                return yaml.safe_load(f)
+                config = yaml.safe_load(f)
+                if "documents" not in config:
+                    raise errors.PDFBakeError(
+                        'Not a main configuration file - "documents" key missing'
+                    )
+                return config
         except Exception as exc:
             raise errors.PDFBakeError(f"Failed to load config file: {exc}") from exc
 
@@ -115,11 +120,12 @@ class PDFBaker:
                         doc_build_dir,
                     )
 
-        # Try to remove the base build directory if empty
-        try:
-            self.build_dir.rmdir()
-        except OSError:
-            # Directory not empty
-            self.logger.warning(
-                "Build directory not empty, keeping: %s", self.build_dir
-            )
+        # Try to remove the base build directory if it exists and is empty
+        if self.build_dir.exists():
+            try:
+                self.build_dir.rmdir()
+            except OSError:
+                # Directory not empty
+                self.logger.warning(
+                    "Build directory not empty, keeping: %s", self.build_dir
+                )
