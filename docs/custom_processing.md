@@ -1,6 +1,7 @@
 # Custom Processing
 
-For advanced use cases, you can create a `bake.py` file in your document directory to customize the document generation process. This allows you to:
+For advanced use cases, you can create a `bake.py` file in your document directory to
+customize the document generation process. This allows you to:
 
 - Add custom preprocessing steps
 - Modify content dynamically
@@ -56,19 +57,19 @@ def process_document(document):
     # Load pricing data
     with open('content/pricing_data.yaml') as f:
         pricing_data = yaml.safe_load(f)
-    
+
     # Calculate pricing for each variant
     for variant in document.config.get('variants', []):
         base_price = document.config['content']['base_price']
         features = len(variant['content']['features'])
-        
+
         # Adjust price based on features
         adjusted_price = base_price * (1 + (features - 1) * 0.1)
         final_price = adjusted_price * (1 - variant['content']['discount'])
-        
+
         # Update variant content
         variant['content']['final_price'] = round(final_price, 2)
-    
+
     # Process as usual
     document.process()
 ```
@@ -82,13 +83,13 @@ def process_document(document):
     # Fetch data from API
     response = requests.get('https://api.example.com/data')
     data = response.json()
-    
+
     # Update document content
     document.config['content'].update({
         'latest_data': data,
         'generated_at': datetime.now().isoformat()
     })
-    
+
     # Process as usual
     document.process()
 ```

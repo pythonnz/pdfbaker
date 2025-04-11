@@ -1,6 +1,8 @@
 # pdfbaker Overview
 
-pdfbaker is a tool for generating PDF documents from SVG templates and YAML configuration. It's designed to be flexible and powerful, allowing you to create complex documents with minimal effort.
+pdfbaker is a tool for generating PDF documents from SVG templates and YAML
+configuration. It's designed to be flexible and powerful, allowing you to create complex
+documents with minimal effort.
 
 ## Key Features
 
@@ -47,7 +49,8 @@ project/
 
 ## Use Cases
 
-pdfbaker is ideal for any document that needs precise layout control. Unlike HTML-based solutions, SVG gives you:
+pdfbaker is ideal for any document that needs precise layout control. Unlike HTML-based
+solutions, SVG gives you:
 
 - Exact positioning of every element
 - Full control over typography
@@ -57,4 +60,4 @@ pdfbaker is ideal for any document that needs precise layout control. Unlike HTM
 
 ## Getting Help
 
-- [Open an issue](https://github.com/pythonnz/pdfbaker/issues) on GitHub 
+- [Open an issue](https://github.com/pythonnz/pdfbaker/issues) on GitHub

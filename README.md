@@ -6,13 +6,15 @@ Create PDF documents from YAML-configured SVG templates.
 
 ### Installation
 
-pdfbaker is available on [PyPI](https://pypi.org/project/pdfbaker/) and can be installed using [pipx](https://github.com/pypa/pipx):
+pdfbaker is available on [PyPI](https://pypi.org/project/pdfbaker/) and can be installed
+using [pipx](https://github.com/pypa/pipx):
 
 ```bash
 pipx install pdfbaker
 ```
 
-If you don't have pipx yet, [install it first](https://pipx.pypa.io/latest/installation/):
+If you don't have pipx yet,
+[install it first](https://pipx.pypa.io/latest/installation/):
 
 ```bash
 sudo apt install pipx
@@ -21,7 +23,8 @@ pipx ensurepath
 
 ### Optional Dependencies
 
-- For SVG to PDF conversion, [CairoSVG](https://cairosvg.org/) is used by default. If you need [Inkscape](https://inkscape.org/) instead, install it:
+- For SVG to PDF conversion, [CairoSVG](https://cairosvg.org/) is used by default. If
+  you need [Inkscape](https://inkscape.org/) instead, install it:
 
   ```bash
   sudo apt install inkscape
@@ -43,7 +46,9 @@ pipx ensurepath
 pdfbaker bake <config_file>
 ```
 
-This will produce your PDF files in a `dist/` directory where your configuration file lives. It will also create a `build/` directory with intermediate files, which is only kept if you specify `--debug`.
+This will produce your PDF files in a `dist/` directory where your configuration file
+lives. It will also create a `build/` directory with intermediate files, which is only
+kept if you specify `--debug`.
 
 ## Documentation
 
@@ -54,12 +59,14 @@ For detailed documentation, see the [Configuration](docs/configuration.md) guide
 ### Setup
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/pythonnz/pdfbaker.git
    cd pdfbaker
    ```
 
 2. Create a virtual environment:
+
    ```bash
    python -m venv .venv
    source .venv/bin/activate
@@ -80,4 +87,5 @@ pytest
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for
+details.

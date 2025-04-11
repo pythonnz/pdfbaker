@@ -1,6 +1,7 @@
 # Document Variants
 
-Document variants allow you to create multiple versions of the same document with different content or settings. This is useful for:
+Document variants allow you to create multiple versions of the same document with
+different content or settings. This is useful for:
 
 - Creating different versions for different audiences
 - Generating documents with different feature sets
@@ -99,4 +100,4 @@ Your SVG templates can access variant-specific content:
    - Different client tiers
    - Language/localization
    - Feature sets
-   - Audience types 
+   - Audience types
