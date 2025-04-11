@@ -1,6 +1,6 @@
 # Configuration
 
-## Project Structure
+## Example Project Structure
 
 ```
 project/
@@ -17,7 +17,7 @@ project/
     └── templates/
 ```
 
-## Configuration Reference
+## Main Configuration File
 
 | Option            | Type    | Default      | Description                                                                                                        |
 | ----------------- | ------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
@@ -27,22 +27,28 @@ project/
 | `compress_pdf`    | boolean | `false`      | Whether to compress the final PDF. Requires Ghostscript.                                                           |
 | `svg2pdf_backend` | string  | `"cairosvg"` | Backend to use for SVG to PDF conversion. `"cairosvg"` is built-in, `"inkscape"` requires Inkscape to be installed |
 
+You can use `<highlight>text</highlight>` tags in your templates, and they will be
+highlighted in the color specified by the `highlight_colour` in your `style`.
+
 Example:
 
 ```yaml
+# kiwipycon.yml
+
 documents:
   - prospectus
   - material_specs
 
 style:
-  highlight_colour: primary
+  highlight_colour: teal # Color for <highlight>text</highlight> tags
   font_family: "Helvetica Neue"
-  heading_size: large
-  spacing: normal
+  heading_size: large # from theme
+  spacing: normal # from theme
 
 theme:
   primary: "#30987c"
   secondary: "#2c3e50"
+  teal: "#30987c"
   large: "24pt"
   normal: "12pt"
   small: "10pt"
@@ -75,6 +81,7 @@ Example:
 
 ```yaml
 # prospectus/config.yml
+
 filename: "Kiwi PyCon {{ conference.year }} - Prospectus"
 compress_pdf: true # Override the main config
 
@@ -98,6 +105,7 @@ Example:
 
 ```yaml
 # pages/conference_schedule.yml
+
 template: list_section.svg.j2
 
 # Override global style settings
@@ -168,6 +176,10 @@ The entire merged configuration is available to your templates. This means:
 | `style`        | Resolved style definitions (if style/theme are defined)                                                                           |
 | `images`       | List of image objects, each with `name` and `type` (as specified) and also `data` (base64-encoded data for inclusion in the page) |
 | Any other keys | All other configuration is passed through as-is                                                                                   |
+
+You can use `<highlight>text</highlight>` tags in your templates, and they will be
+highlighted in the color specified by the `highlight_colour` in your `style` (see "Main
+Configuration File" above). |
 
 ## Document Variants
 
