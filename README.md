@@ -52,10 +52,9 @@ kept if you specify `--debug`.
 
 ## Documentation
 
-* [Overview](docs/overview.md)
-* [Configuration](docs/configuration.md)
-* [Variants](docs/variants.md)
-* [Custom Processing](docs/custom_processing.md)
+- [Overview](docs/overview.md)
+- [Configuration](docs/configuration.md)
+- [Variants](docs/variants.md)
+- [Custom Processing](docs/custom_processing.md)
 
 ( [on GitHub](https://github.com/pythonnz/pdfbaker/tree/main/docs) )
-
