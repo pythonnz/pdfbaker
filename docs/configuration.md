@@ -28,7 +28,7 @@ project/
 | `svg2pdf_backend` | string  | `"cairosvg"` | Backend to use for SVG to PDF conversion. `"cairosvg"` is built-in, `"inkscape"` requires Inkscape to be installed |
 
 You can use `<highlight>text</highlight>` tags in your templates, and they will be
-highlighted in the color specified by the `highlight_colour` in your `style`.
+highlighted in the color specified by the `highlight_color` in your `style`.
 
 Example:
 
@@ -40,7 +40,7 @@ documents:
   - material_specs
 
 style:
-  highlight_colour: teal # Color for <highlight>text</highlight> tags
+  highlight_color: teal # Color for <highlight>text</highlight> tags
   font_family: "Helvetica Neue"
   heading_size: large # from theme
   spacing: normal # from theme
@@ -178,8 +178,8 @@ The entire merged configuration is available to your templates. This means:
 | Any other keys | All other configuration is passed through as-is                                                                                   |
 
 You can use `<highlight>text</highlight>` tags in your templates, and they will be
-highlighted in the color specified by the `highlight_colour` in your `style` (see "Main
-Configuration File" above). |
+highlighted in the color specified by the `highlight_color` in your `style` (see "Main
+Configuration File" above).
 
 ## Document Variants
 

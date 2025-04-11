@@ -6,7 +6,7 @@ from typing import NotRequired, TypedDict
 class StyleDict(TypedDict):
     """Style configuration."""
 
-    highlight_colour: NotRequired[str]
+    highlight_color: NotRequired[str]
 
 
 class ImageSpec(TypedDict):

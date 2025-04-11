@@ -54,12 +54,12 @@ class HighlightingTemplate(jinja2.Template):  # pylint: disable=too-few-public-m
         """Render the template and apply highlighting to the result."""
         rendered = super().render(*args, **kwargs)
 
-        if "style" in kwargs and "highlight_colour" in kwargs["style"]:
-            highlight_colour = kwargs["style"]["highlight_colour"]
+        if "style" in kwargs and "highlight_color" in kwargs["style"]:
+            highlight_color = kwargs["style"]["highlight_color"]
 
             def replacer(match: re.Match[str]) -> str:
                 content = match.group(1)
-                return f'<tspan style="fill:{highlight_colour}">{content}</tspan>'
+                return f'<tspan style="fill:{highlight_color}">{content}</tspan>'
 
             rendered = re.sub(r"<highlight>(.*?)</highlight>", replacer, rendered)
 
