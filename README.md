@@ -31,8 +31,15 @@ pipx ensurepath
   ```
 
 - For PDF compression, install [Ghostscript](https://www.ghostscript.com/):
+
   ```bash
   sudo apt install ghostscript
+  ```
+
+- If you want to embed particular fonts, they need to be installed. For example for
+  [Roboto fonts](https://fonts.google.com/specimen/Roboto):
+  ```bash
+  sudo apt install fonts-roboto
   ```
 
 ### Basic Usage
