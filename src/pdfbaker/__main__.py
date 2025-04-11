@@ -6,6 +6,7 @@ from pathlib import Path
 
 import click
 
+from pdfbaker import __version__
 from pdfbaker.baker import PDFBaker
 from pdfbaker.errors import PDFBakeError
 
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
+@click.version_option(version=__version__, prog_name="pdfbaker")
 def cli() -> None:
     """Generate PDF documents from YAML-configured SVG templates."""
 
