@@ -2,131 +2,82 @@
 
 Create PDF documents from YAML-configured SVG templates.
 
-## Installation
+## Quickstart
 
-pdfbaker is on [PyPI](https://pypi.org/project/pdfbaker/) and we reommend installing it
-using [pipx](https://github.com/pypa/pipx):
+### Installation
 
-```
+pdfbaker is available on [PyPI](https://pypi.org/project/pdfbaker/) and can be installed using [pipx](https://github.com/pypa/pipx):
+
+```bash
 pipx install pdfbaker
 ```
 
-If you don't yet have pipx,
-[install pipx first](https://pipx.pypa.io/latest/installation/):
+If you don't have pipx yet, [install it first](https://pipx.pypa.io/latest/installation/):
 
-```
+```bash
 sudo apt install pipx
 pipx ensurepath
 ```
 
-## Optional Dependencies
+### Optional Dependencies
 
-- SVG to PDF conversion uses [CairoSVG](https://cairosvg.org/) by default. For documents
-  requiring [Inkscape](https://inkscape.org/) instead, install it first:
+- For SVG to PDF conversion, [CairoSVG](https://cairosvg.org/) is used by default. If you need [Inkscape](https://inkscape.org/) instead, install it:
 
-  ```
+  ```bash
   sudo apt install inkscape
   ```
 
-- If you want to compress any of your PDFs, you will need to install
-  [Ghostscript](https://www.ghostscript.com/):
-  ```
+- For PDF compression, install [Ghostscript](https://www.ghostscript.com/):
+  ```bash
   sudo apt install ghostscript
   ```
 
-## Usage
+### Basic Usage
 
-Generate your documents with:
+1. Create your document design in an SVG editor
+2. Replace text with variables using Jinja2 (e.g., `{{ title }}`)
+3. Configure your content in YAML
+4. Generate PDFs with:
 
-```
+```bash
 pdfbaker bake <config_file>
 ```
 
-This will produce your PDF files in a `dist/` directory where you configuration file
-lives. It will also create a `build/` directory with artifacts but only keeps it if you
-specify `--debug`.
+This will produce your PDF files in a `dist/` directory where your configuration file lives. It will also create a `build/` directory with intermediate files, which is only kept if you specify `--debug`.
 
-## Configuration
+## Documentation
 
-**FIXME: This is hard to find useful without seeing an example or the required settings
-to e.g. enable compression.**
-
-A **document** is made up of **pages**.<br> Pages take their layout from **templates**,
-and their specific content from your **configuration**. They may also include
-**images**.
-
-Your configuration file can describe multiple documents, each having further
-configuration and files in their own directory next to the configuration.
-
-```text
-kiwipycon.yml
-prospectus/
-├── bake.py
-├── config.yml
-├── images/
-│   ├── banner_stage1.jpg
-│   └── conference.jpg
-├── pages/
-│   ├── conference_overview.yml
-│   ├── conference_schedule.yml
-│   └── cover.yml
-└── templates/
-    ├── cover.svg.j2
-    └── list_section.svg.j2
-```
-
-Each document directory consists of:
-
-- `templates/`<br> contains `.svg.j2` files describing the layout of a page. These are
-  Jinja2 templates which are used to render pages in SVG format, which then gets
-  transformed into PDF.<br> They contain placeholders for text and images.<br> You only
-  need to work with these files if you want to make fundamental layout or branding
-  changes.
-
-- `pages/`<br> contains one `.yml` file for each page of a document. These files
-  describe which template to use, which image files (if any) should be used in its
-  template, and they also define content which generally doesn't need to be
-  configurable.<br> You only need to work with these files if you want to change text
-  that is usually fixed, or if you want to change which images are used.
-
-- `images/`<br> contains the actual image files referenced in the `.yml` files for
-  pages.
-
-- `config.yml`<br> contains the configuration of the document (and possibly its
-  variants). It describes which pages make up the document and in which order, and what
-  specific content to insert. When your templates are processed, this document-specific
-  configuration will be merged with your main configuration file, so you can keep
-  settings in the latter to share between different documents.
-
-- `bake.py`<br> Contains the code for generating your documents.<br> It will create
-  individual `.svg` files for each page, convert them to `.pdf` files, and then combine
-  them into a single `.pdf` file for each document and place those in the `dist/`
-  directory. Where configured to do so, your PDF will also be compressed.
-
-While you have to write the document generation yourself in `bake.py`, it is little code
-and gives you full control - for example, one document may create just one PDF file but
-another might creates half a dozen variations of itself. All that logic is in your
-`bake.py`.
-
-Start by designing a page in your favourite SVG editor, then use Jinja2 notation to
-replace text with variables, use conditions, loops etc..<br> Your entire configuration
-will be available in the context of each page - the main config file merged with the
-document config file merged with the page config file.
+For detailed documentation, see the [Configuration](docs/configuration.md) guide.
 
 ## Development
 
-The source code of pdfbaker [lives on github](https://github.com/pythonnz/pdfbaker).
+### Setup
 
-Your changes will be rejected by github if the linters throw warnings. You should
-install [pre-commmit](https://pre-commit.com) and run
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/pythonnz/pdfbaker.git
+   cd pdfbaker
+   ```
 
+2. Create a virtual environment:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -e .
+   ```
+
+### Testing
+
+Run the test suite:
+
+```bash
+pytest
 ```
-pre-commit install
-```
 
-inside your repo. This will ensure you run the same checks as github every time you
-commit.
+## License
 
-## Known Issues
-
-See [Github Issues](https://github.com/pythonnz/pdfbaker/issues) for known issues.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
