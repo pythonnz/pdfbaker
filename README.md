@@ -53,4 +53,3 @@ kept if you specify `--debug`.
 ## Documentation
 
 For detailed documentation, see the [Configuration](docs/configuration.md) guide.
-
