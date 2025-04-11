@@ -9,36 +9,18 @@ from pathlib import Path
 from typing import Any
 
 import pypdf
-import yaml
 from cairosvg import svg2pdf
 
-from .types import PageConfig
+from . import errors
+
+__all__ = [
+    "combine_pdfs",
+    "compress_pdf",
+    "convert_svg_to_pdf",
+    "deep_merge",
+]
 
 logger = logging.getLogger(__name__)
-
-
-class PDFBakeError(Exception):
-    """Base exception for PDF baking errors."""
-
-
-class SVGConversionError(PDFBakeError):
-    """Failed to convert SVG to PDF."""
-
-    def __init__(
-        self, svg_path: str | Path, backend: str, cause: str | None = None
-    ) -> None:
-        self.svg_path = svg_path
-        self.backend = backend
-        self.cause = cause
-        super().__init__(f"Failed to convert {svg_path} using {backend}: {cause}")
-
-
-class PDFCombineError(PDFBakeError):
-    """Failed to combine PDFs."""
-
-
-class PDFCompressionError(PDFBakeError):
-    """Failed to compress PDF."""
 
 
 def deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
@@ -56,24 +38,9 @@ def deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
     return merged
 
 
-def load_pages(pages_dir: Path) -> dict[str, dict[str, Any]]:
-    """Load page configurations from a specific subdirectory."""
-    pages: dict[str, dict[str, Any]] = {}
-
-    if pages_dir.exists():
-        for page in pages_dir.iterdir():
-            if not page.name.endswith(".yml"):
-                continue
-            with open(page, encoding="utf-8") as f:
-                yaml_config: PageConfig = yaml.safe_load(f)
-                pages[yaml_config["name"]] = yaml_config["config"]
-
-    return pages
-
-
 def combine_pdfs(
     pdf_files: Sequence[Path], output_file: Path
-) -> Path | PDFCombineError:
+) -> Path | errors.PDFCombineError:
     """Combine multiple PDF files into a single PDF.
 
     Args:
@@ -87,7 +54,7 @@ def combine_pdfs(
         PDFCombineError: If no PDF files provided or if combining fails
     """
     if not pdf_files:
-        raise PDFCombineError("No PDF files provided to combine")
+        raise errors.PDFCombineError("No PDF files provided to combine")
 
     pdf_writer = pypdf.PdfWriter()
 
@@ -111,7 +78,9 @@ def combine_pdfs(
                         else:
                             raise
                 except Exception as exc:
-                    raise PDFCombineError(f"Failed to combine PDFs: {exc}") from exc
+                    raise errors.PDFCombineError(
+                        f"Failed to combine PDFs: {exc}"
+                    ) from exc
         pdf_writer.write(output_stream)
 
     return output_file
@@ -168,7 +137,7 @@ def _run_subprocess_logged(cmd: list[str], env: dict[str, str] | None = None) ->
 
 def compress_pdf(
     input_pdf: Path, output_pdf: Path, dpi: int = 300
-) -> Path | PDFCompressionError:
+) -> Path | errors.PDFCompressionError:
     """Compress a PDF file using Ghostscript.
 
     Args:
@@ -199,14 +168,16 @@ def compress_pdf(
         )
         return output_pdf
     except subprocess.SubprocessError as exc:
-        raise PDFCompressionError(f"Ghostscript compression failed: {exc}") from exc
+        raise errors.PDFCompressionError(
+            f"Ghostscript compression failed: {exc}"
+        ) from exc
 
 
 def convert_svg_to_pdf(
     svg_path: Path,
     pdf_path: Path,
     backend: str = "cairosvg",
-) -> Path | SVGConversionError:
+) -> Path | errors.SVGConversionError:
     """Convert an SVG file to PDF.
 
     Args:
@@ -232,14 +203,14 @@ def convert_svg_to_pdf(
                     ]
                 )
             except subprocess.SubprocessError as exc:
-                raise SVGConversionError(svg_path, backend, str(exc)) from exc
+                raise errors.SVGConversionError(svg_path, backend, str(exc)) from exc
         else:
             try:
                 with open(svg_path, "rb") as svg_file:
                     svg2pdf(file_obj=svg_file, write_to=pdf_path)
             except Exception as exc:
-                raise SVGConversionError(svg_path, backend, str(exc)) from exc
+                raise errors.SVGConversionError(svg_path, backend, str(exc)) from exc
 
         return pdf_path
     except Exception as exc:
-        raise SVGConversionError(svg_path, backend, str(exc)) from exc
+        raise errors.SVGConversionError(svg_path, backend, str(exc)) from exc

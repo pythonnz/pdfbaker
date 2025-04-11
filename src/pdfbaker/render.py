@@ -8,51 +8,46 @@ from typing import Any
 
 import jinja2
 
-from .types import ImageSpec, StyleDict, ThemeDict
+from .types import ImageSpec, StyleDict
 
 __all__ = [
     "create_env",
-    "process_template_data",
+    "prepare_template_context",
 ]
 
 
-def process_style(style: StyleDict, theme: ThemeDict) -> StyleDict:
-    """Convert style references to actual color values from theme."""
-    return_dict: StyleDict = {}
-    for key, value in style.items():
-        return_dict[key] = theme[value]
-    return return_dict
+def prepare_template_context(
+    config: dict[str], images_dir: Path | None = None
+) -> dict[str]:
+    """Prepare config for template rendering by resolving styles and encoding images.
 
+    Args:
+        config: Configuration with optional styles and images
+        images_dir: Directory containing images to encode
+    """
+    context = config.copy()
 
-def process_template_data(
-    template_data: dict[str, Any],
-    defaults: dict[str, Any],
-    images_dir: Path | None = None,
-) -> dict[str, Any]:
-    """Process and enhance template data with styling and images."""
-    # Process style first
-    if template_data.get("style") is not None:
-        default_style = dict(defaults["style"])
-        default_style.update(template_data["style"])
-        template_data["style"] = default_style
-    else:
-        template_data["style"] = defaults["style"]
+    # Resolve style references to actual theme colors
+    if "style" in context and "theme" in context:
+        style = context["style"]
+        theme = context["theme"]
+        resolved_style: StyleDict = {}
+        for key, value in style.items():
+            resolved_style[key] = theme[value]
+        context["style"] = resolved_style
 
-    template_data["style"] = process_style(template_data["style"], defaults["theme"])
+    # Process image references
+    if context.get("images") is not None:
+        context["images"] = encode_images(context["images"], images_dir)
 
-    # Process images
-    if template_data.get("images") is not None:
-        template_data["images"] = encode_images(template_data["images"], images_dir)
-
-    return template_data
+    return context
 
 
 class HighlightingTemplate(jinja2.Template):  # pylint: disable=too-few-public-methods
     """A Jinja template that automatically applies highlighting to text.
 
     This template class extends the base Jinja template to automatically
-    process <highlight> tags in the rendered output, converting them to
-    styled <tspan> elements with the highlight color.
+    convert <highlight> tags to styled <tspan> elements with the highlight color.
     """
 
     def render(self, *args: Any, **kwargs: Any) -> str:
