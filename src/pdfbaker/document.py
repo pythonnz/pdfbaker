@@ -161,8 +161,8 @@ class PDFBakerDocument:
                 variant_config = deep_merge(doc_config, variant)
                 variant_config["variant"] = variant
 
-                # Customise filename for variant
-                template = Template(variant_config["variants_filename"])
+                # Render filename template
+                template = Template(variant_config["filename"])
                 filename = template.render(**variant_config)
                 variant_config.update(filename=filename)
 
