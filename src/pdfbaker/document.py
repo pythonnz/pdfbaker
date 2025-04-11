@@ -9,7 +9,12 @@ import yaml
 from jinja2 import Template
 
 from .common import combine_pdfs, compress_pdf, convert_svg_to_pdf, deep_merge
-from .errors import PDFBakeError, PDFCompressionError, SVGConversionError
+from .errors import (
+    PDFBakeError,
+    PDFCombineError,
+    PDFCompressionError,
+    SVGConversionError,
+)
 from .render import create_env, prepare_template_context
 
 __all__ = [
@@ -204,10 +209,13 @@ class PDFBakerDocument:
 
     def _finalize(self, pdf_files: list[Path], config: dict[str, Any]) -> None:
         """Combine pages and handle compression."""
-        combined_pdf = combine_pdfs(
-            pdf_files,
-            self.build_dir / f"{config['filename']}.pdf",
-        )
+        try:
+            combined_pdf = combine_pdfs(
+                pdf_files,
+                self.build_dir / f"{config['filename']}.pdf",
+            )
+        except PDFCombineError as exc:
+            raise PDFBakeError(f"Failed to combine PDFs: {exc}") from exc
 
         output_path = self.dist_dir / f"{config['filename']}.pdf"
 
