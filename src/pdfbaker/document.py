@@ -1,7 +1,6 @@
 """Document processing classes."""
 
 import importlib
-import logging
 import os
 from pathlib import Path
 from typing import Any
@@ -17,8 +16,6 @@ __all__ = [
     "PDFBakerDocument",
     "PDFBakerPage",
 ]
-
-logger = logging.getLogger(__name__)
 
 
 class PDFBakerPage:  # pylint: disable=too-few-public-methods
