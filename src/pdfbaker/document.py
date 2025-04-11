@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from jinja2 import Template
 
 from . import errors
 from .common import combine_pdfs, compress_pdf, convert_svg_to_pdf, deep_merge
@@ -28,6 +29,7 @@ class PDFBakerPage:  # pylint: disable=too-few-public-methods
         document: "PDFBakerDocument",
         name: str,
         number: int,
+        config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize a page.
 
@@ -35,19 +37,23 @@ class PDFBakerPage:  # pylint: disable=too-few-public-methods
             document: Parent PDFBakerDocument instance
             name: Name of the page
             number: Page number (for output filename)
+            config: Optional variant-specific config to use instead of document config
         """
         self.document = document
         self.name = name
         self.number = number
+        base_config = config or document.config
         config_path = document.doc_dir / "pages" / f"{name}.yml"
-        self.config = self._load_config(config_path)
+        self.config = self._load_config(config_path, base_config)
 
-    def _load_config(self, config_path: Path) -> dict[str, Any]:
+    def _load_config(
+        self, config_path: Path, base_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Load and merge page configuration with document configuration."""
         try:
             with open(config_path, encoding="utf-8") as f:
                 page_config = yaml.safe_load(f)
-                return deep_merge(self.document.config, page_config)
+                return deep_merge(base_config, page_config)
         except Exception as exc:
             raise errors.PDFBakeError(
                 f"Failed to load page config file: {exc}"
@@ -55,7 +61,7 @@ class PDFBakerPage:  # pylint: disable=too-few-public-methods
 
     def process(self) -> Path:
         """Process the page from SVG template to PDF."""
-        output_filename = f"{self.document.name}_{self.number:03}"
+        output_filename = f"{self.config['filename']}_{self.number:03}"
         svg_path = self.document.build_dir / f"{output_filename}.svg"
         pdf_path = self.document.build_dir / f"{output_filename}.pdf"
 
@@ -68,7 +74,7 @@ class PDFBakerPage:  # pylint: disable=too-few-public-methods
         with open(svg_path, "w", encoding="utf-8") as f:
             f.write(template.render(**template_context))
 
-        svg2pdf_backend = self.document.config.get("svg2pdf_backend", "cairosvg")
+        svg2pdf_backend = self.config.get("svg2pdf_backend", "cairosvg")
         try:
             return convert_svg_to_pdf(
                 svg_path,
@@ -144,7 +150,30 @@ class PDFBakerDocument:
 
     def process(self) -> None:
         """Process document using standard processing."""
-        pages = self.config.get("pages", [])
+        doc_config = self.config.copy()
+
+        if "variants" in self.config:
+            # Multiple PDF documents
+            for variant in self.config["variants"]:
+                self.baker.info("Processing variant: %s", variant["name"])
+
+                # Customise config for variant
+                variant_config = deep_merge(doc_config, variant)
+                variant_config["variant"] = variant
+
+                # Customise filename for variant
+                template = Template(variant_config["variants_filename"])
+                filename = template.render(**variant_config)
+                variant_config.update(filename=filename)
+
+                self._process_pages(variant_config)
+        else:
+            # Single PDF document
+            self._process_pages(doc_config)
+
+    def _process_pages(self, config: dict[str, Any]) -> None:
+        """Process pages with given configuration."""
+        pages = config.get("pages", [])
         if not pages:
             raise errors.PDFBakeError("No pages defined in config")
 
@@ -154,10 +183,11 @@ class PDFBakerDocument:
                 document=self,
                 name=page_name,
                 number=page_num,
+                config=config,
             )
             pdf_files.append(page.process())
 
-        self._finalize(pdf_files)
+        self._finalize(pdf_files, config)
 
     def _process_with_custom_bake(self, bake_path: Path) -> None:
         """Process document using custom bake module."""
@@ -177,16 +207,16 @@ class PDFBakerDocument:
                 f"Failed to process document with custom bake: {exc}"
             ) from exc
 
-    def _finalize(self, pdf_files: list[Path]) -> None:
+    def _finalize(self, pdf_files: list[Path], config: dict[str, Any]) -> None:
         """Combine pages and handle compression."""
         combined_pdf = combine_pdfs(
             pdf_files,
-            self.build_dir / f"{self.config['filename']}.pdf",
+            self.build_dir / f"{config['filename']}.pdf",
         )
 
-        output_path = self.dist_dir / f"{self.config['filename']}.pdf"
+        output_path = self.dist_dir / f"{config['filename']}.pdf"
 
-        if self.config.get("compress_pdf", False):
+        if config.get("compress_pdf", False):
             try:
                 compress_pdf(combined_pdf, output_path)
                 self.baker.info("PDF compressed successfully")
