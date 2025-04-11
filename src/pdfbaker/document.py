@@ -121,7 +121,7 @@ class PDFBakerDocument:
             raise PDFBakeError(f"Failed to load config file: {exc}") from exc
 
     def setup_directories(self) -> None:
-        """Set up document directories."""
+        """Set up output directories."""
         self.build_dir.mkdir(parents=True, exist_ok=True)
         self.dist_dir.mkdir(parents=True, exist_ok=True)
 
