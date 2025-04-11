@@ -9,6 +9,8 @@ import yaml
 from . import errors
 from .document import PDFBakerDocument
 
+__all__ = ["PDFBaker"]
+
 
 class PDFBaker:
     """Main class for PDF document generation."""

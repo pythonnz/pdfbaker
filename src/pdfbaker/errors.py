@@ -2,9 +2,24 @@
 
 from pathlib import Path
 
+__all__ = [
+    "PDFBakeError",
+    "PDFCombineError",
+    "PDFCompressionError",
+    "SVGConversionError",
+]
+
 
 class PDFBakeError(Exception):
     """Base exception for PDF baking errors."""
+
+
+class PDFCombineError(PDFBakeError):
+    """Failed to combine PDFs."""
+
+
+class PDFCompressionError(PDFBakeError):
+    """Failed to compress PDF."""
 
 
 class SVGConversionError(PDFBakeError):
@@ -17,11 +32,3 @@ class SVGConversionError(PDFBakeError):
         self.backend = backend
         self.cause = cause
         super().__init__(f"Failed to convert {svg_path} using {backend}: {cause}")
-
-
-class PDFCombineError(PDFBakeError):
-    """Failed to combine PDFs."""
-
-
-class PDFCompressionError(PDFBakeError):
-    """Failed to compress PDF."""
