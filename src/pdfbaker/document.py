@@ -8,8 +8,8 @@ from typing import Any
 import yaml
 from jinja2 import Template
 
-from . import errors
 from .common import combine_pdfs, compress_pdf, convert_svg_to_pdf, deep_merge
+from .errors import PDFBakeError, PDFCompressionError, SVGConversionError
 from .render import create_env, prepare_template_context
 
 __all__ = [
@@ -52,9 +52,7 @@ class PDFBakerPage:  # pylint: disable=too-few-public-methods
                 page_config = yaml.safe_load(f)
                 return deep_merge(base_config, page_config)
         except Exception as exc:
-            raise errors.PDFBakeError(
-                f"Failed to load page config file: {exc}"
-            ) from exc
+            raise PDFBakeError(f"Failed to load page config file: {exc}") from exc
 
     def process(self) -> Path:
         """Process the page from SVG template to PDF."""
@@ -78,7 +76,7 @@ class PDFBakerPage:  # pylint: disable=too-few-public-methods
                 pdf_path,
                 backend=svg2pdf_backend,
             )
-        except errors.SVGConversionError as exc:
+        except SVGConversionError as exc:
             self.document.baker.error(
                 "Failed to convert page %d (%s): %s",
                 self.number,
@@ -120,7 +118,7 @@ class PDFBakerDocument:
                 doc_config = yaml.safe_load(f)
             return deep_merge(self.baker.config, doc_config)
         except Exception as exc:
-            raise errors.PDFBakeError(f"Failed to load config file: {exc}") from exc
+            raise PDFBakeError(f"Failed to load config file: {exc}") from exc
 
     def setup_directories(self) -> None:
         """Set up document directories."""
@@ -172,7 +170,7 @@ class PDFBakerDocument:
         """Process pages with given configuration."""
         pages = config.get("pages", [])
         if not pages:
-            raise errors.PDFBakeError("No pages defined in config")
+            raise PDFBakeError("No pages defined in config")
 
         pdf_files = []
         for page_num, page_name in enumerate(pages, start=1):
@@ -193,14 +191,14 @@ class PDFBakerDocument:
                 f"documents.{self.name}.bake", bake_path
             )
             if spec is None or spec.loader is None:
-                raise errors.PDFBakeError(
+                raise PDFBakeError(
                     f"Failed to load bake module for document {self.name}"
                 )
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             module.process_document(document=self)
         except Exception as exc:
-            raise errors.PDFBakeError(
+            raise PDFBakeError(
                 f"Failed to process document with custom bake: {exc}"
             ) from exc
 
@@ -217,7 +215,7 @@ class PDFBakerDocument:
             try:
                 compress_pdf(combined_pdf, output_path)
                 self.baker.info("PDF compressed successfully")
-            except errors.PDFCompressionError as exc:
+            except PDFCompressionError as exc:
                 self.baker.warning(
                     "Compression failed, using uncompressed version: %s",
                     exc,
