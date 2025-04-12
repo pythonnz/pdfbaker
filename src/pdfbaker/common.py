@@ -207,7 +207,7 @@ def convert_svg_to_pdf(
         else:
             try:
                 with open(svg_path, "rb") as svg_file:
-                    svg2pdf(file_obj=svg_file, write_to=pdf_path)
+                    svg2pdf(file_obj=svg_file, write_to=str(pdf_path))
             except Exception as exc:
                 raise errors.SVGConversionError(svg_path, backend, str(exc)) from exc
 
