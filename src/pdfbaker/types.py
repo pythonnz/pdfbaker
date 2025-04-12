@@ -8,12 +8,15 @@ __all__ = [
 ]
 
 
-class ImageSpec(TypedDict):
+class ImageDict(TypedDict):
     """Image specification."""
 
     name: str
     type: NotRequired[str]
     data: NotRequired[str]
+
+
+ImageSpec = str | ImageDict
 
 
 class StyleDict(TypedDict):
