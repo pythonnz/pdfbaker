@@ -61,6 +61,11 @@ class PDFBakerPage:  # pylint: disable=too-few-public-methods
 
     def process(self) -> Path:
         """Process the page from SVG template to PDF."""
+        if "template" not in self.config:
+            raise PDFBakeError(
+                f'Page "{self.name}" in document "{self.document.name}" has no template'
+            )
+
         output_filename = f"{self.config['filename']}_{self.number:03}"
         svg_path = self.document.build_dir / f"{output_filename}.svg"
         pdf_path = self.document.build_dir / f"{output_filename}.pdf"
@@ -148,6 +153,13 @@ class PDFBakerDocument:
         else:
             self.process()
 
+    def _resolve_config(self, config: dict) -> dict:
+        """Resolve all template strings in config using its own values."""
+        yaml_str = yaml.dump(config)
+        template = Template(yaml_str)
+        resolved_yaml = template.render(**config)
+        return yaml.safe_load(resolved_yaml)
+
     def process(self) -> None:
         """Process document using standard processing."""
         doc_config = self.config.copy()
@@ -156,19 +168,13 @@ class PDFBakerDocument:
             # Multiple PDF documents
             for variant in self.config["variants"]:
                 self.baker.info("Processing variant: %s", variant["name"])
-
-                # Customise config for variant
                 variant_config = deep_merge(doc_config, variant)
                 variant_config["variant"] = variant
-
-                # Render filename template
-                template = Template(variant_config["filename"])
-                filename = template.render(**variant_config)
-                variant_config.update(filename=filename)
-
+                variant_config = self._resolve_config(variant_config)
                 self._process_pages(variant_config)
         else:
             # Single PDF document
+            doc_config = self._resolve_config(doc_config)
             self._process_pages(doc_config)
 
     def _process_pages(self, config: dict[str, Any]) -> None:
