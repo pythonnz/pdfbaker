@@ -8,6 +8,7 @@ wheels/
 # Cache
 /.pytest_cache
 /.ruff_cache
+.coverage
 
 # venv
 /.venv

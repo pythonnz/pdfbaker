@@ -1,0 +1,7 @@
+template: "main.svg.j2"
+title: "Minimal pdfbaker Example"
+content: |-
+  This is a minimal example of pdfbaker usage.
+  - Single page document
+  - One custom variable (text_color)
+  - Basic SVG template using variable for text color

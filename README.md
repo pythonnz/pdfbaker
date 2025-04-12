@@ -57,6 +57,14 @@ This will produce your PDF files in a `dist/` directory where your configuration
 lives. It will also create a `build/` directory with intermediate files, which is only
 kept if you specify `--debug`.
 
+## Examples
+
+For working examples, see the [examples](examples) directory.<br> Create all PDFs with:
+
+```bash
+pdfbaker bake examples/examples.yml
+```
+
 ## Documentation
 
 - [Overview](docs/overview.md)
@@ -65,3 +73,45 @@ kept if you specify `--debug`.
 - [Custom Processing](docs/custom_processing.md)
 
 ( [on GitHub](https://github.com/pythonnz/pdfbaker/tree/main/docs) )
+
+## Development
+
+This project uses [uv](https://github.com/astral-sh/uv) for dependency management. The
+`uv.lock` file ensures reproducible builds.
+
+Create and activate the virtual environment:
+
+```bash
+uv venv
+source .venv/bin/activate
+```
+
+Install development dependencies:
+
+```bash
+uv sync --dev
+```
+
+### Tests
+
+Run tests:
+
+```bash
+pytest
+```
+
+View test coverage:
+
+```bash
+pytest --cov=pdfbaker --cov-report=term-missing
+```
+
+### Pre-commit hook
+
+If you want to commit changes, install [pre-commit](https://pre-commit.com) and run
+
+```bash
+pre-commit install
+```
+
+This ensures the same checks run locally as in GitHub CI.

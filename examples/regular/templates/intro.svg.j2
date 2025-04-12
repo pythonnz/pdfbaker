@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="210mm" height="297mm" viewBox="0 0 210 297" version="1.1"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+  <rect width="210" height="297" fill="white"/>
+  <!-- Header -->
+  <rect x="0" y="0" width="210" height="15" fill="{{ header_color }}"/>
+  <text x="10" y="10" font-family="Arial" font-size="8" fill="white">pdfbaker Example</text>
+
+  <!-- Content -->
+  <text x="10" y="40" font-family="Arial" font-size="12" font-weight="bold" fill="{{ header_color }}">{{ title }}</text>
+  <text x="10" y="55" font-family="Arial" font-size="10" fill="{{ text_color }}">{{ subtitle }}</text>
+
+  <!-- Main content with wrapping consideration -->
+  <text x="10" y="75" font-family="Arial" font-size="8" fill="{{ text_color }}">
+    <tspan x="10" dy="0">{{ content.split('\n')[0] }}</tspan>
+    {% for line in content.split('\n')[1:] %}
+    <tspan x="10" dy="12">{{ line }}</tspan>
+    {% endfor %}
+  </text>
+
+  <!-- Logo -->
+  <image x="150" y="25" width="40" height="40" xlink:href="{{ images[0].data }}"/>
+
+  <!-- Footer -->
+  <text x="200" y="285" font-family="Arial" font-size="8" text-anchor="end" fill="{{ text_color }}">Page {{ page_number }}</text>
+</svg>

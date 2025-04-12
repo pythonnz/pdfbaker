@@ -6,9 +6,14 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from jinja2 import Template
 
-from .common import combine_pdfs, compress_pdf, convert_svg_to_pdf, deep_merge
+from .common import (
+    combine_pdfs,
+    compress_pdf,
+    convert_svg_to_pdf,
+    deep_merge,
+    resolve_config,
+)
 from .errors import (
     PDFBakeError,
     PDFCombineError,
@@ -65,6 +70,9 @@ class PDFBakerPage:  # pylint: disable=too-few-public-methods
             raise PDFBakeError(
                 f'Page "{self.name}" in document "{self.document.name}" has no template'
             )
+
+        # Resolve any templates in the config
+        self.config = resolve_config(self.config)
 
         output_filename = f"{self.config['filename']}_{self.number:03}"
         svg_path = self.document.build_dir / f"{output_filename}.svg"
@@ -153,13 +161,6 @@ class PDFBakerDocument:
         else:
             self.process()
 
-    def _resolve_config(self, config: dict) -> dict:
-        """Resolve all template strings in config using its own values."""
-        yaml_str = yaml.dump(config)
-        template = Template(yaml_str)
-        resolved_yaml = template.render(**config)
-        return yaml.safe_load(resolved_yaml)
-
     def process(self) -> None:
         """Process document using standard processing."""
         doc_config = self.config.copy()
@@ -170,11 +171,11 @@ class PDFBakerDocument:
                 self.baker.info("Processing variant: %s", variant["name"])
                 variant_config = deep_merge(doc_config, variant)
                 variant_config["variant"] = variant
-                variant_config = self._resolve_config(variant_config)
+                variant_config = resolve_config(variant_config)
                 self._process_pages(variant_config)
         else:
             # Single PDF document
-            doc_config = self._resolve_config(doc_config)
+            doc_config = resolve_config(doc_config)
             self._process_pages(doc_config)
 
     def _process_pages(self, config: dict[str, Any]) -> None:

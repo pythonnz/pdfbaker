@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="210mm" height="297mm" viewBox="0 0 210 297" version="1.1"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+  <rect width="210" height="297" fill="white"/>
+  <!-- Header -->
+  <text x="105" y="30" font-family="Arial" font-size="12" font-weight="bold" fill="#333" text-anchor="middle">{{ title }}</text>
+  <text x="105" y="50" font-family="Arial" font-size="10" fill="#666" text-anchor="middle">{{ title2 }}</text>
+
+  <!-- XKCD Info -->
+  <text x="105" y="80" font-family="Arial" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">Latest XKCD:</text>
+  <text x="105" y="95" font-family="Arial" font-size="10" fill="#333" text-anchor="middle">{{ xkcd.title }}</text>
+  <text x="105" y="110" font-family="Arial" font-size="6" fill="#666" text-anchor="middle">Fetched at: {{ xkcd.fetched_at }}</text>
+
+  <!-- XKCD Image -->
+  <image x="20" y="120" width="170" height="120" xlink:href="{{ xkcd.image_data }}"/>
+
+  <!-- Alt Text -->
+  <text x="105" y="260" font-family="Arial" font-size="6" fill="#666" text-anchor="middle">Alt text: {{ xkcd.alt_text }}</text>
+</svg>

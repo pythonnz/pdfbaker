@@ -23,12 +23,21 @@ documents with minimal effort.
 
 For a quick introduction, see the [README](../README.md).
 
+## Examples
+
+See the [examples](../examples) directory for simple working examples:
+
+- [minimal](../examples/minimal) - Basic single page
+- [regular](../examples/regular) - Using various features
+- [variants](../examples/variants) - Different PDFs of the same document
+- [custom_processing](../examples/custom_processing) - Custom Python code
+
 ## Example Project Structure
 
 ```
 project/
-├── kiwipycon.yml          # Main configuration
-├── material_specs/        # A document
+├── kiwipycon.yml         # Main configuration
+├── material_specs/       # A document
 │   ├── config.yml        # Document configuration
 │   ├── images/           # Images
 │   ├── pages/            # Page configurations

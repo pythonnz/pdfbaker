@@ -4,8 +4,8 @@
 
 ```
 project/
-├── kiwipycon.yml          # Main configuration
-├── material_specs/        # A document
+├── kiwipycon.yml         # Main configuration
+├── material_specs/       # A document
 │   ├── config.yml        # Document configuration
 │   ├── images/           # Images
 │   ├── pages/            # Page configurations
@@ -82,8 +82,9 @@ Example:
 ```yaml
 # prospectus/config.yml
 
-filename: "Kiwi PyCon {{ conference.year }} - Prospectus"
-compress_pdf: true # Override the main config
+filename: "Kiwi PyCon {{ conference.year }} - Prospectus" # Use config values in config values!
+title: "Sponsorship Prospectus"
+compress_pdf: true
 
 pages:
   - cover

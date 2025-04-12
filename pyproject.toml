@@ -24,10 +24,21 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 managed = true
-dev-dependencies = []
+dev-dependencies = [
+    "pytest",
+    "pytest-cov",
+]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pdfbaker"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=pdfbaker --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["pdfbaker"]

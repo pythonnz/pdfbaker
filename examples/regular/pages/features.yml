@@ -1,0 +1,14 @@
+template: "list.svg.j2"
+title: "Document Features"
+header_color: "#2c3e50"
+text_color: "#333333"
+content_type: "list"
+items:
+  - title: "Multiple Pages"
+    desc: "Document may have multiple pages"
+  - title: "Template Reuse"
+    desc: "Same template used by multiple pages"
+  - title: "Consistent Styling"
+    desc: "Shared styles across pages"
+images:
+  - name: pythonnz.png

@@ -1,0 +1,14 @@
+template: "list.svg.j2"
+title: "Document Benefits"
+header_color: "#2c3e50"
+text_color: "#333333"
+content_type: "list"
+items:
+  - title: "Easy Configuration"
+    desc: "Simple YAML-based configuration"
+  - title: "Flexible Templates"
+    desc: "Full control over layout with SVG"
+  - title: "Image Support"
+    desc: "Include and position images easily"
+images:
+  - name: pythonnz.png

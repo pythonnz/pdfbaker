@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import Any
 
 import pypdf
+import yaml
 from cairosvg import svg2pdf
+from jinja2 import Template
 
 from . import errors
 
@@ -18,6 +20,7 @@ __all__ = [
     "compress_pdf",
     "convert_svg_to_pdf",
     "deep_merge",
+    "resolve_config",
 ]
 
 logger = logging.getLogger(__name__)
@@ -36,6 +39,35 @@ def deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
         else:
             merged[key] = value
     return merged
+
+
+def resolve_config(config: dict) -> dict:
+    """Resolve all template strings in config using its own values.
+
+    Args:
+        config: Configuration dictionary with template strings
+
+    Returns:
+        Resolved configuration dictionary
+
+    Raises:
+        ValueError: If maximum number of iterations is reached
+            (likely due to circular references)
+    """
+    max_iterations = 10
+    for _ in range(max_iterations):
+        config_yaml = Template(yaml.dump(config))
+        resolved_yaml = config_yaml.render(**config)
+        new_config = yaml.safe_load(resolved_yaml)
+
+        if new_config == config:  # No more changes
+            return new_config
+        config = new_config
+
+    raise ValueError(
+        "Maximum number of iterations reached. "
+        "Check for circular references in your configuration."
+    )
 
 
 def combine_pdfs(

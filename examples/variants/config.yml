@@ -1,0 +1,25 @@
+filename: "{{ variant.name | lower }}_variant"
+pages:
+  - main
+variants:
+  - name: Basic
+    style:
+      color: "#3498db"
+      features:
+        - "Single page layout"
+        - "Basic styling"
+  - name: Premium
+    style:
+      color: "#2ecc71"
+      features:
+        - "Single page layout"
+        - "Premium styling"
+        - "Custom colors"
+  - name: Enterprise
+    style:
+      color: "#e74c3c"
+      features:
+        - "Single page layout"
+        - "Enterprise styling"
+        - "Custom colors"
+        - "Priority support"

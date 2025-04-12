@@ -1,0 +1,7 @@
+filename: regular_example
+pages:
+  - intro
+  - features
+  - benefits
+style:
+  highlight_color: "#30987c"

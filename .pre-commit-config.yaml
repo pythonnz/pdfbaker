@@ -45,3 +45,10 @@ repos:
       - id: pylint
         args:
           - --rcfile=.pylintrc
+        additional_dependencies:
+          - "cairosvg"
+          - "click"
+          - "jinja2"
+          - "pypdf"
+          - "pytest"
+          - "pyyaml"

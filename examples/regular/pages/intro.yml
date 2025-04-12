@@ -1,0 +1,19 @@
+template: "intro.svg.j2"
+title: "Regular Example"
+subtitle: "pdfbaker more realistic"
+header_color: "#2c3e50"
+text_color: "#333333"
+content: |
+  This example demonstrates a more realistic use
+  of <highlight>pdfbaker</highlight> with multiple pages and more complex
+  styling. This document shows:
+
+  - <highlight>Multiple pages</highlight> with different layouts
+  - <highlight>Template reuse</highlight> across pages
+  - <highlight>Header and footer</highlight> elements
+  - <highlight>Text formatting</highlight> and styling
+  - <highlight>Page numbers</highlight>
+  - <highlight>Image inclusion</highlight>
+  - <highlight>Highlighting</highlight> inside text blocks
+images:
+  - name: pythonnz.png

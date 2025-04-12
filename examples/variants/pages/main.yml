@@ -1,0 +1,3 @@
+template: "main.svg.j2"
+title: "pdfbaker Variants Example"
+subtitle: "{{ variant.name }} Edition"
