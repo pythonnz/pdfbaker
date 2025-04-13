@@ -101,7 +101,7 @@ def combine_pdfs(
                         if str(exc) == "'/Subtype'":
                             # PDF has broken annotations with missing /Subtype
                             logger.warning(
-                                "PDF %s has broken annotations. "
+                                "Broken annotations in PDF: %s"
                                 "Falling back to page-by-page method.",
                                 pdf_file,
                             )

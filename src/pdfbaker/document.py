@@ -168,7 +168,7 @@ class PDFBakerDocument:
         if "variants" in self.config:
             # Multiple PDF documents
             for variant in self.config["variants"]:
-                self.baker.info("Processing variant: %s", variant["name"])
+                self.baker.info('Processing variant "%s"', variant["name"])
                 variant_config = deep_merge(doc_config, variant)
                 variant_config["variant"] = variant
                 variant_config = resolve_config(variant_config)

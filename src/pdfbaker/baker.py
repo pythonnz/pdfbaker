@@ -116,7 +116,7 @@ class PDFBaker:
                 except OSError:
                     # Directory not empty (might contain subdirectories)
                     self.logger.warning(
-                        "Build directory of document not empty, keeping: %s",
+                        "Build directory of document not empty, keeping %s",
                         doc_build_dir,
                     )
 
@@ -127,5 +127,5 @@ class PDFBaker:
             except OSError:
                 # Directory not empty
                 self.logger.warning(
-                    "Build directory not empty, keeping: %s", self.build_dir
+                    "Build directory not empty, keeping %s", self.build_dir
                 )
