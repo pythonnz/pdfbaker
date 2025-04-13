@@ -32,6 +32,6 @@ def process_document(document: PDFBakerDocument) -> None:
         }
 
         # Process as usual
-        document.process()
+        return document.process()
     except Exception as exc:
         raise PDFBakeError(f"Failed to process XKCD example: {exc}") from exc
