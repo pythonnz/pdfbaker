@@ -55,6 +55,8 @@ class PDFBaker:
             debug: If True, keep build files for debugging
         """
         document_paths = self._get_document_paths(self.config.get("documents", []))
+        pdfs_created: list[str] = []
+        failed_docs: list[tuple[str, str]] = []
 
         for doc_name, doc_path in document_paths.items():
             doc = PDFBakerDocument(
@@ -63,10 +65,25 @@ class PDFBaker:
                 baker=self,
             )
             doc.setup_directories()
-            doc.process_document()
+            pdf_file, error_message = doc.process_document()
+            if pdf_file is not None:
+                pdfs_created.append(pdf_file)
+            else:
+                self.error(
+                    "Failed to process document '%s': %s", doc_name, error_message
+                )
+                failed_docs.append((doc_name, error_message))
 
         if not debug:
             self._teardown_build_directories(list(document_paths.keys()))
+
+        self.info("Done.")
+        if pdfs_created:
+            self.info("PDF files created in %s", self.dist_dir.resolve())
+        else:
+            self.warning("No PDF files created.")
+        if failed_docs:
+            self.warning("There were errors.")
 
     def _load_config(self, config_file: Path) -> dict[str, Any]:
         """Load configuration from YAML file."""

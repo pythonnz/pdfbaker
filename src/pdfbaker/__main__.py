@@ -44,7 +44,6 @@ def bake(config_file: Path, debug: bool, verbose: bool, quiet: bool) -> int:
     try:
         baker = PDFBaker(config_file)
         baker.bake(debug=debug)
-        logger.info("Done.")
         return 0
     except PDFBakeError as exc:
         logger.error(str(exc))

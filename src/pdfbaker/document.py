@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+import jinja2
 import yaml
 
 from .common import (
@@ -150,16 +151,30 @@ class PDFBakerDocument:
                 if os.path.isfile(file_path):
                     os.remove(file_path)
 
-    def process_document(self) -> None:
-        """Process the document - use custom bake module if it exists."""
+    def process_document(self) -> tuple[Path | None, str | None]:
+        """Process the document - use custom bake module if it exists.
+
+        Returns:
+            Tuple of (pdf_file, error_message) where:
+            - pdf_file is the path to the created PDF, or None if creation failed
+            - error_message is a string describing the error, or None if successful
+        """
         self.baker.info('Processing document "%s" from %s...', self.name, self.doc_dir)
 
         # Try to load custom bake module
         bake_path = self.doc_dir / "bake.py"
         if bake_path.exists():
-            self._process_with_custom_bake(bake_path)
+            try:
+                self._process_with_custom_bake(bake_path)
+                return self.dist_dir / f"{self.config['filename']}.pdf", None
+            except PDFBakeError as exc:
+                return None, str(exc)
         else:
-            self.process()
+            try:
+                self.process()
+                return self.dist_dir / f"{self.config['filename']}.pdf", None
+            except (PDFBakeError, jinja2.exceptions.TemplateError) as exc:
+                return None, str(exc)
 
     def process(self) -> None:
         """Process document using standard processing."""
@@ -168,7 +183,7 @@ class PDFBakerDocument:
         if "variants" in self.config:
             # Multiple PDF documents
             for variant in self.config["variants"]:
-                self.baker.info('Processing variant "%s"', variant["name"])
+                self.baker.info('Processing variant "%s"...', variant["name"])
                 variant_config = deep_merge(doc_config, variant)
                 variant_config["variant"] = variant
                 variant_config = resolve_config(variant_config)
