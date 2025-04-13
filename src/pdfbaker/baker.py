@@ -66,13 +66,13 @@ class PDFBaker:
             )
             doc.setup_directories()
             pdf_file, error_message = doc.process_document()
-            if pdf_file is not None:
-                pdfs_created.append(pdf_file)
-            else:
+            if pdf_file is None:
                 self.error(
                     "Failed to process document '%s': %s", doc_name, error_message
                 )
                 failed_docs.append((doc_name, error_message))
+            else:
+                pdfs_created.append(pdf_file)
 
         if not debug:
             self._teardown_build_directories(list(document_paths.keys()))
