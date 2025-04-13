@@ -8,6 +8,7 @@ import yaml
 
 from . import errors
 from .document import PDFBakerDocument
+from .errors import PDFBakeError
 
 __all__ = ["PDFBaker"]
 
@@ -99,11 +100,21 @@ class PDFBaker:
             raise errors.PDFBakeError(f"Failed to load config file: {exc}") from exc
 
     def _get_document_paths(
-        self, documents: list[dict[str, str] | str]
+        self, documents: list[dict[str, str] | str] | None
     ) -> dict[str, Path]:
-        """Resolve document paths to absolute paths."""
-        document_paths: dict[str, Path] = {}
+        """Resolve document paths to absolute paths.
 
+        Args:
+            documents: List of document names or dicts with name/path,
+                or None if no documents specified
+
+        Returns:
+            Dictionary mapping document names to their paths
+        """
+        if not documents:
+            return {}
+
+        document_paths: dict[str, Path] = {}
         for doc_name in documents:
             if isinstance(doc_name, dict):
                 # Format: {"name": "doc_name", "path": "/absolute/path/to/doc"}
@@ -113,6 +124,8 @@ class PDFBaker:
                 # Default: document in subdirectory with same name as doc_name
                 doc_path = self.base_dir / doc_name
 
+            if not doc_path.exists():
+                raise PDFBakeError(f"Document directory not found: {doc_path}")
             document_paths[doc_name] = doc_path.resolve()
 
         return document_paths
