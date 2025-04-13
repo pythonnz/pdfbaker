@@ -19,7 +19,3 @@ wheels/
 # Backup files
 **.~
 *.swp
-
-# Example build/dist directories
-/examples/build/
-/examples/dist/
