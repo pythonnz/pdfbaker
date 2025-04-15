@@ -1,0 +1,6 @@
+documents:
+  - minimal
+  - regular
+  - variants
+  - "./custom_locations/your_directory"
+  - custom_processing

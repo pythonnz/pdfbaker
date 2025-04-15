@@ -1,8 +1,10 @@
 """Tests for common functionality."""
 
+from pathlib import Path
+
 import pytest
 
-from pdfbaker.common import deep_merge, resolve_config
+from pdfbaker.config import PDFBakerConfiguration, deep_merge
 
 
 def test_deep_merge_basic():
@@ -99,84 +101,43 @@ def test_deep_merge_empty():
     assert deep_merge(update, base) == base
 
 
-def test_resolve_config_basic():
-    """Test basic template resolution."""
-    config = {
-        "name": "test",
-        "title": "{{ name }} document",
-    }
-    expected = {
-        "name": "test",
-        "title": "test document",
-    }
-    assert resolve_config(config) == expected
+def test_configuration_init_with_dict():
+    """Test initializing Configuration with a dictionary."""
+    config = PDFBakerConfiguration({}, {"title": "Document"})
+    assert config["title"] == "Document"
 
 
-def test_resolve_config_multiple_passes():
-    """Test config that needs multiple passes to resolve."""
-    config = {
-        "name": "test",
-        "title": "{{ name }} document",
-        "filename": "{{ title }}.pdf",
-    }
-    expected = {
-        "name": "test",
-        "title": "test document",
-        "filename": "test document.pdf",
-    }
-    assert resolve_config(config) == expected
+def test_configuration_init_with_path(tmp_path):
+    """Test initializing Configuration with a file path."""
+    config_file = tmp_path / "test.yaml"
+    config_file.write_text("title: Document")
+
+    config = PDFBakerConfiguration({}, config_file)
+    assert config["title"] == "Document"
+    assert config.directory == tmp_path
 
 
-def test_resolve_config_diamond_reference():
-    """Test diamond-shaped reference pattern."""
-    config = {
-        "name": "test",
-        "title": "{{ name }} document",
-        "subtitle": "{{ name }} details",
-        "header": "{{ title }} - {{ subtitle }}",
-    }
-    expected = {
-        "name": "test",
-        "title": "test document",
-        "subtitle": "test details",
-        "header": "test document - test details",
-    }
-    assert resolve_config(config) == expected
+def test_configuration_init_with_directory(tmp_path):
+    """Test initializing Configuration with custom directory."""
+    config = PDFBakerConfiguration({}, {"title": "Document"}, directory=tmp_path)
+    assert config["title"] == "Document"
+    assert config.directory == tmp_path
 
 
-def test_resolve_config_circular():
-    """Test circular reference handling."""
-    config = {
-        "a": "{{ b }}",
-        "b": "{{ c }}",
-        "c": "{{ a }}",
-    }
-    with pytest.raises(ValueError, match="Maximum number of iterations reached"):
-        resolve_config(config)
+def test_configuration_resolve_path():
+    """Test path resolution."""
+    config = PDFBakerConfiguration(
+        {}, {"template": "test.yaml"}, directory=Path("/base")
+    )
+    assert config.resolve_path("test.yaml") == Path("/base/test.yaml")
+    assert config.resolve_path({"path": "/absolute/path.yaml"}) == Path(
+        "/absolute/path.yaml"
+    )
+    assert config.resolve_path({"name": "test.yaml"}) == Path("/base/test.yaml")
 
 
-def test_resolve_config_nested():
-    """Test resolution in nested structures."""
-    config = {
-        "name": "test",
-        "sections": [
-            {"title": "{{ name }} section 1"},
-            {"title": "{{ name }} section 2"},
-        ],
-        "meta": {
-            "title": "{{ name }} document",
-            "description": "About {{ meta.title }}",
-        },
-    }
-    expected = {
-        "name": "test",
-        "sections": [
-            {"title": "test section 1"},
-            {"title": "test section 2"},
-        ],
-        "meta": {
-            "title": "test document",
-            "description": "About test document",
-        },
-    }
-    assert resolve_config(config) == expected
+def test_configuration_resolve_path_invalid():
+    """Test invalid path specification."""
+    config = PDFBakerConfiguration({}, {})
+    with pytest.raises(ValueError, match="Invalid path specification"):
+        config.resolve_path({})
