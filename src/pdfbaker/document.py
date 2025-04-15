@@ -1,4 +1,10 @@
-"""Document processing classes."""
+"""PDFBakerDocument class.
+
+Document-level processing, variants, custom bake modules.
+
+Delegates the jobs of rendering and converting to its pages,
+combines and compresses the result and reports back to its baker.
+"""
 
 import importlib
 import os
@@ -6,242 +12,189 @@ from pathlib import Path
 from typing import Any
 
 import jinja2
-import yaml
 
-from .common import (
-    combine_pdfs,
-    compress_pdf,
-    convert_svg_to_pdf,
+from .config import (
+    PDFBakerConfiguration,
     deep_merge,
-    resolve_config,
 )
 from .errors import (
-    PDFBakeError,
+    ConfigurationError,
+    PDFBakerError,
     PDFCombineError,
     PDFCompressionError,
-    SVGConversionError,
 )
-from .render import create_env, prepare_template_context
+from .page import PDFBakerPage
+from .pdf import (
+    combine_pdfs,
+    compress_pdf,
+)
 
-__all__ = [
-    "PDFBakerDocument",
-    "PDFBakerPage",
-]
+DEFAULT_DOCUMENT_CONFIG_FILE = "config.yaml"
 
-
-class PDFBakerPage:  # pylint: disable=too-few-public-methods
-    """A single page of a document."""
-
-    def __init__(
-        self,
-        document: "PDFBakerDocument",
-        name: str,
-        number: int,
-        config: dict[str, Any] | None = None,
-    ) -> None:
-        """Initialize a page.
-
-        Args:
-            document: Parent PDFBakerDocument instance
-            name: Name of the page
-            number: Page number (for output filename)
-            config: Optional variant-specific config to use instead of document config
-        """
-        self.document = document
-        self.name = name
-        self.number = number
-        base_config = config or document.config
-        config_path = document.doc_dir / "pages" / f"{name}.yml"
-        self.config = self._load_config(config_path, base_config)
-
-    def _load_config(
-        self, config_path: Path, base_config: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Load and merge page configuration with document configuration."""
-        try:
-            with open(config_path, encoding="utf-8") as f:
-                page_config = yaml.safe_load(f)
-                return deep_merge(base_config, page_config)
-        except Exception as exc:
-            raise PDFBakeError(f"Failed to load page config file: {exc}") from exc
-
-    def process(self) -> Path:
-        """Process the page from SVG template to PDF."""
-        if "template" not in self.config:
-            raise PDFBakeError(
-                f'Page "{self.name}" in document "{self.document.name}" has no template'
-            )
-
-        # Resolve any templates in the config
-        self.config = resolve_config(self.config)
-
-        output_filename = f"{self.config['filename']}_{self.number:03}"
-        svg_path = self.document.build_dir / f"{output_filename}.svg"
-        pdf_path = self.document.build_dir / f"{output_filename}.pdf"
-
-        template = self.document.jinja_env.get_template(self.config["template"])
-        template_context = prepare_template_context(
-            self.config, images_dir=self.document.doc_dir / "images"
-        )
-        template_context["page_number"] = self.number
-
-        with open(svg_path, "w", encoding="utf-8") as f:
-            f.write(template.render(**template_context))
-
-        svg2pdf_backend = self.config.get("svg2pdf_backend", "cairosvg")
-        try:
-            return convert_svg_to_pdf(
-                svg_path,
-                pdf_path,
-                backend=svg2pdf_backend,
-            )
-        except SVGConversionError as exc:
-            self.document.baker.error(
-                "Failed to convert page %d (%s): %s",
-                self.number,
-                self.name,
-                exc,
-            )
-            raise
+__all__ = ["PDFBakerDocument"]
 
 
 class PDFBakerDocument:
     """A document being processed."""
 
+    class Configuration(PDFBakerConfiguration):
+        """PDFBaker document-specific configuration."""
+
+        def __init__(
+            self,
+            base_config: "PDFBakerConfiguration",  # type: ignore # noqa: F821
+            config: Path,
+            document: "PDFBakerDocument",
+        ) -> None:
+            """Initialize document configuration.
+
+            Args:
+                base_config: The PDFBaker configuration to merge with
+                config_file: The document configuration (YAML file)
+            """
+            if config.is_dir():
+                self.name = config.name
+                config = config / DEFAULT_DOCUMENT_CONFIG_FILE
+            else:
+                self.name = config.stem
+            super().__init__(base_config, config)
+            self.document = document
+            if "pages" not in self:
+                raise ConfigurationError(
+                    'Document "{document.name}" is missing key "pages"'
+                )
+            self.directory = config.parent
+            self.pages_dir = self.resolve_path(self["pages_dir"])
+            self.pages = []
+            for page_spec in self["pages"]:
+                page = self.resolve_path(page_spec, directory=self.pages_dir)
+                if not page.suffix:
+                    page = page.with_suffix(".yaml")
+                self.pages.append(page)
+            self.build_dir = self.resolve_path(self["build_dir"])
+            self.dist_dir = self.resolve_path(self["dist_dir"])
+            self.document.baker.debug("Document config for %s:", self.name)
+            self.document.baker.debug(self.pprint())
+
     def __init__(
         self,
-        name: str,
-        doc_dir: Path,
-        baker: "PDFBaker",  # noqa: F821
-    ) -> None:
-        """Initialize a document.
-
-        Args:
-            name: Document name
-            doc_dir: Path to document directory
-            baker: PDFBaker instance that owns this document
-        """
-        self.name = name
-        self.doc_dir = doc_dir
+        baker: "PDFBaker",  # type: ignore # noqa: F821
+        base_config: dict[str, Any],
+        config: Path,
+    ):
+        """Initialize a document."""
         self.baker = baker
-        self.config = self._load_config()
-        self.jinja_env = create_env(doc_dir / "templates")
-        self.build_dir = baker.build_dir / name
-        self.dist_dir = baker.dist_dir / name
+        self.config = self.Configuration(base_config, config, document=self)
 
-    def _load_config(self) -> dict[str, Any]:
-        """Load and merge document configuration."""
-        config_path = self.doc_dir / "config.yml"
-        try:
-            with open(config_path, encoding="utf-8") as f:
-                doc_config = yaml.safe_load(f)
-            return deep_merge(self.baker.config, doc_config)
-        except Exception as exc:
-            raise PDFBakeError(f"Failed to load config file: {exc}") from exc
-
-    def setup_directories(self) -> None:
-        """Set up output directories."""
-        self.build_dir.mkdir(parents=True, exist_ok=True)
-        self.dist_dir.mkdir(parents=True, exist_ok=True)
-
-        # Clean existing files
-        for dir_path in [self.build_dir, self.dist_dir]:
-            for file in os.listdir(dir_path):
-                file_path = dir_path / file
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-
-    def process_document(self) -> tuple[Path | None, str | None]:
+    def process_document(self) -> tuple[Path | list[Path] | None, str | None]:
         """Process the document - use custom bake module if it exists.
 
         Returns:
-            Tuple of (pdf_file, error_message) where:
-            - pdf_file is the path to the created PDF, or None if creation failed
+            Tuple of (pdf_files, error_message) where:
+            - pdf_files is a Path or list of Paths to the created PDF
+              files, or None if creation failed
+            FIXME: could have created SOME PDF files
             - error_message is a string describing the error, or None if successful
         """
-        self.baker.info('Processing document "%s" from %s...', self.name, self.doc_dir)
+        self.baker.info_section(
+            'Processing document "%s"...', self.config.directory.name
+        )
 
-        # Try to load custom bake module
-        bake_path = self.doc_dir / "bake.py"
+        self.config.build_dir.mkdir(parents=True, exist_ok=True)
+        self.config.dist_dir.mkdir(parents=True, exist_ok=True)
+
+        bake_path = self.config.directory / "bake.py"
         if bake_path.exists():
+            # Custom (pre-)processing
             try:
-                self._process_with_custom_bake(bake_path)
-                return self.dist_dir / f"{self.config['filename']}.pdf", None
-            except PDFBakeError as exc:
+                return self._process_with_custom_bake(bake_path), None
+            except PDFBakerError as exc:
                 return None, str(exc)
         else:
+            # Standard processing
             try:
-                self.process()
-                return self.dist_dir / f"{self.config['filename']}.pdf", None
-            except (PDFBakeError, jinja2.exceptions.TemplateError) as exc:
+                return self.process(), None
+            except (PDFBakerError, jinja2.exceptions.TemplateError) as exc:
                 return None, str(exc)
 
-    def process(self) -> None:
-        """Process document using standard processing."""
+    def _process_with_custom_bake(self, bake_path: Path) -> Path | list[Path]:
+        """Process document using custom bake module."""
+        try:
+            spec = importlib.util.spec_from_file_location(
+                f"documents.{self.config.name}.bake", bake_path
+            )
+            if spec is None or spec.loader is None:
+                raise PDFBakerError(
+                    f"Failed to load bake module for document {self.config.name}"
+                )
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module.process_document(document=self)
+        except Exception as exc:
+            raise PDFBakerError(
+                f"Failed to process document with custom bake: {exc}"
+            ) from exc
+
+    def process(self) -> Path | list[Path]:
+        """Process document using standard processing.
+
+        FIXME: don't mix up who gets what - there's still a page config
+        PDFBaker and PDFBakerDocument load and merge their config
+        file upong initialization, but a PDFBakerPage is initialized with
+        an already merged config, so that we can provide different
+        configs for different variants.
+        """
         doc_config = self.config.copy()
 
         if "variants" in self.config:
             # Multiple PDF documents
+            pdf_files = []
             for variant in self.config["variants"]:
-                self.baker.info('Processing variant "%s"...', variant["name"])
+                self.baker.info_subsection(
+                    'Processing variant "%s"...', variant["name"]
+                )
                 variant_config = deep_merge(doc_config, variant)
                 variant_config["variant"] = variant
-                variant_config = resolve_config(variant_config)
-                self._process_pages(variant_config)
-        else:
-            # Single PDF document
-            doc_config = resolve_config(doc_config)
-            self._process_pages(doc_config)
+                # variant_config = deep_merge(variant_config, self.config)
+                page_pdfs = self._process_pages(variant_config)
+                pdf_files.append(self._combine_and_compress(page_pdfs, variant_config))
+            return pdf_files
 
-    def _process_pages(self, config: dict[str, Any]) -> None:
+        # Single PDF document
+        page_pdfs = self._process_pages(doc_config)
+        # doc_config = doc_config.render()
+        return self._combine_and_compress(page_pdfs, doc_config)
+
+    def _process_pages(self, config: dict[str, Any]) -> list[Path]:
         """Process pages with given configuration."""
-        pages = config.get("pages", [])
-        if not pages:
-            raise PDFBakeError("No pages defined in config")
-
         pdf_files = []
-        for page_num, page_name in enumerate(pages, start=1):
+        for page_num, page in enumerate(self.config.pages, start=1):
+            # FIXME: just call with config - already merged
             page = PDFBakerPage(
                 document=self,
-                name=page_name,
-                number=page_num,
-                config=config,
+                page_number=page_num,
+                base_config=config,
+                config=page,
             )
             pdf_files.append(page.process())
 
-        self._finalize(pdf_files, config)
+        return pdf_files
 
-    def _process_with_custom_bake(self, bake_path: Path) -> None:
-        """Process document using custom bake module."""
-        try:
-            spec = importlib.util.spec_from_file_location(
-                f"documents.{self.name}.bake", bake_path
-            )
-            if spec is None or spec.loader is None:
-                raise PDFBakeError(
-                    f"Failed to load bake module for document {self.name}"
-                )
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            module.process_document(document=self)
-        except Exception as exc:
-            raise PDFBakeError(
-                f"Failed to process document with custom bake: {exc}"
-            ) from exc
-
-    def _finalize(self, pdf_files: list[Path], config: dict[str, Any]) -> None:
-        """Combine pages and handle compression."""
+    def _combine_and_compress(
+        self, pdf_files: list[Path], doc_config: dict[str, Any]
+    ) -> Path:
+        """Combine PDF pages and optionally compress."""
         try:
             combined_pdf = combine_pdfs(
                 pdf_files,
-                self.build_dir / f"{config['filename']}.pdf",
+                self.config.build_dir / f"{doc_config['filename']}.pdf",
             )
         except PDFCombineError as exc:
-            raise PDFBakeError(f"Failed to combine PDFs: {exc}") from exc
+            raise PDFBakerError(f"Failed to combine PDFs: {exc}") from exc
 
-        output_path = self.dist_dir / f"{config['filename']}.pdf"
+        output_path = self.config.dist_dir / f"{doc_config['filename']}.pdf"
 
-        if config.get("compress_pdf", False):
+        if doc_config.get("compress_pdf", False):
             try:
                 compress_pdf(combined_pdf, output_path)
                 self.baker.info("PDF compressed successfully")
@@ -253,3 +206,21 @@ class PDFBakerDocument:
                 os.rename(combined_pdf, output_path)
         else:
             os.rename(combined_pdf, output_path)
+
+        self.baker.info("Created PDF: %s", output_path)
+        return output_path
+
+    def teardown(self) -> None:
+        """Clean up build directory after successful processing."""
+        if self.config.build_dir.exists():
+            # Remove all files in the build directory
+            for file_path in self.config.build_dir.iterdir():
+                if file_path.is_file():
+                    file_path.unlink()
+
+            # Try to remove the build directory
+            try:
+                self.config.build_dir.rmdir()
+            except OSError:
+                # Directory not empty - this is expected if we have subdirectories
+                pass

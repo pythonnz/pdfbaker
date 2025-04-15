@@ -3,26 +3,31 @@
 from pathlib import Path
 
 __all__ = [
-    "PDFBakeError",
+    "ConfigurationError",
+    "PDFBakerError",
     "PDFCombineError",
     "PDFCompressionError",
     "SVGConversionError",
 ]
 
 
-class PDFBakeError(Exception):
+class PDFBakerError(Exception):
     """Base exception for PDF baking errors."""
 
 
-class PDFCombineError(PDFBakeError):
+class ConfigurationError(PDFBakerError):
+    """Failed to load or parse configuration."""
+
+
+class PDFCombineError(PDFBakerError):
     """Failed to combine PDFs."""
 
 
-class PDFCompressionError(PDFBakeError):
+class PDFCompressionError(PDFBakerError):
     """Failed to compress PDF."""
 
 
-class SVGConversionError(PDFBakeError):
+class SVGConversionError(PDFBakerError):
     """Failed to convert SVG to PDF."""
 
     def __init__(

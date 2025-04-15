@@ -1,4 +1,4 @@
-"""Helper functions for rendering with Jinja"""
+"""Classes and functions used for rendering with Jinja"""
 
 import base64
 import re
@@ -14,33 +14,6 @@ __all__ = [
     "create_env",
     "prepare_template_context",
 ]
-
-
-def prepare_template_context(
-    config: dict[str], images_dir: Path | None = None
-) -> dict[str]:
-    """Prepare config for template rendering by resolving styles and encoding images.
-
-    Args:
-        config: Configuration with optional styles and images
-        images_dir: Directory containing images to encode
-    """
-    context = config.copy()
-
-    # Resolve style references to actual theme colors
-    if "style" in context and "theme" in context:
-        style = context["style"]
-        theme = context["theme"]
-        resolved_style: StyleDict = {}
-        for key, value in style.items():
-            resolved_style[key] = theme[value]
-        context["style"] = resolved_style
-
-    # Process image references
-    if context.get("images") is not None:
-        context["images"] = encode_images(context["images"], images_dir)
-
-    return context
 
 
 class HighlightingTemplate(jinja2.Template):  # pylint: disable=too-few-public-methods
@@ -74,10 +47,38 @@ def create_env(templates_dir: Path | None = None) -> jinja2.Environment:
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(templates_dir)),
         autoescape=jinja2.select_autoescape(),
+        # FIXME: extensions configurable
         extensions=["jinja2.ext.do"],
     )
     env.template_class = HighlightingTemplate
     return env
+
+
+def prepare_template_context(
+    config: dict[str], images_dir: Path | None = None
+) -> dict[str]:
+    """Prepare config for template rendering by resolving styles and encoding images.
+
+    Args:
+        config: Configuration with optional styles and images
+        images_dir: Directory containing images to encode
+    """
+    context = config.copy()
+
+    # Resolve style references to actual theme colors
+    if "style" in context and "theme" in context:
+        style = context["style"]
+        theme = context["theme"]
+        resolved_style: StyleDict = {}
+        for key, value in style.items():
+            resolved_style[key] = theme[value]
+        context["style"] = resolved_style
+
+    # Process image references
+    if context.get("images") is not None:
+        context["images"] = encode_images(context["images"], images_dir)
+
+    return context
 
 
 def encode_image(filename: str, images_dir: Path) -> str:

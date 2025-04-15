@@ -4,11 +4,12 @@ from typing import NotRequired, TypedDict
 
 __all__ = [
     "ImageSpec",
+    "PathSpec",
     "StyleDict",
 ]
 
 
-class ImageDict(TypedDict):
+class _ImageDict(TypedDict):
     """Image specification."""
 
     name: str
@@ -16,10 +17,20 @@ class ImageDict(TypedDict):
     data: NotRequired[str]
 
 
-ImageSpec = str | ImageDict
+ImageSpec = str | _ImageDict
 
 
 class StyleDict(TypedDict):
     """Style configuration."""
 
     highlight_color: NotRequired[str]
+
+
+class _PathSpecDict(TypedDict):
+    """File/Directory location in YAML config."""
+
+    path: NotRequired[str]
+    name: NotRequired[str]
+
+
+PathSpec = str | _PathSpecDict
