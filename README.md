@@ -59,10 +59,18 @@ kept if you specify `--debug`.
 
 ## Examples
 
-For working examples, see the [examples](examples) directory.<br> Create all PDFs with:
+For working examples, see the [examples](examples) directory:
+
+- [minimal](examples/minimal) - Basic usage
+- [regular](examples/regular) - Standard features
+- [variants](examples/variants) - Document variants
+- [custom_locations](examples/custom_locations) - Custom file/directory locations
+- [custom_processing](examples/custom_processing) - Custom processing with Python
+
+Create all PDFs with:
 
 ```bash
-pdfbaker bake examples/examples.yml
+pdfbaker bake examples/examples.yaml
 ```
 
 ## Documentation

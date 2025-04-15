@@ -6,7 +6,7 @@ import urllib.request
 from datetime import datetime
 
 from pdfbaker.document import PDFBakerDocument
-from pdfbaker.errors import PDFBakeError
+from pdfbaker.errors import PDFBakerError
 
 
 def process_document(document: PDFBakerDocument) -> None:
@@ -30,8 +30,7 @@ def process_document(document: PDFBakerDocument) -> None:
             "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "image_data": image_data,
         }
-
-        # Process as usual
-        return document.process()
     except Exception as exc:
-        raise PDFBakeError(f"Failed to process XKCD example: {exc}") from exc
+        raise PDFBakerError(f"Failed to process XKCD example: {exc}") from exc
+
+    return document.process()
