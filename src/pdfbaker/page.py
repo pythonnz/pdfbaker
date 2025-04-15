@@ -19,17 +19,19 @@ from .render import create_env, prepare_template_context
 __all__ = ["PDFBakerPage"]
 
 
+# pylint: disable=too-few-public-methods
 class PDFBakerPage:
     """A single page of a document."""
 
     class Configuration(PDFBakerConfiguration):
         """PDFBakerPage configuration."""
+
         def __init__(
-                self,
-                base_config: dict[str, Any],
-                config: Path,
-                page: "PDFBakerPage",
-            ) -> None:
+            self,
+            base_config: dict[str, Any],
+            config: Path,
+            page: "PDFBakerPage",
+        ) -> None:
             """Initialize page configuration (needs a template)."""
             self.page = page
             # FIXME: config is usually pages/mypage.yaml

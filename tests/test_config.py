@@ -119,16 +119,17 @@ def test_configuration_init_with_path(tmp_path):
 
 def test_configuration_init_with_directory(tmp_path):
     """Test initializing Configuration with custom directory."""
-    config = PDFBakerConfiguration({}, {"title": "Document"}, directory=tmp_path)
+    config_file = tmp_path / "test.yaml"
+    config_file.write_text('{"title": "Document"}')
+    config = PDFBakerConfiguration({}, config_file)
     assert config["title"] == "Document"
     assert config.directory == tmp_path
 
 
 def test_configuration_resolve_path():
     """Test path resolution."""
-    config = PDFBakerConfiguration(
-        {}, {"template": "test.yaml"}, directory=Path("/base")
-    )
+    config = PDFBakerConfiguration({}, {"template": "test.yaml"})
+    config.directory = Path("/base")  # Set directory explicitly for testing
     assert config.resolve_path("test.yaml") == Path("/base/test.yaml")
     assert config.resolve_path({"path": "/absolute/path.yaml"}) == Path(
         "/absolute/path.yaml"
