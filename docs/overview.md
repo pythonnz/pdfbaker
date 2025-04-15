@@ -25,25 +25,26 @@ For a quick introduction, see the [README](../README.md).
 
 ## Examples
 
-See the [examples](../examples) directory for simple working examples:
+See the [examples](examples) directory:
 
-- [minimal](../examples/minimal) - Basic single page
-- [regular](../examples/regular) - Using various features
-- [variants](../examples/variants) - Different PDFs of the same document
-- [custom_processing](../examples/custom_processing) - Custom Python code
+- [minimal](examples/minimal) - Basic usage
+- [regular](examples/regular) - Standard features
+- [variants](examples/variants) - Document variants
+- [custom_locations](examples/custom_locations) - Custom file/directory locations
+- [custom_processing](examples/custom_processing) - Custom processing with Python
 
 ## Example Project Structure
 
 ```
 project/
-├── kiwipycon.yml         # Main configuration
+├── kiwipycon.yaml        # Main configuration
 ├── material_specs/       # A document
-│   ├── config.yml        # Document configuration
+│   ├── config.yaml       # Document configuration
 │   ├── images/           # Images
 │   ├── pages/            # Page configurations
 │   └── templates/        # SVG templates
 └── prospectus/           # Another document
-    ├── config.yml
+    ├── config.yaml
     ├── images/
     ├── pages/
     └── templates/

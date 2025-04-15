@@ -10,7 +10,7 @@ different content or settings. This is useful for:
 
 ## Basic Structure
 
-Variants are defined in your document's `config.yml`:
+Variants are defined in your document's `config.yaml`:
 
 ```yaml
 filename: "My Document - {{ variant.name }}"

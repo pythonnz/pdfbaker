@@ -1,3 +1,4 @@
+template: main.svg.j2
 filename: minimal_example
 pages:
   - main

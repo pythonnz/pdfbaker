@@ -17,7 +17,7 @@ from pdfbaker.document import PDFBakerDocument
 
 def process_document(document: PDFBakerDocument) -> None:
     # Custom processing logic here
-    return document.process()
+    document.process()
 ```
 
 You will usually just manipulate the data for your templates, and then call `.process()`
@@ -27,5 +27,5 @@ the PDF as configured.
 See `examples/custom_processing/bake.py` for a simple example of how to do this.
 
 If you need to fully customise the processing, make sure that your function returns a
-list of Path objects (the PDF files that were created) as that is the expected type of
-return value for logging.
+Path or list of Path objects (the PDF files that were created) as that is the expected
+type of return value for logging.
