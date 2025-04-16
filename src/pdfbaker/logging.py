@@ -4,7 +4,8 @@ import logging
 from typing import Any
 
 TRACE = 5
-logging.addLevelName(TRACE, 'TRACE')
+logging.addLevelName(TRACE, "TRACE")
+
 
 class LoggingMixin:
     """Mixin providing consistent logging functionality across pdfbaker classes."""

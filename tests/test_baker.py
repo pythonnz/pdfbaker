@@ -3,7 +3,7 @@
 import shutil
 from pathlib import Path
 
-from pdfbaker.baker import PDFBaker
+from pdfbaker.baker import PDFBaker, PDFBakerOptions
 
 
 def test_examples() -> None:
@@ -31,5 +31,6 @@ def test_examples() -> None:
         f.write(content)
 
     # Run baker
-    baker = PDFBaker(test_config, quiet=True, keep_build=True)
+    options = PDFBakerOptions(quiet=True, keep_build=True)
+    baker = PDFBaker(test_config, options=options)
     baker.bake()

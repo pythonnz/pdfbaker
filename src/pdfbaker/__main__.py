@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 
 from pdfbaker import __version__
-from pdfbaker.baker import PDFBaker
+from pdfbaker.baker import PDFBaker, PDFBakerOptions
 from pdfbaker.errors import PDFBakerError
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ def cli() -> None:
 @click.option(
     "--debug", is_flag=True, help="Debug mode (implies --verbose and --keep-build)"
 )
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def bake(
     config_file: Path,
     quiet: bool,
@@ -50,13 +51,13 @@ def bake(
         keep_build = True
 
     try:
-        baker = PDFBaker(
-            config_file,
+        options = PDFBakerOptions(
             quiet=quiet,
             verbose=verbose,
             trace=trace,
             keep_build=keep_build,
         )
+        baker = PDFBaker(config_file, options=options)
         baker.bake()
         return 0
     except PDFBakerError as exc:

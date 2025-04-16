@@ -7,6 +7,7 @@ bake() delegates to its documents and reports back the end result.
 """
 
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +16,7 @@ from .document import PDFBakerDocument
 from .errors import ConfigurationError
 from .logging import TRACE, LoggingMixin
 
-__all__ = ["PDFBaker"]
+__all__ = ["PDFBaker", "PDFBakerOptions"]
 
 
 DEFAULT_CONFIG = {
@@ -26,6 +27,23 @@ DEFAULT_CONFIG = {
     "build_dir": "build",
     "dist_dir": "dist",
 }
+
+
+@dataclass
+class PDFBakerOptions:
+    """Options for controlling PDFBaker behavior.
+
+    Attributes:
+        quiet: Show errors only
+        verbose: Show debug information
+        trace: Show trace information (even more detailed than debug)
+        keep_build: Keep build artifacts after processing
+    """
+
+    quiet: bool = False
+    verbose: bool = False
+    trace: bool = False
+    keep_build: bool = False
 
 
 class PDFBaker(LoggingMixin):
@@ -53,31 +71,27 @@ class PDFBaker(LoggingMixin):
     def __init__(
         self,
         config_file: Path,
-        quiet: bool = False,
-        verbose: bool = False,
-        trace: bool = False,
-        keep_build: bool = False,
+        options: PDFBakerOptions | None = None,
     ) -> None:
         """Initialize PDFBaker with config file path. Set logging level.
 
         Args:
-            config_file: Path to config file, document directory is its parent
-            quiet: Show errors only
-            verbose: Show debug information
-            trace: Show trace information (even more detailed than debug)
-            keep_build: Keep build artifacts
+            config_file: Path to config file
+            options: Optional options for logging and build behavior
         """
         super().__init__()
+        options = options or PDFBakerOptions()
+
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-        if quiet:
+        if options.quiet:
             logging.getLogger().setLevel(logging.ERROR)
-        elif trace:
+        elif options.trace:
             logging.getLogger().setLevel(TRACE)
-        elif verbose:
+        elif options.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
         else:
             logging.getLogger().setLevel(logging.INFO)
-        self.keep_build = keep_build
+        self.keep_build = options.keep_build
         self.config = self.Configuration(
             baker=self,
             base_config=DEFAULT_CONFIG,
