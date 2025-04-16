@@ -84,6 +84,8 @@ pdfbaker bake examples/examples.yaml
 
 ## Development
 
+All source code is [on github](https://github.com/pythonnz/pdfbaker).
+
 This project uses [uv](https://github.com/astral-sh/uv) for dependency management. The
 `uv.lock` file ensures reproducible builds.
 
