@@ -120,6 +120,6 @@ class PDFBakerConfiguration(dict):
         )
 
     def pretty(self, max_string=60) -> str:
-        """Pretty print a configuration dictionary (for debugging)."""
+        """Return readable presentation (for debugging)."""
         truncated = _truncate_strings(self, max_string)
         return pprint.pformat(truncated, indent=2)
