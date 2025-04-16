@@ -119,7 +119,7 @@ class PDFBakerConfiguration(dict):
             "Check for circular references in your configuration."
         )
 
-    def pprint(self, max_string=60) -> str:
+    def pretty(self, max_string=60) -> str:
         """Pretty print a configuration dictionary (for debugging)."""
         truncated = _truncate_strings(self, max_string)
         return pprint.pformat(truncated, indent=2)

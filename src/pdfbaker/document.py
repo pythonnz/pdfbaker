@@ -61,12 +61,12 @@ class PDFBakerDocument(LoggingMixin):
             else:
                 self.name = config.stem
             self.directory = config.parent
-            self.document.log_trace(self.pprint())
+            self.document.log_trace(self.pretty())
             self.document.log_debug_section(
                 'Merging document config for "%s"...', self.name
             )
             super().__init__(base_config, config)
-            self.document.log_trace(self.pprint())
+            self.document.log_trace(self.pretty())
             self.document.log_debug_subsection("Document config for %s:", self.name)
             if "pages" not in self:
                 raise ConfigurationError(
@@ -81,7 +81,7 @@ class PDFBakerDocument(LoggingMixin):
                 self.pages.append(page)
             self.build_dir = self.resolve_path(self["build_dir"])
             self.dist_dir = self.resolve_path(self["dist_dir"])
-            self.document.log_trace(self.pprint())
+            self.document.log_trace(self.pretty())
 
     def __init__(
         self,

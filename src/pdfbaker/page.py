@@ -36,13 +36,13 @@ class PDFBakerPage(LoggingMixin):
             """Initialize page configuration (needs a template)."""
             self.page = page
             self.page.log_debug_subsection("Loading page config: %s", config)
-            self.page.log_trace(self.pprint())
+            self.page.log_trace(self.pretty())
             # FIXME: config is usually pages/mypage.yaml
             self.name = "TBC"
             self.page.log_debug_section('Initializing document "%s"...', self.name)
             self.page.log_debug_subsection("Merging config for %s:", self.name)
             super().__init__(base_config, config)
-            self.page.log_trace(self.pprint())
+            self.page.log_trace(self.pretty())
             if "template" not in self:
                 raise ConfigurationError(
                     f'Page "{self.name}" in document '

@@ -175,25 +175,27 @@ def convert_svg_to_pdf(
     Raises:
         SVGConversionError: If SVG conversion fails, includes the backend used and cause
     """
-    try:
-        if backend == "inkscape":
-            try:
-                _run_subprocess_logged(
-                    [
-                        "inkscape",
-                        f"--export-filename={pdf_path}",
-                        str(svg_path),
-                    ]
-                )
-            except subprocess.SubprocessError as exc:
-                raise SVGConversionError(svg_path, backend, str(exc)) from exc
-        else:
-            try:
-                with open(svg_path, "rb") as svg_file:
-                    svg2pdf(file_obj=svg_file, write_to=str(pdf_path))
-            except Exception as exc:
-                raise SVGConversionError(svg_path, backend, str(exc)) from exc
+    if backend == "inkscape":
+        try:
+            _run_subprocess_logged(
+                [
+                    "inkscape",
+                    f"--export-filename={pdf_path}",
+                    str(svg_path),
+                ]
+            )
+        except subprocess.SubprocessError as exc:
+            raise SVGConversionError(svg_path, backend, str(exc)) from exc
+    else:
+        if backend != "cairosvg":
+            logger.warning(
+                "Unknown svg2pdf backend: %s - falling back to cairosvg",
+                backend,
+            )
+        try:
+            with open(svg_path, "rb") as svg_file:
+                svg2pdf(file_obj=svg_file, write_to=str(pdf_path))
+        except Exception as exc:
+            raise SVGConversionError(svg_path, backend, str(exc)) from exc
 
-        return pdf_path
-    except Exception as exc:
-        raise SVGConversionError(svg_path, backend, str(exc)) from exc
+    return pdf_path

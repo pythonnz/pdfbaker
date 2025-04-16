@@ -20,6 +20,7 @@ __all__ = ["PDFBaker", "PDFBakerOptions"]
 
 
 DEFAULT_CONFIG = {
+    # Default to directories relative to the config file
     "documents_dir": ".",
     "pages_dir": "pages",
     "templates_dir": "templates",
@@ -59,7 +60,7 @@ class PDFBaker(LoggingMixin):
             self.baker = baker
             self.baker.log_debug_section("Loading main configuration: %s", config_file)
             super().__init__(base_config, config_file)
-            self.baker.log_trace(self.pprint())
+            self.baker.log_trace(self.pretty())
             if "documents" not in self:
                 raise ConfigurationError(
                     'Key "documents" missing - is this the main configuration file?'
