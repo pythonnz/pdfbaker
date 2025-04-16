@@ -13,6 +13,7 @@ from jinja2.exceptions import TemplateError
 
 from .config import PDFBakerConfiguration
 from .errors import ConfigurationError, SVGConversionError
+from .logging import LoggingMixin
 from .pdf import convert_svg_to_pdf
 from .render import create_env, prepare_template_context
 
@@ -20,7 +21,7 @@ __all__ = ["PDFBakerPage"]
 
 
 # pylint: disable=too-few-public-methods
-class PDFBakerPage:
+class PDFBakerPage(LoggingMixin):
     """A single page of a document."""
 
     class Configuration(PDFBakerConfiguration):
@@ -34,11 +35,14 @@ class PDFBakerPage:
         ) -> None:
             """Initialize page configuration (needs a template)."""
             self.page = page
+            self.page.log_debug_subsection("Loading page config: %s", config)
+            self.page.log_trace(self.pprint())
             # FIXME: config is usually pages/mypage.yaml
             self.name = "TBC"
+            self.page.log_debug_section('Initializing document "%s"...', self.name)
+            self.page.log_debug_subsection("Merging config for %s:", self.name)
             super().__init__(base_config, config)
-            self.page.document.baker.debug("Page config for %s:", self.name)
-            self.page.document.baker.debug(self.pprint())
+            self.page.log_trace(self.pprint())
             if "template" not in self:
                 raise ConfigurationError(
                     f'Page "{self.name}" in document '
@@ -66,6 +70,7 @@ class PDFBakerPage:
         config: Path | dict[str, Any],
     ) -> None:
         """Initialize a page."""
+        super().__init__()
         self.document = document
         self.number = page_number
         self.config = self.Configuration(
@@ -91,7 +96,7 @@ class PDFBakerPage:
             with open(output_svg, "w", encoding="utf-8") as f:
                 f.write(template.render(**template_context))
         except TemplateError as exc:
-            self.document.baker.error(
+            self.log_error(
                 "Failed to render page %d (%s): %s",
                 self.number,
                 self.config.name,
@@ -107,7 +112,7 @@ class PDFBakerPage:
                 backend=svg2pdf_backend,
             )
         except SVGConversionError as exc:
-            self.document.baker.error(
+            self.log_error(
                 "Failed to convert page %d (%s): %s",
                 self.number,
                 self.config.name,

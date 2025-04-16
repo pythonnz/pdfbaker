@@ -23,6 +23,7 @@ from .errors import (
     PDFCombineError,
     PDFCompressionError,
 )
+from .logging import LoggingMixin
 from .page import PDFBakerPage
 from .pdf import (
     combine_pdfs,
@@ -34,7 +35,7 @@ DEFAULT_DOCUMENT_CONFIG_FILE = "config.yaml"
 __all__ = ["PDFBakerDocument"]
 
 
-class PDFBakerDocument:
+class PDFBakerDocument(LoggingMixin):
     """A document being processed."""
 
     class Configuration(PDFBakerConfiguration):
@@ -52,18 +53,25 @@ class PDFBakerDocument:
                 base_config: The PDFBaker configuration to merge with
                 config_file: The document configuration (YAML file)
             """
+            self.document = document
+            self.document.log_debug_subsection("Parsing document config: %s", config)
             if config.is_dir():
                 self.name = config.name
                 config = config / DEFAULT_DOCUMENT_CONFIG_FILE
             else:
                 self.name = config.stem
+            self.directory = config.parent
+            self.document.log_trace(self.pprint())
+            self.document.log_debug_section(
+                'Merging document config for "%s"...', self.name
+            )
             super().__init__(base_config, config)
-            self.document = document
+            self.document.log_trace(self.pprint())
+            self.document.log_debug_subsection("Document config for %s:", self.name)
             if "pages" not in self:
                 raise ConfigurationError(
                     'Document "{document.name}" is missing key "pages"'
                 )
-            self.directory = config.parent
             self.pages_dir = self.resolve_path(self["pages_dir"])
             self.pages = []
             for page_spec in self["pages"]:
@@ -73,8 +81,7 @@ class PDFBakerDocument:
                 self.pages.append(page)
             self.build_dir = self.resolve_path(self["build_dir"])
             self.dist_dir = self.resolve_path(self["dist_dir"])
-            self.document.baker.debug("Document config for %s:", self.name)
-            self.document.baker.debug(self.pprint())
+            self.document.log_trace(self.pprint())
 
     def __init__(
         self,
@@ -83,6 +90,7 @@ class PDFBakerDocument:
         config: Path,
     ):
         """Initialize a document."""
+        super().__init__()
         self.baker = baker
         self.config = self.Configuration(base_config, config, document=self)
 
@@ -96,9 +104,7 @@ class PDFBakerDocument:
             FIXME: could have created SOME PDF files
             - error_message is a string describing the error, or None if successful
         """
-        self.baker.info_section(
-            'Processing document "%s"...', self.config.directory.name
-        )
+        self.log_info_section('Processing document "%s"...', self.config.directory.name)
 
         self.config.build_dir.mkdir(parents=True, exist_ok=True)
         self.config.dist_dir.mkdir(parents=True, exist_ok=True)
@@ -150,9 +156,7 @@ class PDFBakerDocument:
             # Multiple PDF documents
             pdf_files = []
             for variant in self.config["variants"]:
-                self.baker.info_subsection(
-                    'Processing variant "%s"...', variant["name"]
-                )
+                self.log_info_subsection('Processing variant "%s"...', variant["name"])
                 variant_config = deep_merge(doc_config, variant)
                 variant_config["variant"] = variant
                 # variant_config = deep_merge(variant_config, self.config)
@@ -197,9 +201,9 @@ class PDFBakerDocument:
         if doc_config.get("compress_pdf", False):
             try:
                 compress_pdf(combined_pdf, output_path)
-                self.baker.info("PDF compressed successfully")
+                self.log_info("PDF compressed successfully")
             except PDFCompressionError as exc:
-                self.baker.warning(
+                self.log_warning(
                     "Compression failed, using uncompressed version: %s",
                     exc,
                 )
@@ -207,7 +211,7 @@ class PDFBakerDocument:
         else:
             os.rename(combined_pdf, output_path)
 
-        self.baker.info("Created PDF: %s", output_path)
+        self.log_info("Created PDF: %s", output_path)
         return output_path
 
     def teardown(self) -> None:

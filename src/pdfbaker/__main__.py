@@ -26,12 +26,23 @@ def cli() -> None:
 )
 @click.option("-q", "--quiet", is_flag=True, help="Show errors only")
 @click.option("-v", "--verbose", is_flag=True, help="Show debug information")
+@click.option(
+    "-t",
+    "--trace",
+    is_flag=True,
+    help="Show trace information (even more detailed than debug)",
+)
 @click.option("--keep-build", is_flag=True, help="Keep build artifacts")
 @click.option(
     "--debug", is_flag=True, help="Debug mode (implies --verbose and --keep-build)"
 )
 def bake(
-    config_file: Path, quiet: bool, verbose: bool, keep_build: bool, debug: bool
+    config_file: Path,
+    quiet: bool,
+    verbose: bool,
+    trace: bool,
+    keep_build: bool,
+    debug: bool,
 ) -> int:
     """Parse config file and bake PDFs."""
     if debug:
@@ -40,7 +51,11 @@ def bake(
 
     try:
         baker = PDFBaker(
-            config_file, quiet=quiet, verbose=verbose, keep_build=keep_build
+            config_file,
+            quiet=quiet,
+            verbose=verbose,
+            trace=trace,
+            keep_build=keep_build,
         )
         baker.bake()
         return 0
