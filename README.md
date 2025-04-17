@@ -36,8 +36,8 @@ pipx ensurepath
   sudo apt install ghostscript
   ```
 
-- If you want to embed particular fonts, they need to be installed. For example for
-  [Roboto fonts](https://fonts.google.com/specimen/Roboto):
+- If you your templates embed particular fonts, they need to be installed. For example
+  for [Roboto fonts](https://fonts.google.com/specimen/Roboto):
   ```bash
   sudo apt install fonts-roboto
   ```
@@ -55,7 +55,7 @@ pdfbaker bake <config_file>
 
 This will produce your PDF files in a `dist/` directory where your configuration file
 lives. It will also create a `build/` directory with intermediate files, which is only
-kept if you specify `--debug`.
+kept if you specify `--keep-build-files` (or `--debug`).
 
 ## Examples
 
