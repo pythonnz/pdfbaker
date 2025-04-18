@@ -45,8 +45,8 @@ class PDFBakerPage(LoggingMixin):
 
             self.templates_dir = self["directories"]["templates"]
             self.images_dir = self["directories"]["images"]
-            self.build_dir = self["directories"]["build"]
-            self.dist_dir = self["directories"]["dist"]
+            self.build_dir = page.document.config.build_dir
+            self.dist_dir = page.document.config.dist_dir
 
             if "template" not in self:
                 raise ConfigurationError(

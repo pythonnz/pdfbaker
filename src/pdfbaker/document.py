@@ -76,8 +76,8 @@ class PDFBakerDocument(LoggingMixin):
             self.document.log_trace(self.pretty())
 
             self.bake_path = self["directories"]["config"] / "bake.py"
-            self.build_dir = self["directories"]["build"]
-            self.dist_dir = self["directories"]["dist"]
+            self.build_dir = self["directories"]["build"] / self.name
+            self.dist_dir = self["directories"]["dist"] / self.name
 
             if "pages" not in self:
                 raise ConfigurationError(
@@ -156,22 +156,32 @@ class PDFBakerDocument(LoggingMixin):
 
     def process(self) -> Path | list[Path]:
         """Process document using standard processing."""
-        if "variants" in self.config:
-            # Multiple PDF documents
-            pdf_files = []
-            for variant in self.config["variants"]:
-                self.log_info_subsection('Processing variant "%s"...', variant["name"])
-                variant_config = deep_merge(self.config, variant)
-                variant_config["variant"] = variant
-                variant_config = render_config(variant_config)
-                page_pdfs = self._process_pages(variant_config)
-                pdf_files.append(self._combine_and_compress(page_pdfs, variant_config))
-            return pdf_files
+        try:
+            if "variants" in self.config:
+                # Multiple PDF documents
+                pdf_files = []
+                for variant in self.config["variants"]:
+                    self.log_info_subsection(
+                        'Processing variant "%s"...', variant["name"]
+                    )
+                    variant_config = deep_merge(self.config, variant)
+                    variant_config["variant"] = variant
+                    variant_config = render_config(variant_config)
+                    page_pdfs = self._process_pages(variant_config)
+                    pdf_files.append(
+                        self._combine_and_compress(page_pdfs, variant_config)
+                    )
+                return pdf_files
 
-        # Single PDF document
-        doc_config = render_config(self.config)
-        page_pdfs = self._process_pages(doc_config)
-        return self._combine_and_compress(page_pdfs, doc_config)
+            # Single PDF document
+            doc_config = render_config(self.config)
+            page_pdfs = self._process_pages(doc_config)
+            return self._combine_and_compress(page_pdfs, doc_config)
+        except Exception:
+            # Ensure build directory is cleaned up if processing fails
+            if not self.baker.keep_build:
+                self.teardown()
+            raise
 
     def _process_pages(self, config: dict[str, Any]) -> list[Path]:
         """Process pages with given configuration."""
@@ -222,6 +232,9 @@ class PDFBakerDocument(LoggingMixin):
 
     def teardown(self) -> None:
         """Clean up build directory after successful processing."""
+        self.log_debug_subsection(
+            "Tearing down build directory: %s", self.config.build_dir
+        )
         if self.config.build_dir.exists():
             # Remove all files in the build directory
             for file_path in self.config.build_dir.iterdir():
