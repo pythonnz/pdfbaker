@@ -19,14 +19,13 @@ from .logging import TRACE, LoggingMixin
 __all__ = ["PDFBaker", "PDFBakerOptions"]
 
 
-DEFAULT_CONFIG = {
+DEFAULT_BAKER_CONFIG = {
     # Default to directories relative to the config file
-    "documents_dir": ".",
-    "pages_dir": "pages",
-    "templates_dir": "templates",
-    "images_dir": "images",
-    "build_dir": "build",
-    "dist_dir": "dist",
+    "directories": {
+        "documents": ".",
+        "build": "build",
+        "dist": "dist",
+    },
 }
 
 
@@ -58,15 +57,16 @@ class PDFBaker(LoggingMixin):
         ) -> None:
             """Initialize baker configuration (needs documents)."""
             self.baker = baker
-            self.baker.log_debug_section("Loading main configuration: %s", config_file)
             super().__init__(base_config, config_file)
+            self.baker.log_trace_section("Main configuration: %s", config_file)
             self.baker.log_trace(self.pretty())
             if "documents" not in self:
                 raise ConfigurationError(
                     'Key "documents" missing - is this the main configuration file?'
                 )
             self.documents = [
-                self.resolve_path(doc_spec) for doc_spec in self["documents"]
+                self.resolve_path(doc_spec, directory=self["directories"]["documents"])
+                for doc_spec in self["documents"]
             ]
 
     def __init__(
@@ -93,9 +93,11 @@ class PDFBaker(LoggingMixin):
         else:
             logging.getLogger().setLevel(logging.INFO)
         self.keep_build = options.keep_build
+        base_config = DEFAULT_BAKER_CONFIG.copy()
+        base_config["directories"]["config"] = config_file.parent.resolve()
         self.config = self.Configuration(
             baker=self,
-            base_config=DEFAULT_CONFIG,
+            base_config=base_config,
             config_file=config_file,
         )
 
@@ -110,7 +112,7 @@ class PDFBaker(LoggingMixin):
             doc = PDFBakerDocument(
                 baker=self,
                 base_config=self.config,
-                config=doc_config,
+                config_path=doc_config,
             )
             pdf_files, error_message = doc.process_document()
             if pdf_files is None:

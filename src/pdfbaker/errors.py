@@ -8,6 +8,7 @@ __all__ = [
     "PDFCombineError",
     "PDFCompressionError",
     "SVGConversionError",
+    "SVGTemplateError",
 ]
 
 
@@ -37,3 +38,7 @@ class SVGConversionError(PDFBakerError):
         self.backend = backend
         self.cause = cause
         super().__init__(f"Failed to convert {svg_path} using {backend}: {cause}")
+
+
+class SVGTemplateError(PDFBakerError):
+    """Failed to load or render an SVG template."""

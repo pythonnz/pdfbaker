@@ -9,10 +9,10 @@ converts the result to PDF and returns the path of the new PDF file.
 from pathlib import Path
 from typing import Any
 
-from jinja2.exceptions import TemplateError
+from jinja2.exceptions import TemplateError, TemplateNotFound
 
 from .config import PDFBakerConfiguration
-from .errors import ConfigurationError, SVGConversionError
+from .errors import ConfigurationError, SVGConversionError, SVGTemplateError
 from .logging import LoggingMixin
 from .pdf import convert_svg_to_pdf
 from .render import create_env, prepare_template_context
@@ -29,54 +29,56 @@ class PDFBakerPage(LoggingMixin):
 
         def __init__(
             self,
-            base_config: dict[str, Any],
-            config: Path,
             page: "PDFBakerPage",
+            base_config: dict[str, Any],
+            config_path: Path,
         ) -> None:
             """Initialize page configuration (needs a template)."""
             self.page = page
-            self.page.log_debug_subsection("Loading page config: %s", config)
+
+            self.name = config_path.stem
+            base_config["directories"]["config"] = config_path.parent.resolve()
+
+            super().__init__(base_config, config_path)
+            self.page.log_trace_section("Page configuration: %s", config_path)
             self.page.log_trace(self.pretty())
-            # FIXME: config is usually pages/mypage.yaml
-            self.name = "TBC"
-            self.page.log_debug_section('Initializing document "%s"...', self.name)
-            self.page.log_debug_subsection("Merging config for %s:", self.name)
-            super().__init__(base_config, config)
-            self.page.log_trace(self.pretty())
+
+            self.templates_dir = self["directories"]["templates"]
+            self.images_dir = self["directories"]["images"]
+            self.build_dir = self["directories"]["build"]
+            self.dist_dir = self["directories"]["dist"]
+
             if "template" not in self:
                 raise ConfigurationError(
                     f'Page "{self.name}" in document '
                     f'"{self.page.document.config.name}" has no template'
                 )
-            self.templates_dir = self.resolve_path(
-                self["templates_dir"],
-                directory=self.page.document.config.directory,
-            )
-            self.template = self.resolve_path(
-                self["template"],
-                directory=self.templates_dir,
-            )
-            self.images_dir = self.resolve_path(
-                self["images_dir"],
-                directory=self.page.document.config.directory,
-            )
-            self.build_dir = self.resolve_path(self["build_dir"])
+            if isinstance(self["template"], dict) and "path" in self["template"]:
+                # Path was specified: relative to the config file
+                self.template = self.resolve_path(
+                    self["template"]["path"], directory=self["directories"]["config"]
+                ).resolve()
+            else:
+                # Only name was specified: relative to the templates directory
+                self.template = self.resolve_path(
+                    self["template"], directory=self.templates_dir
+                ).resolve()
 
     def __init__(
         self,
         document: "PDFBakerDocument",  # type: ignore # noqa: F821
         page_number: int,
         base_config: dict[str, Any],
-        config: Path | dict[str, Any],
+        config_path: Path | dict[str, Any],
     ) -> None:
         """Initialize a page."""
         super().__init__()
         self.document = document
         self.number = page_number
         self.config = self.Configuration(
-            base_config=base_config,
-            config=config,
             page=self,
+            base_config=base_config,
+            config_path=config_path,
         )
 
     def process(self) -> Path:
@@ -85,8 +87,15 @@ class PDFBakerPage(LoggingMixin):
         output_svg = self.config.build_dir / f"{self.config.name}_{self.number:03}.svg"
         output_pdf = self.config.build_dir / f"{self.config.name}_{self.number:03}.pdf"
 
-        jinja_env = create_env(self.config.template.parent)
-        template = jinja_env.get_template(self.config["template"])
+        try:
+            jinja_env = create_env(self.config.template.parent)
+            template = jinja_env.get_template(self.config.template.name)
+        except TemplateNotFound as exc:
+            raise SVGTemplateError(
+                "Failed to load template for page "
+                f"{self.number} ({self.config.name}): {exc}"
+            ) from exc
+
         template_context = prepare_template_context(
             self.config,
             self.config.images_dir,
@@ -96,13 +105,9 @@ class PDFBakerPage(LoggingMixin):
             with open(output_svg, "w", encoding="utf-8") as f:
                 f.write(template.render(**template_context))
         except TemplateError as exc:
-            self.log_error(
-                "Failed to render page %d (%s): %s",
-                self.number,
-                self.config.name,
-                exc,
-            )
-            raise
+            raise SVGTemplateError(
+                f"Failed to render page {self.number} ({self.config.name}): {exc}"
+            ) from exc
 
         svg2pdf_backend = self.config.get("svg2pdf_backend", "cairosvg")
         try:
