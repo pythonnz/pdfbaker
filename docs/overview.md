@@ -55,8 +55,8 @@ flowchart TD
 
 Settings in the main configuration are available to all documents.<br>Settings in a
 document configuration are available to all of its pages.<br>Each page configuration can
-hold page-specific settings/content, so that the template of page is only responsible
-for layout/design.
+hold page-specific settings/content, so that the template of the page is only
+responsible for layout/design.
 
 ```mermaid
 flowchart TD
@@ -77,8 +77,8 @@ flowchart TD
 ### Pages make up a document
 
 After each page template was rendered and the resulting SVG file converted to PDF, these
-page PDFs are combined to create the document.<br>This may optionally get compressed for
-a nice end result.
+page PDFs are combined to create the document.<br>This PDF document may optionally get
+compressed for a nice end result.
 
 ```mermaid
 flowchart LR
