@@ -91,7 +91,12 @@ def setup_logging(quiet=False, trace=False, verbose=False) -> None:
     stderr_handler.setFormatter(formatter)
     stderr_handler.setLevel(logging.WARNING)
 
-    logger.handlers.clear()
+    # Remove existing console handlers, add ours
+    for handler in logger.handlers[:]:
+        if isinstance(handler, logging.StreamHandler) and not isinstance(
+            handler, logging.FileHandler
+        ):
+            logger.removeHandler(handler)
     logger.addHandler(stdout_handler)
     logger.addHandler(stderr_handler)
 
