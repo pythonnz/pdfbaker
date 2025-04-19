@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Bake",
+      "type": "shell",
+      "command": "python -m pdfbaker bake ${input:configPath}",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "pytest -v tests",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Run Coverage",
+      "type": "shell",
+      "command": "pytest --cov=pdfbaker --cov-report=html",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "View Coverage",
+      "type": "shell",
+      "command": "python -c \"import webbrowser; webbrowser.open('htmlcov/index.html')\"",
+      "presentation": {
+        "reveal": "never",
+        "panel": "new"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "configPath",
+      "type": "promptString",
+      "description": "Path to main YAML config file",
+      "default": "examples/examples.yaml"
+    }
+  ]
+}

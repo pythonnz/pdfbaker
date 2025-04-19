@@ -1,0 +1,6 @@
+title: "Custom Location Example"
+description: "This page uses custom directory structure"
+template:
+  # If you just wrote this directly it would be relative to the templates directory
+  # We want it to be relative to the config file:
+  path: "../other_templates/custom_page.svg.j2"

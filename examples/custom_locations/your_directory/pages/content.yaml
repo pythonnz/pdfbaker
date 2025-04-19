@@ -1,0 +1,4 @@
+title: "Content Page"
+description:
+  "This document is located in a nested directory structure, demonstrating how pdfbaker
+  can handle documents located anywhere in your filesystem."

@@ -1,0 +1,4 @@
+title: "Custom Locations Example"
+subtitle: "Mixing conventional and custom locations"
+template: "templates/intro.svg.j2"
+# Uses conventional location (templates/intro.svg.j2)

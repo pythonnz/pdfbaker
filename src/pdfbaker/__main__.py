@@ -7,10 +7,9 @@ from pathlib import Path
 import click
 
 from pdfbaker import __version__
-from pdfbaker.baker import PDFBaker
-from pdfbaker.errors import PDFBakeError
+from pdfbaker.baker import PDFBaker, PDFBakerOptions
+from pdfbaker.errors import PDFBakerError
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -25,30 +24,44 @@ def cli() -> None:
     "config_file",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
 )
-@click.option(
-    "--debug", is_flag=True, help="Debug mode (implies --verbose, keeps build files)"
-)
-@click.option("-v", "--verbose", is_flag=True, help="Show debug information")
 @click.option("-q", "--quiet", is_flag=True, help="Show errors only")
-def bake(config_file: Path, debug: bool, verbose: bool, quiet: bool) -> int:
+@click.option("-v", "--verbose", is_flag=True, help="Show debug information")
+@click.option(
+    "-t",
+    "--trace",
+    is_flag=True,
+    help="Show trace information (even more detailed than --verbose)",
+)
+@click.option("--keep-build", is_flag=True, help="Keep build artifacts")
+@click.option("--debug", is_flag=True, help="Debug mode (--verbose and --keep-build)")
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def bake(
+    config_file: Path,
+    quiet: bool,
+    verbose: bool,
+    trace: bool,
+    keep_build: bool,
+    debug: bool,
+) -> int:
     """Parse config file and bake PDFs."""
     if debug:
         verbose = True
-    if quiet:
-        logging.getLogger().setLevel(logging.ERROR)
-    elif verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.getLogger().setLevel(logging.INFO)
+        keep_build = True
 
     try:
-        baker = PDFBaker(config_file)
-        baker.bake(debug=debug)
-        return 0
-    except PDFBakeError as exc:
+        options = PDFBakerOptions(
+            quiet=quiet,
+            verbose=verbose,
+            trace=trace,
+            keep_build=keep_build,
+        )
+        baker = PDFBaker(config_file, options=options)
+        success = baker.bake()
+        sys.exit(0 if success else 1)
+    except PDFBakerError as exc:
         logger.error(str(exc))
-        return 1
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(cli())
+    cli()

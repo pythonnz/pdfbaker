@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Examples",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pdfbaker",
+      "args": ["bake", "examples/examples.yaml"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-v", "tests"],
+      "justMyCode": false,
+      "env": {"PYTEST_ADDOPTS": "--no-cov"},
+      "console": "integratedTerminal"
+    }
+  ]
+}

@@ -4,24 +4,46 @@
 
 ```
 project/
-├── kiwipycon.yml         # Main configuration
+├── kiwipycon.yaml        # Main configuration
 ├── material_specs/       # A document
-│   ├── config.yml        # Document configuration
+│   ├── config.yaml       # Document configuration
 │   ├── images/           # Images
 │   ├── pages/            # Page configurations
 │   └── templates/        # SVG templates
 └── prospectus/           # Another document
-    ├── config.yml
+    ├── config.yaml
     ├── images/
     ├── pages/
     └── templates/
+```
+
+## Configuration Workflow
+
+For every page, your main configuration (for all documents), document configuration (for
+all pages of this document) and the page configuration are merged to form the context
+provided to your page template.
+
+```mermaid
+flowchart TD
+    subgraph Configuration
+        Main[YAML Main Config] -->|inherits| Doc[YAML Document Config]
+        Doc -->|inherits| Page[YAML Page Config]
+    end
+
+    subgraph Page Processing
+        Template[SVG Template]
+        Page -->|context| Render[Template Rendering]
+        Template -->|jinja2| Render
+        Render -->|output| SVG[SVG File]
+        SVG -->|cairosvg| PDF[PDF File]
+    end
 ```
 
 ## Main Configuration File
 
 | Option            | Type    | Default      | Description                                                                                                        |
 | ----------------- | ------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `documents`       | array   | Yes          | List of document directories. Each directory must contain a `config.yml` file                                      |
+| `documents`       | array   | Yes          | List of document directories. Each directory must contain a `config.yaml` file                                     |
 | `style`           | object  | No           | Global style definitions that may reference `theme` values                                                         |
 | `theme`           | object  | No           | Reusable values (colors, fonts, spacing, etc.) used by `style`                                                     |
 | `compress_pdf`    | boolean | `false`      | Whether to compress the final PDF. Requires Ghostscript.                                                           |
@@ -33,7 +55,7 @@ highlighted in the color specified by the `highlight_color` in your `style`.
 Example:
 
 ```yaml
-# kiwipycon.yml
+# kiwipycon.yaml
 
 documents:
   - prospectus
@@ -74,13 +96,13 @@ for each document.
 | Option     | Type   | Required | Description                                                                                                                     |
 | ---------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `filename` | string | Yes      | Filename (without extension) of the final PDF document. Can use variables, particularly `variant` (see [Variants](variants.md)) |
-| `pages`    | array  | Yes      | List of page names. Each page must have a corresponding `.yml` file in the `pages/` directory                                   |
+| `pages`    | array  | Yes      | List of page names. Each page must have a corresponding `.yaml` file in the `pages/` directory                                  |
 | `variants` | array  | No       | List of document variants (see [Variants](variants.md))                                                                         |
 
 Example:
 
 ```yaml
-# prospectus/config.yml
+# prospectus/config.yaml
 
 filename: "Kiwi PyCon {{ conference.year }} - Prospectus" # Use config values in config values!
 title: "Sponsorship Prospectus"
@@ -105,7 +127,7 @@ merged with this for access to all settings in your template.
 Example:
 
 ```yaml
-# pages/conference_schedule.yml
+# pages/conference_schedule.yaml
 
 template: list_section.svg.j2
 

@@ -1,0 +1,9 @@
+title: Custom Locations Example
+filename: custom_locations_custom
+pages:
+  # Simple notation - uses conventional location (pages/standard_page.yaml)
+  - standard_page
+  # Path notation - uses custom location
+  - path: ../other_pages/custom_page.yaml
+# Custom images directory name and location
+images_dir: ../your_images

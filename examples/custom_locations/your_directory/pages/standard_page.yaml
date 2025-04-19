@@ -1,0 +1,3 @@
+title: "Standard Location Example"
+subtitle: "This page uses conventional directory structure"
+template: "standard_page.svg.j2"
