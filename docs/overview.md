@@ -31,7 +31,7 @@ flowchart TD
     subgraph Document[YAML Document Config]
         Doc1 -->|page 1| Page1[Page Processing]
         Doc1 -->|page 2| Page2[Page Processing]
-        Doc1 -->|page n| PageN[Page Processing]
+        Doc1 -->|page ...| PageN[Page Processing]
         
         Page1 --> PDF1[PDF File Page 1]
         Page2 --> PDF2[PDF File Page 2]
