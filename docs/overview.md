@@ -28,7 +28,7 @@ flowchart TD
     Main[YAML Main Config] -->|document 1| Doc1[Document Processing]
     Main -->|document 2| Doc2[Document Processing]
 
-    subgraph Document1[Document]
+    subgraph Document[YAML Document Config]
         Doc1 -->|page 1| Page1[Page Processing]
         Doc1 -->|page 2| Page2[Page Processing]
         Doc1 -->|page n| PageN[Page Processing]
