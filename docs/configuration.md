@@ -17,6 +17,16 @@ project/
     └── templates/
 ```
 
+## Configuration Workflow
+
+```mermaid
+graph TD
+    Main[Main config] -->|merge| Document[Document config]
+    Document -->|merge| Page[Page config]
+    Template[SVG Template] -.- Page
+    Template -->|render| SVG[SVG Page]
+```
+
 ## Main Configuration File
 
 | Option            | Type    | Default      | Description                                                                                                        |

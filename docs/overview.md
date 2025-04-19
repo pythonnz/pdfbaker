@@ -13,6 +13,25 @@ documents with minimal effort.
 - **Custom Processing**: Extend the processing workflow with Python
 - **PDF Compression**: Optional compression of final PDFs
 
+```mermaid
+graph TD
+    Main[Main config] -->|merge| Document[Document config]
+    Document -->|merge| Page[Page config]
+    Template[SVG Template] -.- Page
+    Template -->|render| SVG[SVG Page]
+    SVG -->|convert| PDF[PDF Page]
+
+```
+
+```mermaid
+graph LR
+    Page1[PDF Page 1] -->|combine| Document[PDF Document]
+    Page2[PDF Page 2] -->|combine| Document
+    PageN[PDF Page ...] -->|combine| Document
+    Document -.->|compress| Compressed[PDF Document compressed]
+    linkStyle 3 stroke-dasharray: 5 5
+```
+
 ## Documentation
 
 - [Configuration](configuration.md) - How to set up your documents
