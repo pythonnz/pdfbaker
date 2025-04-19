@@ -19,12 +19,22 @@ project/
 
 ## Configuration Workflow
 
+For every page, your main configuration (for all documents), document configuration (for all pages of this document) and the page configuration are merged to form the context provided to your page template. 
+
 ```mermaid
-graph TD
-    Main[Main config] -->|merge| Document[Document config]
-    Document -->|merge| Page[Page config]
-    Template[SVG Template] -.- Page
-    Template -->|render| SVG[SVG Page]
+flowchart TD
+    subgraph Configuration
+        Main[YAML Main Config] -->|inherits| Doc[YAML Document Config]
+        Doc -->|inherits| Page[YAML Page Config]
+    end
+
+    subgraph Page Processing
+        Template[SVG Template]
+        Page -->|context| Render[Template Rendering]
+        Template -->|jinja2| Render
+        Render -->|output| SVG[SVG File]
+        SVG -->|cairosvg| PDF[PDF File]
+    end
 ```
 
 ## Main Configuration File
