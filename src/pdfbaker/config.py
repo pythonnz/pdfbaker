@@ -45,6 +45,10 @@ class PDFBakerConfiguration(dict):
         try:
             with open(config_file, encoding="utf-8") as f:
                 config = yaml.safe_load(f)
+        except yaml.scanner.ScannerError as exc:
+            raise ConfigurationError(
+                f"Invalid YAML syntax in config file {config_file}: {exc}"
+            ) from exc
         except Exception as exc:
             raise ConfigurationError(f"Failed to load config file: {exc}") from exc
 
