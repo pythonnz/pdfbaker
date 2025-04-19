@@ -98,13 +98,11 @@ class PDFBaker(LoggingMixin):
             logging.getLogger().setLevel(logging.INFO)
         self.keep_build = options.keep_build
 
-        # Start with defaults and apply any overrides
         base_config = DEFAULT_BAKER_CONFIG.copy()
         if options and options.default_config_overrides:
             base_config = deep_merge(base_config, options.default_config_overrides)
-
-        # Set config directory and initialize
         base_config["directories"]["config"] = config_file.parent.resolve()
+
         self.config = self.Configuration(
             baker=self,
             base_config=base_config,

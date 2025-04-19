@@ -37,7 +37,6 @@ class PDFBakerPage(LoggingMixin):
             self.page = page
 
             self.name = config_path.stem
-            base_config["directories"]["config"] = config_path.parent.resolve()
 
             self.page.log_trace_section("Loading page configuration: %s", config_path)
             super().__init__(base_config, config_path)

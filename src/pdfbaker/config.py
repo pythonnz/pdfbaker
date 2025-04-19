@@ -49,7 +49,7 @@ class PDFBakerConfiguration(dict):
             raise ConfigurationError(f"Failed to load config file: {exc}") from exc
 
         # Determine all relevant directories
-        directories = {"config": config_file.parent.resolve()}
+        self["directories"] = directories = {"config": config_file.parent.resolve()}
         for directory in (
             "documents",
             "pages",

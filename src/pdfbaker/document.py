@@ -69,7 +69,6 @@ class PDFBakerDocument(LoggingMixin):
                 self.name = config_path.stem
 
             base_config = deep_merge(base_config, DEFAULT_DOCUMENT_CONFIG)
-            base_config["directories"]["config"] = config_path.parent.resolve()
 
             self.document.log_trace_section(
                 "Loading document configuration: %s", config_path
