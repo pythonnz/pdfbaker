@@ -21,7 +21,8 @@ For a quick introduction, see the [README](../README.md).
 
 ### From configuration to PDF documents
 
-Your main configuration defines which documents to create.<br>Each document configuration defines which pages make up the document.
+Your main configuration defines which documents to create.<br>Each document
+configuration defines which pages make up the document.
 
 ```mermaid
 flowchart TD
@@ -32,7 +33,7 @@ flowchart TD
         Doc1 -->|page 1| Page1[Page Processing]
         Doc1 -->|page 2| Page2[Page Processing]
         Doc1 -->|page ...| PageN[Page Processing]
-        
+
         Page1 --> PDF1[PDF File Page 1]
         Page2 --> PDF2[PDF File Page 2]
         PageN --> PDFN[PDF File Page ...]
@@ -52,7 +53,10 @@ flowchart TD
 
 ### Inheriting common values
 
-Settings in the main configuration are available to all documents.<br>Settings in a document configuration are available to all of its pages.<br>Each page configuration can hold page-specific settings/content, so that the template of page is only responsible for layout/design.
+Settings in the main configuration are available to all documents.<br>Settings in a
+document configuration are available to all of its pages.<br>Each page configuration can
+hold page-specific settings/content, so that the template of page is only responsible
+for layout/design.
 
 ```mermaid
 flowchart TD
@@ -72,7 +76,9 @@ flowchart TD
 
 ### Pages make up a document
 
-After each page template was rendered and the resulting SVG file converted to PDF, these page PDFs are combined to create the document.<br>This may optionally get compressed for a nice end result.
+After each page template was rendered and the resulting SVG file converted to PDF, these
+page PDFs are combined to create the document.<br>This may optionally get compressed for
+a nice end result.
 
 ```mermaid
 flowchart LR

@@ -19,7 +19,9 @@ project/
 
 ## Configuration Workflow
 
-For every page, your main configuration (for all documents), document configuration (for all pages of this document) and the page configuration are merged to form the context provided to your page template. 
+For every page, your main configuration (for all documents), document configuration (for
+all pages of this document) and the page configuration are merged to form the context
+provided to your page template.
 
 ```mermaid
 flowchart TD
