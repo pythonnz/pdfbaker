@@ -211,7 +211,7 @@ class PDFBakerDocument(LoggingMixin):
                 self.log_info("PDF compressed successfully")
             except PDFCompressionError as exc:
                 self.log_warning(
-                    "Compression failed, using uncompressed version: %s",
+                    "Compression failed, using uncompressed PDF: %s",
                     exc,
                 )
                 os.rename(combined_pdf, output_path)
