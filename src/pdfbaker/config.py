@@ -63,15 +63,14 @@ class PDFBakerConfiguration(dict):
             "dist",
         ):
             if directory in config.get("directories", {}):
-                # Set in this config file
+                # Set in this config file, relative to this config file
                 directories[directory] = self.resolve_path(
                     config["directories"][directory]
                 )
             elif directory in base_config.get("directories", {}):
-                # Inherited or not yet relevant/mentioned
+                # Inherited (absolute) or default (relative to _this_ config)
                 directories[directory] = self.resolve_path(
-                    str(base_config["directories"][directory]),
-                    directory=base_config["directories"]["config"],
+                    str(base_config["directories"][directory])
                 )
         super().__init__(deep_merge(base_config, config))
         self["directories"] = directories
