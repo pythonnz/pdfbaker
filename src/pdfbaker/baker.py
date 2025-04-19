@@ -6,7 +6,6 @@ Is given a configuration file and sets up logging.
 bake() delegates to its documents and reports back the end result.
 """
 
-import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,7 +13,7 @@ from typing import Any
 from .config import PDFBakerConfiguration, deep_merge
 from .document import PDFBakerDocument
 from .errors import ConfigurationError
-from .logging import TRACE, LoggingMixin
+from .logging import LoggingMixin, setup_logging
 
 __all__ = ["PDFBaker", "PDFBakerOptions"]
 
@@ -86,16 +85,7 @@ class PDFBaker(LoggingMixin):
         """
         super().__init__()
         options = options or PDFBakerOptions()
-
-        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-        if options.quiet:
-            logging.getLogger().setLevel(logging.ERROR)
-        elif options.trace:
-            logging.getLogger().setLevel(TRACE)
-        elif options.verbose:
-            logging.getLogger().setLevel(logging.DEBUG)
-        else:
-            logging.getLogger().setLevel(logging.INFO)
+        setup_logging(quiet=options.quiet, trace=options.trace, verbose=options.verbose)
         self.keep_build = options.keep_build
 
         base_config = DEFAULT_BAKER_CONFIG.copy()

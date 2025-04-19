@@ -1,10 +1,13 @@
 """Logging mixin for pdfbaker classes."""
 
 import logging
+import sys
 from typing import Any
 
 TRACE = 5
 logging.addLevelName(TRACE, "TRACE")
+
+__all__ = ["LoggingMixin", "setup_logging", "truncate_strings"]
 
 
 class LoggingMixin:
@@ -69,6 +72,37 @@ class LoggingMixin:
     def log_critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a critical message."""
         self.logger.critical(msg, *args, **kwargs)
+
+
+def setup_logging(quiet=False, trace=False, verbose=False) -> None:
+    """Set up logging for the application."""
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter("%(levelname)s: %(message)s")
+
+    # stdout handler for TRACE/DEBUG/INFO
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    stdout_handler.setLevel(TRACE)
+    stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
+
+    # stderr handler for WARNING and above
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setFormatter(formatter)
+    stderr_handler.setLevel(logging.WARNING)
+
+    logger.handlers.clear()
+    logger.addHandler(stdout_handler)
+    logger.addHandler(stderr_handler)
+
+    if quiet:
+        logger.setLevel(logging.ERROR)
+    elif trace:
+        logger.setLevel(TRACE)
+    elif verbose:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
 
 def truncate_strings(obj, max_chars: int) -> Any:
