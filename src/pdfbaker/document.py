@@ -71,8 +71,10 @@ class PDFBakerDocument(LoggingMixin):
             base_config = deep_merge(base_config, DEFAULT_DOCUMENT_CONFIG)
             base_config["directories"]["config"] = config_path.parent.resolve()
 
+            self.document.log_trace_section(
+                "Loading document configuration: %s", config_path
+            )
             super().__init__(base_config, config_path)
-            self.document.log_trace_section("Document configuration: %s", config_path)
             self.document.log_trace(self.pretty())
 
             self.bake_path = self["directories"]["config"] / "bake.py"
@@ -168,15 +170,13 @@ class PDFBakerDocument(LoggingMixin):
                     variant_config["variant"] = variant
                     variant_config = render_config(variant_config)
                     page_pdfs = self._process_pages(variant_config)
-                    pdf_files.append(
-                        self._combine_and_compress(page_pdfs, variant_config)
-                    )
+                    pdf_files.append(self._finalize(page_pdfs, variant_config))
                 return pdf_files
 
             # Single PDF document
             doc_config = render_config(self.config)
             page_pdfs = self._process_pages(doc_config)
-            return self._combine_and_compress(page_pdfs, doc_config)
+            return self._finalize(page_pdfs, doc_config)
         except Exception:
             # Ensure build directory is cleaned up if processing fails
             if not self.baker.keep_build:
@@ -189,7 +189,6 @@ class PDFBakerDocument(LoggingMixin):
         self.log_debug_subsection("Pages to process:")
         self.log_debug(self.config.pages)
         for page_num, page_config in enumerate(self.config.pages, start=1):
-            # FIXME: just call with config - already merged
             page = PDFBakerPage(
                 document=self,
                 page_number=page_num,
@@ -200,10 +199,10 @@ class PDFBakerDocument(LoggingMixin):
 
         return pdf_files
 
-    def _combine_and_compress(
-        self, pdf_files: list[Path], doc_config: dict[str, Any]
-    ) -> Path:
+    def _finalize(self, pdf_files: list[Path], doc_config: dict[str, Any]) -> Path:
         """Combine PDF pages and optionally compress."""
+        self.log_debug_subsection("Finalizing document...")
+        self.log_debug("Combining PDF pages...")
         try:
             combined_pdf = combine_pdfs(
                 pdf_files,
@@ -215,6 +214,7 @@ class PDFBakerDocument(LoggingMixin):
         output_path = self.config.dist_dir / f"{doc_config['filename']}.pdf"
 
         if doc_config.get("compress_pdf", False):
+            self.log_debug("Compressing PDF document...")
             try:
                 compress_pdf(combined_pdf, output_path)
                 self.log_info("PDF compressed successfully")
@@ -227,23 +227,22 @@ class PDFBakerDocument(LoggingMixin):
         else:
             os.rename(combined_pdf, output_path)
 
-        self.log_info("Created PDF: %s", output_path)
+        self.log_info("Created %s", output_path.name)
         return output_path
 
     def teardown(self) -> None:
-        """Clean up build directory after successful processing."""
+        """Clean up build directory after processing."""
         self.log_debug_subsection(
             "Tearing down build directory: %s", self.config.build_dir
         )
         if self.config.build_dir.exists():
-            # Remove all files in the build directory
+            self.log_debug("Removing files in build directory...")
             for file_path in self.config.build_dir.iterdir():
                 if file_path.is_file():
                     file_path.unlink()
 
-            # Try to remove the build directory
             try:
+                self.log_debug("Removing build directory...")
                 self.config.build_dir.rmdir()
             except OSError:
-                # Directory not empty - this is expected if we have subdirectories
-                pass
+                self.log_warning("Build directory not empty - not removing")

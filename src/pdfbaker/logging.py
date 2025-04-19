@@ -18,6 +18,14 @@ class LoggingMixin:
         """Log a trace message (more detailed than debug)."""
         self.logger.log(TRACE, msg, *args, **kwargs)
 
+    def log_trace_preview(
+        self, msg: str, *args: Any, max_chars: int = 500, **kwargs: Any
+    ) -> None:
+        """Log a trace preview of a potentially large message, truncating if needed."""
+        self.logger.log(
+            TRACE, truncate_strings(msg, max_chars=max_chars), *args, **kwargs
+        )
+
     def log_trace_section(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a trace message as a main section header."""
         self.logger.log(TRACE, f"──── {msg} ────", *args, **kwargs)
@@ -61,3 +69,21 @@ class LoggingMixin:
     def log_critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a critical message."""
         self.logger.critical(msg, *args, **kwargs)
+
+
+def truncate_strings(obj, max_chars: int) -> Any:
+    """Recursively truncate strings in nested structures."""
+    if isinstance(obj, str):
+        return obj if len(obj) <= max_chars else obj[:max_chars] + "…"
+    if isinstance(obj, dict):
+        return {
+            truncate_strings(k, max_chars): truncate_strings(v, max_chars)
+            for k, v in obj.items()
+        }
+    if isinstance(obj, list):
+        return [truncate_strings(item, max_chars) for item in obj]
+    if isinstance(obj, tuple):
+        return tuple(truncate_strings(item, max_chars) for item in obj)
+    if isinstance(obj, set):
+        return {truncate_strings(item, max_chars) for item in obj}
+    return obj

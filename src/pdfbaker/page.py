@@ -13,7 +13,7 @@ from jinja2.exceptions import TemplateError, TemplateNotFound
 
 from .config import PDFBakerConfiguration
 from .errors import ConfigurationError, SVGConversionError, SVGTemplateError
-from .logging import LoggingMixin
+from .logging import TRACE, LoggingMixin
 from .pdf import convert_svg_to_pdf
 from .render import create_env, prepare_template_context
 
@@ -39,8 +39,8 @@ class PDFBakerPage(LoggingMixin):
             self.name = config_path.stem
             base_config["directories"]["config"] = config_path.parent.resolve()
 
+            self.page.log_trace_section("Loading page configuration: %s", config_path)
             super().__init__(base_config, config_path)
-            self.page.log_trace_section("Page configuration: %s", config_path)
             self.page.log_trace(self.pretty())
 
             self.templates_dir = self["directories"]["templates"]
@@ -83,9 +83,14 @@ class PDFBakerPage(LoggingMixin):
 
     def process(self) -> Path:
         """Render SVG template and convert to PDF."""
-        self.config.build_dir.mkdir(parents=True, exist_ok=True)
-        output_svg = self.config.build_dir / f"{self.config.name}_{self.number:03}.svg"
-        output_pdf = self.config.build_dir / f"{self.config.name}_{self.number:03}.pdf"
+        self.log_debug_subsection(
+            "Processing page %d: %s", self.number, self.config.name
+        )
+
+        self.log_debug("Loading template: %s", self.config.template)
+        if self.logger.isEnabledFor(TRACE):
+            with open(self.config.template, encoding="utf-8") as f:
+                self.log_trace_preview(f.read())
 
         try:
             jinja_env = create_env(self.config.template.parent)
@@ -101,14 +106,22 @@ class PDFBakerPage(LoggingMixin):
             self.config.images_dir,
         )
 
+        self.config.build_dir.mkdir(parents=True, exist_ok=True)
+        output_svg = self.config.build_dir / f"{self.config.name}_{self.number:03}.svg"
+        output_pdf = self.config.build_dir / f"{self.config.name}_{self.number:03}.pdf"
+
+        self.log_debug("Rendering template...")
         try:
+            rendered_template = template.render(**template_context)
             with open(output_svg, "w", encoding="utf-8") as f:
-                f.write(template.render(**template_context))
+                f.write(rendered_template)
         except TemplateError as exc:
             raise SVGTemplateError(
                 f"Failed to render page {self.number} ({self.config.name}): {exc}"
             ) from exc
+        self.log_trace_preview(rendered_template)
 
+        self.log_debug("Converting SVG to PDF: %s", output_svg)
         svg2pdf_backend = self.config.get("svg2pdf_backend", "cairosvg")
         try:
             return convert_svg_to_pdf(

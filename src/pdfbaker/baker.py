@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .config import PDFBakerConfiguration
+from .config import PDFBakerConfiguration, deep_merge
 from .document import PDFBakerDocument
 from .errors import ConfigurationError
 from .logging import TRACE, LoggingMixin
@@ -38,12 +38,15 @@ class PDFBakerOptions:
         verbose: Show debug information
         trace: Show trace information (even more detailed than debug)
         keep_build: Keep build artifacts after processing
+        default_config_overrides: Dictionary of values to override the built-in defaults
+            before loading the main configuration
     """
 
     quiet: bool = False
     verbose: bool = False
     trace: bool = False
     keep_build: bool = False
+    default_config_overrides: dict[str, Any] | None = None
 
 
 class PDFBaker(LoggingMixin):
@@ -57,13 +60,14 @@ class PDFBaker(LoggingMixin):
         ) -> None:
             """Initialize baker configuration (needs documents)."""
             self.baker = baker
+            self.baker.log_debug_section("Loading main configuration: %s", config_file)
             super().__init__(base_config, config_file)
-            self.baker.log_trace_section("Main configuration: %s", config_file)
             self.baker.log_trace(self.pretty())
             if "documents" not in self:
                 raise ConfigurationError(
                     'Key "documents" missing - is this the main configuration file?'
                 )
+            self.build_dir = self["directories"]["build"]
             self.documents = [
                 self.resolve_path(doc_spec, directory=self["directories"]["documents"])
                 for doc_spec in self["documents"]
@@ -93,7 +97,13 @@ class PDFBaker(LoggingMixin):
         else:
             logging.getLogger().setLevel(logging.INFO)
         self.keep_build = options.keep_build
+
+        # Start with defaults and apply any overrides
         base_config = DEFAULT_BAKER_CONFIG.copy()
+        if options and options.default_config_overrides:
+            base_config = deep_merge(base_config, options.default_config_overrides)
+
+        # Set config directory and initialize
         base_config["directories"]["config"] = config_file.parent.resolve()
         self.config = self.Configuration(
             baker=self,
@@ -102,7 +112,7 @@ class PDFBaker(LoggingMixin):
         )
 
     def bake(self) -> None:
-        """Generate PDFs from documents."""
+        """Create PDFs for all documents."""
         pdfs_created: list[Path] = []
         failed_docs: list[tuple[str, str]] = []
 
@@ -115,7 +125,7 @@ class PDFBaker(LoggingMixin):
                 config_path=doc_config,
             )
             pdf_files, error_message = doc.process_document()
-            if pdf_files is None:
+            if error_message:
                 self.log_error(
                     "Failed to process document '%s': %s",
                     doc.config.name,
@@ -130,7 +140,7 @@ class PDFBaker(LoggingMixin):
                     doc.teardown()
 
         if pdfs_created:
-            self.log_info("Created PDFs:")
+            self.log_info("Successfully created PDFs:")
             for pdf in pdfs_created:
                 self.log_info("  %s", pdf)
         else:
@@ -144,3 +154,18 @@ class PDFBaker(LoggingMixin):
             )
             for doc_name, error in failed_docs:
                 self.log_error("  %s: %s", doc_name, error)
+
+        if not self.keep_build:
+            self.teardown()
+
+    def teardown(self) -> None:
+        """Clean up (top-level) build directory after processing."""
+        self.log_debug_subsection(
+            "Tearing down top-level build directory: %s", self.config.build_dir
+        )
+        if self.config.build_dir.exists():
+            try:
+                self.log_debug("Removing top-level build directory...")
+                self.config.build_dir.rmdir()
+            except OSError:
+                self.log_warning("Top-level build directory not empty - not removing")

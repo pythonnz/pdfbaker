@@ -9,6 +9,7 @@ import yaml
 from jinja2 import Template
 
 from .errors import ConfigurationError
+from .logging import truncate_strings
 from .types import PathSpec
 
 __all__ = ["PDFBakerConfiguration", "deep_merge", "render_config"]
@@ -25,24 +26,6 @@ def deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
         else:
             result[key] = value
     return result
-
-
-def _truncate_strings(obj, max_length: int) -> Any:
-    """Recursively truncate strings in nested structures."""
-    if isinstance(obj, str):
-        return obj if len(obj) <= max_length else obj[:max_length] + "…"
-    if isinstance(obj, dict):
-        return {
-            _truncate_strings(k, max_length): _truncate_strings(v, max_length)
-            for k, v in obj.items()
-        }
-    if isinstance(obj, list):
-        return [_truncate_strings(item, max_length) for item in obj]
-    if isinstance(obj, tuple):
-        return tuple(_truncate_strings(item, max_length) for item in obj)
-    if isinstance(obj, set):
-        return {_truncate_strings(item, max_length) for item in obj}
-    return obj
 
 
 class PDFBakerConfiguration(dict):
@@ -110,9 +93,9 @@ class PDFBakerConfiguration(dict):
 
         return directory / spec["name"]
 
-    def pretty(self, max_string=60) -> str:
+    def pretty(self, max_chars: int = 60) -> str:
         """Return readable presentation (for debugging)."""
-        truncated = _truncate_strings(self, max_string)
+        truncated = truncate_strings(self, max_chars=max_chars)
         return pprint.pformat(truncated, indent=2)
 
 
@@ -161,6 +144,13 @@ def render_config(config: dict[str, Any]) -> dict[str, Any]:
         config_yaml = Template(yaml.dump(current_config))
         resolved_yaml = config_yaml.render(**current_config)
         new_config = yaml.safe_load(resolved_yaml)
+
+        # Check for direct self-references
+        for key, value in new_config.items():
+            if isinstance(value, str) and f"{{{{ {key} }}}}" in value:
+                raise ConfigurationError(
+                    f"Circular reference detected: {key} references itself"
+                )
 
         if new_config == current_config:  # No more changes
             return new_config

@@ -30,12 +30,10 @@ def cli() -> None:
     "-t",
     "--trace",
     is_flag=True,
-    help="Show trace information (even more detailed than debug)",
+    help="Show trace information (even more detailed than --verbose)",
 )
 @click.option("--keep-build", is_flag=True, help="Keep build artifacts")
-@click.option(
-    "--debug", is_flag=True, help="Debug mode (implies --verbose and --keep-build)"
-)
+@click.option("--debug", is_flag=True, help="Debug mode (--verbose and --keep-build)")
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def bake(
     config_file: Path,
