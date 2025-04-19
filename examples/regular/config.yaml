@@ -1,4 +1,5 @@
 filename: regular_example
+compress_pdf: true
 pages:
   - intro
   - features
