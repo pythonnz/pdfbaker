@@ -40,6 +40,7 @@ class PDFBakerPage(LoggingMixin):
 
             self.page.log_trace_section("Loading page configuration: %s", config_path)
             super().__init__(base_config, config_path)
+            self["page_number"] = page.number
             self.page.log_trace(self.pretty())
 
             self.templates_dir = self["directories"]["templates"]
