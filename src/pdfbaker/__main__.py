@@ -56,12 +56,12 @@ def bake(
             keep_build=keep_build,
         )
         baker = PDFBaker(config_file, options=options)
-        baker.bake()
-        return 0
+        success = baker.bake()
+        sys.exit(0 if success else 1)
     except PDFBakerError as exc:
         logger.error(str(exc))
-        return 1
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(cli())
+    cli()

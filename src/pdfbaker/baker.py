@@ -110,7 +110,11 @@ class PDFBaker(LoggingMixin):
         )
 
     def bake(self) -> None:
-        """Create PDFs for all documents."""
+        """Create PDFs for all documents.
+
+        Returns:
+        bool: True if all documents were processed successfully, False if any failed
+        """
         pdfs_created: list[Path] = []
         failed_docs: list[tuple[str, str]] = []
 
@@ -155,6 +159,8 @@ class PDFBaker(LoggingMixin):
 
         if not self.keep_build:
             self.teardown()
+
+        return not failed_docs
 
     def teardown(self) -> None:
         """Clean up (top-level) build directory after processing."""
