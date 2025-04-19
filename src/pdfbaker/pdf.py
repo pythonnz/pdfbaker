@@ -152,6 +152,8 @@ def compress_pdf(
             ]
         )
         return output_pdf
+    except FileNotFoundError as exc:
+        raise PDFCompressionError(f"Ghostscript not found: {exc}") from exc
     except subprocess.SubprocessError as exc:
         raise PDFCompressionError(f"Ghostscript compression failed: {exc}") from exc
 
