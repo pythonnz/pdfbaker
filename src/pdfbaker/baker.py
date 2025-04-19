@@ -138,8 +138,8 @@ class PDFBaker(LoggingMixin):
                 if isinstance(pdf_files, Path):
                     pdf_files = [pdf_files]
                 pdfs_created.extend(pdf_files)
-                if not self.keep_build:
-                    doc.teardown()
+            if not self.keep_build:
+                doc.teardown()
 
         if pdfs_created:
             self.log_info("Successfully created PDFs:")
