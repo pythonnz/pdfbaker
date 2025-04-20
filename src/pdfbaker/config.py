@@ -85,6 +85,9 @@ class PDFBakerConfiguration(dict):
             Resolved Path object
         """
         directory = directory or self["directories"]["config"]
+        if isinstance(directory, str):
+            directory = Path(directory)
+
         if isinstance(spec, str):
             return directory / spec
 
