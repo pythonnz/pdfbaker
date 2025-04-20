@@ -80,25 +80,47 @@ class PDFBakerDocument(LoggingMixin):
             self.build_dir = self["directories"]["build"] / self.name
             self.dist_dir = self["directories"]["dist"] / self.name
 
+            # The "pages" may be defined in the variants rather than
+            # the document itself (when different variants have different pages)
             if "pages" not in self:
-                raise ConfigurationError(
-                    'Document "{document.name}" is missing key "pages"'
-                )
+                if "variants" in self:
+                    # A variant not defining pages will fail to process
+                    self.document.log_debug(
+                        'Pages of document "%s" will be determined per variant',
+                        self.name,
+                    )
+                else:
+                    self.document.log_warning(
+                        f'Document "{self.name}" has neither "pages" nor "variants"'
+                    )
+                    raise ConfigurationError(
+                        f'Cannot determine pages of document "{self.name}"'
+                    )
+            # Actual pages will be determined during processing
             self.pages = []
-            for page_spec in self["pages"]:
+
+        def determine_pages(self, config: dict[str, Any]) -> list[Path]:
+            """Determine pages for the give (document/variant) configuration."""
+            if "pages" not in config:
+                raise ConfigurationError(
+                    f'Cannot determine pages for "{self.name}"'
+                )
+            pages = []
+            for page_spec in config["pages"]:
                 if isinstance(page_spec, dict) and "path" in page_spec:
-                    # Path was specified: relative to the config file
+                    # Path was specified: relative to this config file
                     page = self.resolve_path(
-                        page_spec["path"], directory=self["directories"]["config"]
+                        page_spec["path"], directory=config["directories"]["config"]
                     )
                 else:
                     # Only name was specified: relative to the pages directory
                     page = self.resolve_path(
-                        page_spec, directory=self["directories"]["pages"]
+                        page_spec, directory=config["directories"]["pages"]
                     )
                 if not page.suffix:
                     page = page.with_suffix(".yaml")
-                self.pages.append(page)
+                pages.append(page)
+            self.pages = pages
 
     def __init__(
         self,
@@ -163,6 +185,7 @@ class PDFBakerDocument(LoggingMixin):
             for variant in self.config["variants"]:
                 self.log_info_subsection('Processing variant "%s"...', variant["name"])
                 variant_config = deep_merge(self.config, variant)
+                self.log_trace(variant_config)
                 variant_config["variant"] = variant
                 variant_config = render_config(variant_config)
                 page_pdfs = self._process_pages(variant_config)
@@ -176,9 +199,10 @@ class PDFBakerDocument(LoggingMixin):
 
     def _process_pages(self, config: dict[str, Any]) -> list[Path]:
         """Process pages with given configuration."""
-        pdf_files = []
+        self.config.determine_pages(config)
         self.log_debug_subsection("Pages to process:")
         self.log_debug(self.config.pages)
+        pdf_files = []
         for page_num, page_config in enumerate(self.config.pages, start=1):
             page = PDFBakerPage(
                 document=self,
