@@ -79,6 +79,10 @@ def test_document_init_with_dir(
         config_path=doc_dir,  # this will default to config.yaml in the directory
     )
     assert doc.config.name == "test_doc"
+    assert doc.config["pages"] == ["page1.yaml"]
+
+    # We need to manually determine pages now
+    doc.config.determine_pages(doc.config)
     assert len(doc.config.pages) > 0
     assert doc.config.pages[0].name == "page1.yaml"
 
@@ -125,7 +129,7 @@ def test_document_init_missing_pages(tmp_path: Path, baker_config: Path) -> None
     """)
 
     baker = PDFBaker(baker_config)
-    with pytest.raises(ConfigurationError, match='missing key "pages"'):
+    with pytest.raises(ConfigurationError, match="Cannot determine pages"):
         PDFBakerDocument(baker, baker.config, config_file)
 
 
@@ -213,3 +217,79 @@ def test_document_teardown(
     assert "Tearing down build directory" in caplog.text
     assert "Removing files in build directory" in caplog.text
     assert "Removing build directory" in caplog.text
+
+
+def test_document_variants_with_different_pages(
+    tmp_path: Path, baker_config: Path, baker_options: PDFBakerOptions
+) -> None:
+    """Test document with variants where each variant has different pages."""
+    # Create document config with variants but no pages
+    config_file = tmp_path / "test_doc.yaml"
+    config_file.write_text("""
+    filename: "{{ variant.name }}_doc"
+    directories:
+        build: build
+        dist: dist
+    variants:
+        - name: variant1
+          filename: variant1
+          pages: [page1.yaml]
+        - name: variant2
+          filename: variant2
+          pages: [page2.yaml]
+    """)
+
+    # Create page configs
+    pages_dir = tmp_path / "pages"
+    pages_dir.mkdir()
+
+    page_file1 = pages_dir / "page1.yaml"
+    page_file1.write_text("""
+    template: template.svg
+    content: "Variant 1 content"
+    """)
+
+    page_file2 = pages_dir / "page2.yaml"
+    page_file2.write_text("""
+    template: template.svg
+    content: "Variant 2 content"
+    """)
+
+    # Create template
+    templates_dir = tmp_path / "templates"
+    templates_dir.mkdir()
+    template_file = templates_dir / "template.svg"
+    template_file.write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>'
+    )
+
+    baker = PDFBaker(baker_config, options=baker_options)
+    doc = PDFBakerDocument(baker, baker.config, config_file)
+
+    # Check that document initialization works without pages at doc level
+    assert doc.config.name == "test_doc"
+    assert "pages" not in doc.config
+    assert len(doc.config["variants"]) == 2
+
+    # Check that each variant has its own pages definition
+    assert doc.config["variants"][0]["pages"] == ["page1.yaml"]
+    assert doc.config["variants"][1]["pages"] == ["page2.yaml"]
+
+    # Test that processing works with per-variant pages
+    # We don't need to call process for this basic functionality test
+    # as that would require inkapscape/cairosvg and be more integration testing
+
+    # Instead, test that we can determine pages from variant configs
+    variant1_config = doc.config.copy()
+    variant1_config.update(doc.config["variants"][0])
+    assert "pages" in variant1_config
+    doc.config.determine_pages(variant1_config)
+    assert len(doc.config.pages) > 0
+    assert doc.config.pages[0].name == "page1.yaml"
+
+    variant2_config = doc.config.copy()
+    variant2_config.update(doc.config["variants"][1])
+    assert "pages" in variant2_config
+    doc.config.determine_pages(variant2_config)
+    assert len(doc.config.pages) > 0
+    assert doc.config.pages[0].name == "page2.yaml"
