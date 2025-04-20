@@ -102,9 +102,7 @@ class PDFBakerDocument(LoggingMixin):
         def determine_pages(self, config: dict[str, Any]) -> list[Path]:
             """Determine pages for the give (document/variant) configuration."""
             if "pages" not in config:
-                raise ConfigurationError(
-                    f'Cannot determine pages for "{self.name}"'
-                )
+                raise ConfigurationError(f'Cannot determine pages for "{self.name}"')
             pages = []
             for page_spec in config["pages"]:
                 if isinstance(page_spec, dict) and "path" in page_spec:
