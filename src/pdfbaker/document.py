@@ -183,7 +183,7 @@ class PDFBakerDocument(LoggingMixin):
             for variant in self.config["variants"]:
                 self.log_info_subsection('Processing variant "%s"...', variant["name"])
                 variant_config = deep_merge(self.config, variant)
-                self.log_trace(variant_config)
+                # self.log_trace(variant_config)
                 variant_config["variant"] = variant
                 variant_config = render_config(variant_config)
                 page_pdfs = self._process_pages(variant_config)
@@ -201,12 +201,28 @@ class PDFBakerDocument(LoggingMixin):
         self.log_debug_subsection("Pages to process:")
         self.log_debug(self.config.pages)
         pdf_files = []
-        for page_num, page_config in enumerate(self.config.pages, start=1):
+        for page_num, page_config_path in enumerate(self.config.pages, start=1):
+            page_name = page_config_path.stem
+            base_config = config.copy()
+
+            # If the document/variant has page-specific configuration
+            # (a section with the same name as the page), include it
+            if page_name in config:
+                if "variant" in config:
+                    source_desc = f'Variant "{config["variant"]["name"]}"'
+                else:
+                    source_desc = f'Document "{self.config.name}"'
+                self.log_debug_subsection(
+                    f'{source_desc} provides settings for page "{page_name}"'
+                )
+                self.log_trace(config[page_name])
+                base_config.update(config[page_name])
+
             page = PDFBakerPage(
                 document=self,
                 page_number=page_num,
-                base_config=config,
-                config_path=page_config,
+                base_config=base_config,
+                config_path=page_config_path,
             )
             pdf_files.append(page.process())
 
