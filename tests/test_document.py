@@ -188,35 +188,6 @@ def test_document_variants(
     assert len(doc.config["variants"]) == 2
 
 
-def test_document_teardown(
-    baker_config: Path,
-    baker_options: PDFBakerOptions,
-    doc_dir: Path,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Test document teardown."""
-    # Create build directory and some files
-    build_dir = doc_dir / "build" / "test_doc"
-    build_dir.mkdir(parents=True)
-    (build_dir / "file1.pdf").write_text("test")
-    (build_dir / "file2.pdf").write_text("test")
-
-    baker = PDFBaker(baker_config, options=baker_options)
-    doc = PDFBakerDocument(baker, baker.config, doc_dir)
-    assert doc.config.name == "test_doc"
-    assert doc.config["pages"] == ["page1.yaml"]
-
-    with caplog.at_level(logging.DEBUG):
-        # Manually reinstall caplog handler to the root logger
-        logging.getLogger().addHandler(caplog.handler)
-        doc.teardown()
-
-    assert not build_dir.exists()
-    assert "Tearing down build directory" in caplog.text
-    assert "Removing files in build directory" in caplog.text
-    assert "Removing build directory" in caplog.text
-
-
 def test_document_variants_with_different_pages(
     tmp_path: Path, baker_config: Path, baker_options: PDFBakerOptions
 ) -> None:
@@ -291,3 +262,32 @@ def test_document_variants_with_different_pages(
     doc.config.determine_pages(variant2_config)
     assert len(doc.config.pages) > 0
     assert doc.config.pages[0].name == "page2.yaml"
+
+
+def test_document_teardown(
+    baker_config: Path,
+    baker_options: PDFBakerOptions,
+    doc_dir: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test document teardown."""
+    # Create build directory and some files
+    build_dir = doc_dir / "build" / "test_doc"
+    build_dir.mkdir(parents=True)
+    (build_dir / "file1.pdf").write_text("test")
+    (build_dir / "file2.pdf").write_text("test")
+
+    baker = PDFBaker(baker_config, options=baker_options)
+    doc = PDFBakerDocument(baker, baker.config, doc_dir)
+    assert doc.config.name == "test_doc"
+    assert doc.config["pages"] == ["page1.yaml"]
+
+    with caplog.at_level(logging.DEBUG):
+        # Manually reinstall caplog handler to the root logger
+        logging.getLogger().addHandler(caplog.handler)
+        doc.teardown()
+
+    assert not build_dir.exists()
+    assert "Tearing down build directory" in caplog.text
+    assert "Removing files in build directory" in caplog.text
+    assert "Removing build directory" in caplog.text
