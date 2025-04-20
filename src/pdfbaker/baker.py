@@ -121,13 +121,12 @@ class PDFBaker(LoggingMixin):
             name for name in selected_document_names if name not in available_doc_names
         ]
         if missing_docs:
-            self.log_info(
-                f"Documents in {self.config.name}: %s",
-                ", ".join(f'"{name}"' for name in available_doc_names),
-            )
+            available_str = ", ".join([f'"{name}"' for name in available_doc_names])
+            self.log_info(f"Documents in {self.config.name}: {available_str}")
+            missing_str = ", ".join([f'"{name}"' for name in missing_docs])
             raise DocumentNotFoundError(
-                f"{'Document' if len(missing_docs) == 1 else 'Documents'} not found in "
-                f"configuration: {', '.join(f'"{name}"' for name in missing_docs)}."
+                f"Document{'s' if len(missing_docs) != 1 else ''} not found "
+                f"in configuration: {missing_str}."
             )
 
         return [
