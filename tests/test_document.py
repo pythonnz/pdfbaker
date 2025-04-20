@@ -201,8 +201,6 @@ def test_document_teardown(
     (build_dir / "file1.pdf").write_text("test")
     (build_dir / "file2.pdf").write_text("test")
 
-    # Set verbose mode to enable debug logging
-    # baker_options.verbose = True
     baker = PDFBaker(baker_config, options=baker_options)
     doc = PDFBakerDocument(baker, baker.config, doc_dir)
     assert doc.config.name == "test_doc"
