@@ -8,7 +8,7 @@ import click
 
 from pdfbaker import __version__
 from pdfbaker.baker import PDFBaker, PDFBakerOptions
-from pdfbaker.errors import PDFBakerError
+from pdfbaker.errors import DocumentNotFoundError, PDFBakerError
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ def cli() -> None:
     "config_file",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
 )
+@click.argument("documents", nargs=-1)
 @click.option("-q", "--quiet", is_flag=True, help="Show errors only")
 @click.option("-v", "--verbose", is_flag=True, help="Show debug information")
 @click.option(
@@ -37,13 +38,17 @@ def cli() -> None:
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def bake(
     config_file: Path,
+    documents: tuple[str, ...],
     quiet: bool,
     verbose: bool,
     trace: bool,
     keep_build: bool,
     debug: bool,
 ) -> int:
-    """Parse config file and bake PDFs."""
+    """Parse config file and bake PDFs.
+
+    Optionally specify one or more document names to only process those documents.
+    """
     if debug:
         verbose = True
         keep_build = True
@@ -56,8 +61,11 @@ def bake(
             keep_build=keep_build,
         )
         baker = PDFBaker(config_file, options=options)
-        success = baker.bake()
+        success = baker.bake(document_names=documents if documents else None)
         sys.exit(0 if success else 1)
+    except DocumentNotFoundError as exc:
+        logger.error(str(exc))
+        sys.exit(2)
     except PDFBakerError as exc:
         logger.error(str(exc))
         sys.exit(1)

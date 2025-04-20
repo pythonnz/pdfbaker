@@ -16,6 +16,10 @@ class PDFBakerError(Exception):
     """Base exception for PDF baking errors."""
 
 
+class DocumentNotFoundError(PDFBakerError):
+    """Document not found in main configuration."""
+
+
 class ConfigurationError(PDFBakerError):
     """Failed to load or parse configuration."""
 

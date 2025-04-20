@@ -12,7 +12,7 @@ from typing import Any
 
 from .config import PDFBakerConfiguration, deep_merge
 from .document import PDFBakerDocument
-from .errors import ConfigurationError
+from .errors import ConfigurationError, DocumentNotFoundError
 from .logging import LoggingMixin, setup_logging
 
 __all__ = ["PDFBaker", "PDFBakerOptions"]
@@ -59,6 +59,7 @@ class PDFBaker(LoggingMixin):
         ) -> None:
             """Initialize baker configuration (needs documents)."""
             self.baker = baker
+            self.name = config_file.name
             self.baker.log_debug_section("Loading main configuration: %s", config_file)
             super().__init__(base_config, config_file)
             self.baker.log_trace(self.pretty())
@@ -67,10 +68,12 @@ class PDFBaker(LoggingMixin):
                     'Key "documents" missing - is this the main configuration file?'
                 )
             self.build_dir = self["directories"]["build"]
-            self.documents = [
-                self.resolve_path(doc_spec, directory=self["directories"]["documents"])
-                for doc_spec in self["documents"]
-            ]
+            self.documents = []
+            for doc_spec in self["documents"]:
+                doc_path = self.resolve_path(
+                    doc_spec, directory=self["directories"]["documents"]
+                )
+                self.documents.append({"name": doc_path.name, "path": doc_path})
 
     def __init__(
         self,
@@ -99,8 +102,45 @@ class PDFBaker(LoggingMixin):
             config_file=config_file,
         )
 
-    def bake(self) -> None:
-        """Create PDFs for all documents.
+    def _get_documents_to_process(
+        self, selected_document_names: tuple[str, ...] | None = None
+    ) -> list[Path]:
+        """Get the document paths to process based on optional filtering.
+
+        Args:
+            document_names: Optional tuple of document names to process
+
+        Returns:
+            List of document paths to process
+        """
+        if not selected_document_names:
+            return self.config.documents
+
+        available_doc_names = [doc["name"] for doc in self.config.documents]
+        missing_docs = [
+            name for name in selected_document_names if name not in available_doc_names
+        ]
+        if missing_docs:
+            self.log_info(
+                f"Documents in {self.config.name}: %s",
+                ", ".join(f'"{name}"' for name in available_doc_names),
+            )
+            raise DocumentNotFoundError(
+                f"{'Document' if len(missing_docs) == 1 else 'Documents'} not found in "
+                f"configuration: {', '.join(f'"{name}"' for name in missing_docs)}."
+            )
+
+        return [
+            doc
+            for doc in self.config.documents
+            if doc["name"] in selected_document_names
+        ]
+
+    def bake(self, document_names: tuple[str, ...] | None = None) -> bool:
+        """Create PDFs for all documents or only the specified ones.
+
+        Args:
+            document_names: Optional tuple of document names to process
 
         Returns:
         bool: True if all documents were processed successfully, False if any failed
@@ -108,13 +148,15 @@ class PDFBaker(LoggingMixin):
         pdfs_created: list[Path] = []
         failed_docs: list[tuple[str, str]] = []
 
+        documents = self._get_documents_to_process(document_names)
+
         self.log_debug_subsection("Documents to process:")
-        self.log_debug(self.config.documents)
-        for doc_config in self.config.documents:
+        self.log_debug(documents)
+        for doc_config in documents:
             doc = PDFBakerDocument(
                 baker=self,
                 base_config=self.config,
-                config_path=doc_config,
+                config_path=doc_config["path"],
             )
             pdf_files, error_message = doc.process_document()
             if error_message:
