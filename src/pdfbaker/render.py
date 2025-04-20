@@ -39,7 +39,9 @@ class HighlightingTemplate(jinja2.Template):  # pylint: disable=too-few-public-m
         return rendered
 
 
-def create_env(templates_dir: Path | None = None) -> jinja2.Environment:
+def create_env(
+    templates_dir: Path | None = None, extensions: list[str] | None = None
+) -> jinja2.Environment:
     """Create and configure the Jinja environment."""
     if templates_dir is None:
         raise ValueError("templates_dir is required")
@@ -47,8 +49,7 @@ def create_env(templates_dir: Path | None = None) -> jinja2.Environment:
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(templates_dir)),
         autoescape=jinja2.select_autoescape(),
-        # FIXME: extensions configurable
-        extensions=["jinja2.ext.do"],
+        extensions=extensions or [],
     )
     env.template_class = HighlightingTemplate
     return env

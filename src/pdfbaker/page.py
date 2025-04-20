@@ -93,12 +93,22 @@ class PDFBakerPage(LoggingMixin):
                 self.log_trace_preview(f.read())
 
         try:
-            jinja_env = create_env(self.config.template.parent)
+            jinja_extensions = self.config.get("jinja2_extensions", [])
+            if jinja_extensions:
+                self.log_debug("Using Jinja2 extensions: %s", jinja_extensions)
+            jinja_env = create_env(
+                templates_dir=self.config.template.parent,
+                extensions=jinja_extensions,
+            )
             template = jinja_env.get_template(self.config.template.name)
         except TemplateNotFound as exc:
             raise SVGTemplateError(
                 "Failed to load template for page "
                 f"{self.number} ({self.config.name}): {exc}"
+            ) from exc
+        except TemplateError as exc:
+            raise SVGTemplateError(
+                f"Template error for page {self.number} ({self.config.name}): {exc}"
             ) from exc
 
         template_context = prepare_template_context(
