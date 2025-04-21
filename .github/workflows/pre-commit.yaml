@@ -1,4 +1,4 @@
-name: pre-commit
+name: pre-commit and tests
 
 on:
   pull_request:
@@ -34,6 +34,14 @@ jobs:
               echo "$newfiles"
               exit 1
           fi
+
+  tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Install uv and sync dev dependencies
         run: |
           pip install uv
