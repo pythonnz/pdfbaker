@@ -5,15 +5,26 @@
   <rect width="210" height="297" fill="white"/>
   <!-- Header -->
   <rect x="0" y="0" width="210" height="15" fill="{{ header_color }}"/>
-  <text x="10" y="10" font-family="Arial" font-size="8" fill="white">pdfbaker Example</text>
+  <text x="10" y="10" font-family="Arial" font-size="8" fill="white">{{ header_title }}</text>
 
   <!-- Content -->
   <text x="10" y="40" font-family="Arial" font-size="12" font-weight="bold" fill="{{ header_color }}">{{ title }}</text>
 
-  <!-- List items -->
+  <!-- List items with dynamic spacing using namespace -->
+  {% set ns = namespace(y=70) %}
+
   {% for item in items %}
-  <text x="10" y="{{ 70 + loop.index0 * 40 }}" font-family="Arial" font-size="10" font-weight="bold" fill="{{ text_color }}">{{ item.title }}</text>
-  <text x="10" y="{{ 85 + loop.index0 * 40 }}" font-family="Arial" font-size="9" fill="{{ text_color }}">{{ item.desc }}</text>
+    <!-- Title -->
+    <text x="10" y="{{ ns.y }}" font-family="Arial" font-size="10" font-weight="bold" fill="{{ text_color }}">{{ item.title }}</text>
+
+    <!-- Description with wordwrap filter -->
+    {% set desc_lines = item.desc | wordwrap(40) %}
+    {% for line in desc_lines %}
+      <text x="10" y="{{ ns.y + 15 + loop.index0 * 15 }}" font-family="Arial" font-size="9" fill="{{ text_color }}">{{ line }}</text>
+    {% endfor %}
+
+    <!-- Update position for next item -->
+    {% set ns.y = ns.y + 25 + (desc_lines|length * 15) %}
   {% endfor %}
 
   <!-- Logo -->

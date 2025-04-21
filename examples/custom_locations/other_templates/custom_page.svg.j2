@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg width="210mm" height="297mm" viewBox="0 0 210 297" version="1.1">
-  <text x="105" y="50" text-anchor="middle" font-size="20">{{ title }}</text>
-  <text x="105" y="80" text-anchor="middle" font-size="14">{{ description }}</text>
+  <!-- Background -->
+  <rect width="210" height="297" fill="#ffffff"/>
+
+  <!-- Light blue header background -->
+  <rect x="0" y="0" width="210" height="70" fill="#e0f0ff"/>
+
+  <!-- Title with smaller font -->
+  <text x="105" y="40" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">{{ title }}</text>
+
+  <!-- Description with smaller font -->
+  <text x="105" y="60" text-anchor="middle" font-family="Arial" font-size="8">{{ description }}</text>
+
+  <!-- Detailed description using wordwrap filter -->
+  {% for line in detailed_description | wordwrap(45) %}
+  <text x="20" y="{{ 100 + loop.index0 * 15 }}" font-family="Arial" font-size="8">{{ line }}</text>
+  {% endfor %}
 </svg>

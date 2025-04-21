@@ -6,3 +6,4 @@ pages:
   - benefits
 style:
   highlight_color: "#30987c"
+header_title: "pdfbaker Example"

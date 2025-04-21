@@ -7,6 +7,7 @@ from datetime import datetime
 
 from pdfbaker.document import PDFBakerDocument
 from pdfbaker.errors import PDFBakerError
+from pdfbaker.processing import wordwrap
 
 
 def process_document(document: PDFBakerDocument) -> None:
@@ -23,10 +24,15 @@ def process_document(document: PDFBakerDocument) -> None:
                 f"data:image/png;base64,{base64.b64encode(img_data).decode('utf-8')}"
             )
 
-        # Update config with XKCD info
+        # Get the alt text and split it into lines using the wordwrap function
+        # Note: This is for demonstration. Could use the wordwrap filter in template.
+        wrapped_alt_text = wordwrap(data["alt"], max_chars=60)
+
+        # Update config/template context with XKCD info
         document.config["xkcd"] = {
             "title": data["title"],
             "alt_text": data["alt"],
+            "alt_text_lines": wrapped_alt_text,
             "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "image_data": image_data,
         }

@@ -10,5 +10,10 @@ items:
     desc: "Same template used by multiple pages"
   - title: "Consistent Styling"
     desc: "Shared styles across pages"
+  - title: "Wrapping Long Text"
+    desc:
+      "SVG doesn't have text wrapping containers, but pdfbaker lets you store long text
+      in config and use the wordwrap filter to split it into lines. Adjust max_chars to
+      fit narrower spaces."
 images:
   - name: pythonnz.png

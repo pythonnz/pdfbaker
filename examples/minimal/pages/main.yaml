@@ -4,4 +4,4 @@ content: |-
   This is a minimal example of pdfbaker usage.
   - Single page document
   - One custom variable (text_color)
-  - Basic SVG template using variable for text color
+  - Basic SVG template uses variable for styling

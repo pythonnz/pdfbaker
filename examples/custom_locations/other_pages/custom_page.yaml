@@ -2,5 +2,10 @@ title: "Custom Location Example"
 description: "This page uses custom directory structure"
 template:
   # If you just wrote this directly it would be relative to the templates directory
-  # We want it to be relative to the config file:
+  # We want it to be relative to the config file, so use path:
   path: "../other_templates/custom_page.svg.j2"
+detailed_description:
+  "This example demonstrates custom file locations in pdfbaker. The template file is in
+  a custom directory (other_templates/), the page configuration file is in another
+  custom directory (other_pages/), and the document configuration uses a path-based page
+  reference with custom location."
