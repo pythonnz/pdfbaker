@@ -34,3 +34,12 @@ jobs:
               echo "$newfiles"
               exit 1
           fi
+      - name: Install uv and sync dev dependencies
+        run: |
+          pip install uv
+          uv venv
+          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+          uv sync --dev
+      - name: Run tests with pytest
+        run: pytest
