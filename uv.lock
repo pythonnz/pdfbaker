@@ -253,7 +253,7 @@ wheels = [
 
 [[package]]
 name = "pdfbaker"
-version = "0.5.1"
+version = "0.5.2"
 source = { editable = "." }
 dependencies = [
     { name = "cairosvg" },
