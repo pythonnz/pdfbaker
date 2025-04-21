@@ -25,6 +25,10 @@ DEFAULT_BAKER_CONFIG = {
         "build": "build",
         "dist": "dist",
     },
+    # Highlighting support enabled by default
+    "template_renderers": ["render_highlight"],
+    # Make all filters available by default
+    "template_filters": ["wordwrap"],
 }
 
 

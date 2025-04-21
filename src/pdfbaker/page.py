@@ -99,6 +99,7 @@ class PDFBakerPage(LoggingMixin):
             jinja_env = create_env(
                 templates_dir=self.config.template.parent,
                 extensions=jinja_extensions,
+                template_filters=self.config.get("template_filters", []),
             )
             template = jinja_env.get_template(self.config.template.name)
         except TemplateNotFound as exc:
@@ -122,7 +123,10 @@ class PDFBakerPage(LoggingMixin):
 
         self.log_debug("Rendering template...")
         try:
-            rendered_template = template.render(**template_context)
+            rendered_template = template.render(
+                **template_context,
+                renderers=self.config.get("template_renderers", []),
+            )
             with open(output_svg, "w", encoding="utf-8") as f:
                 f.write(rendered_template)
         except TemplateError as exc:

@@ -7,7 +7,7 @@ import jinja2
 import pytest
 
 from pdfbaker.render import (
-    HighlightingTemplate,
+    PDFBakerTemplate,
     create_env,
     encode_image,
     encode_images,
@@ -20,7 +20,7 @@ def test_create_env(tmp_path: Path) -> None:
     """Test creating Jinja environment."""
     env = create_env(tmp_path)
     assert isinstance(env, jinja2.Environment)
-    assert env.template_class == HighlightingTemplate
+    assert env.template_class == PDFBakerTemplate
     assert isinstance(env.loader, jinja2.FileSystemLoader)
 
 
@@ -33,15 +33,20 @@ def test_create_env_no_directory() -> None:
 # Template rendering tests
 def test_highlighting_template() -> None:
     """Test highlighting template functionality."""
-    template = HighlightingTemplate("<highlight>test</highlight>")
-    result = template.render(style={"highlight_color": "red"})
+    template = PDFBakerTemplate("<highlight>test</highlight>")
+    result = template.render(
+        renderers=["render_highlight"], style={"highlight_color": "red"}
+    )
     assert result == '<tspan style="fill:red">test</tspan>'
 
 
-def test_highlighting_template_no_highlight() -> None:
+def test_highlighting_template_no_style() -> None:
     """Test highlighting template with no highlight color."""
-    template = HighlightingTemplate("<highlight>test</highlight>")
-    result = template.render()  # No style provided
+    template = PDFBakerTemplate("<highlight>test</highlight>")
+    result = template.render(
+        renderers=["render_highlight"],
+        # No style provided
+    )
     assert result == "<highlight>test</highlight>"
 
 

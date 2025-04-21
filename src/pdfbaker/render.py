@@ -8,39 +8,66 @@ from typing import Any
 
 import jinja2
 
+from . import processing
+from .config import render_config
 from .types import ImageSpec, StyleDict
 
 __all__ = [
     "create_env",
+    "PDFBakerTemplate",
     "prepare_template_context",
 ]
 
 
-class HighlightingTemplate(jinja2.Template):  # pylint: disable=too-few-public-methods
-    """A Jinja template that automatically applies highlighting to text.
+class PDFBakerTemplate(jinja2.Template):  # pylint: disable=too-few-public-methods
+    """A Jinja template with custom rendering capabilities for PDFBaker.
 
-    This template class extends the base Jinja template to automatically
-    convert <highlight> tags to styled <tspan> elements with the highlight color.
+    This template class extends the base Jinja template to apply
+    additional rendering transformations to the template output.
     """
 
     def render(self, *args: Any, **kwargs: Any) -> str:
-        """Render the template and apply highlighting to the result."""
+        """Render the template and apply custom transformations.
+
+        Args:
+            *args: Positional arguments for template rendering
+            **kwargs: Keyword arguments for template rendering
+                renderers: Optional list of renderer function names to apply
+
+        Returns:
+            Rendered template with transformations applied
+        """
         rendered = super().render(*args, **kwargs)
 
-        if "style" in kwargs and "highlight_color" in kwargs["style"]:
-            highlight_color = kwargs["style"]["highlight_color"]
-
-            def replacer(match: re.Match[str]) -> str:
-                content = match.group(1)
-                return f'<tspan style="fill:{highlight_color}">{content}</tspan>'
-
-            rendered = re.sub(r"<highlight>(.*?)</highlight>", replacer, rendered)
+        for renderer_name in kwargs.get("renderers", []):
+            renderer_func = globals().get(renderer_name)
+            if callable(renderer_func):
+                rendered = renderer_func(rendered, **kwargs)
 
         return rendered
 
 
+def render_highlight(rendered: str, **kwargs: Any) -> str:
+    """Apply highlight tags to the rendered template content.
+
+    Convert <highlight> tags to styled <tspan> elements with the highlight color.
+    """
+    if "style" in kwargs and "highlight_color" in kwargs["style"]:
+        highlight_color = kwargs["style"]["highlight_color"]
+
+        def replacer(match: re.Match[str]) -> str:
+            content = match.group(1)
+            return f'<tspan style="fill:{highlight_color}">{content}</tspan>'
+
+        rendered = re.sub(r"<highlight>(.*?)</highlight>", replacer, rendered)
+
+    return rendered
+
+
 def create_env(
-    templates_dir: Path | None = None, extensions: list[str] | None = None
+    templates_dir: Path | None = None,
+    extensions: list[str] | None = None,
+    template_filters: list[str] | None = None,
 ) -> jinja2.Environment:
     """Create and configure the Jinja environment."""
     if templates_dir is None:
@@ -51,20 +78,29 @@ def create_env(
         autoescape=jinja2.select_autoescape(),
         extensions=extensions or [],
     )
-    env.template_class = HighlightingTemplate
+    env.template_class = PDFBakerTemplate
+
+    if template_filters:
+        for filter_name in template_filters:
+            if hasattr(processing, filter_name):
+                env.filters[filter_name] = getattr(processing, filter_name)
+
     return env
 
 
 def prepare_template_context(
     config: dict[str], images_dir: Path | None = None
 ) -> dict[str]:
-    """Prepare config for template rendering by resolving styles and encoding images.
+    """Prepare template context with variables/styles/images
+
+    Resolves variables, styles and encodes images.
 
     Args:
         config: Configuration with optional styles and images
         images_dir: Directory containing images to encode
     """
-    context = config.copy()
+    # Render configuration to resolve template strings inside strings
+    context = render_config(config)
 
     # Resolve style references to actual theme colors
     if "style" in context and "theme" in context:
