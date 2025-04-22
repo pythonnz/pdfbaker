@@ -36,7 +36,7 @@ pipx ensurepath
   sudo apt install ghostscript
   ```
 
-- If you your templates embed particular fonts, they need to be installed. For example
+- If your templates embed particular fonts, they need to be installed. For example
   for [Roboto fonts](https://fonts.google.com/specimen/Roboto):
   ```bash
   sudo apt install fonts-roboto
