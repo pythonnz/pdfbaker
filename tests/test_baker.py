@@ -6,15 +6,16 @@ from pathlib import Path
 
 import pytest
 
-from pdfbaker.baker import PDFBaker, PDFBakerOptions
+from pdfbaker.baker import PDFBaker
+from pdfbaker.config import BakerOptions
 from pdfbaker.errors import ConfigurationError
 from pdfbaker.logging import TRACE
 
 
-# PDFBakerOptions tests
+# BakerOptions tests
 def test_baker_options_defaults() -> None:
-    """Test PDFBakerOptions default values."""
-    options = PDFBakerOptions()
+    """Test BakerOptions default values."""
+    options = BakerOptions()
     assert not options.quiet
     assert not options.verbose
     assert not options.trace
@@ -25,10 +26,10 @@ def test_baker_options_defaults() -> None:
 def test_baker_options_logging_levels() -> None:
     """Test different logging level configurations."""
     test_cases = [
-        (PDFBakerOptions(quiet=True), logging.ERROR),
-        (PDFBakerOptions(verbose=True), logging.DEBUG),
-        (PDFBakerOptions(trace=True), TRACE),
-        (PDFBakerOptions(), logging.INFO),  # default
+        (BakerOptions(quiet=True), logging.ERROR),
+        (BakerOptions(verbose=True), logging.DEBUG),
+        (BakerOptions(trace=True), TRACE),
+        (BakerOptions(), logging.INFO),  # default
     ]
 
     examples_config = Path(__file__).parent.parent / "examples" / "examples.yaml"
@@ -38,13 +39,13 @@ def test_baker_options_logging_levels() -> None:
 
 
 def test_baker_options_default_config_overrides(tmp_path: Path) -> None:
-    """Test PDFBakerOptions with default_config_overrides."""
+    """Test BakerOptions with default_config_overrides."""
     # Create a minimal valid config
     config_file = tmp_path / "test.yaml"
     config_file.write_text("documents: [test]")
 
     custom_dir = tmp_path / "custom"
-    options = PDFBakerOptions(
+    options = BakerOptions(
         default_config_overrides={
             "directories": {
                 "documents": str(custom_dir),
@@ -79,7 +80,7 @@ def test_baker_examples() -> None:
     build_dir.mkdir(exist_ok=True)
     dist_dir.mkdir(exist_ok=True)
 
-    options = PDFBakerOptions(
+    options = BakerOptions(
         quiet=True,
         keep_build=True,
         default_config_overrides={

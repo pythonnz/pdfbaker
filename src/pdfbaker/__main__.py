@@ -7,7 +7,8 @@ from pathlib import Path
 import click
 
 from pdfbaker import __version__
-from pdfbaker.baker import PDFBaker, PDFBakerOptions
+from pdfbaker.baker import PDFBaker
+from pdfbaker.config import BakerOptions
 from pdfbaker.errors import DocumentNotFoundError, PDFBakerError
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ def bake(
         keep_build = True
 
     try:
-        options = PDFBakerOptions(
+        options = BakerOptions(
             quiet=quiet,
             verbose=verbose,
             trace=trace,

@@ -49,6 +49,8 @@ repos:
           - "cairosvg"
           - "click"
           - "jinja2"
+          - "pydantic"
           - "pypdf"
           - "pytest"
-          - "pyyaml"
+          - "pyyaml" # FIXME: remove once fully migrated to ruamel
+          - "ruamel.yaml"

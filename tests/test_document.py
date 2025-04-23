@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from pdfbaker.baker import PDFBaker, PDFBakerOptions
+from pdfbaker.baker import PDFBaker
+from pdfbaker.config import BakerOptions
 from pdfbaker.document import PDFBakerDocument
 from pdfbaker.errors import ConfigurationError
 
@@ -22,9 +23,9 @@ def fixture_baker_config(tmp_path: Path) -> Path:
 
 
 @pytest.fixture(name="baker_options")
-def fixture_baker_options(tmp_path: Path) -> PDFBakerOptions:
+def fixture_baker_options(tmp_path: Path) -> BakerOptions:
     """Create baker options with test-specific build/dist directories."""
-    return PDFBakerOptions(
+    return BakerOptions(
         default_config_overrides={
             "directories": {
                 "build": str(tmp_path / "build"),
@@ -69,7 +70,7 @@ def fixture_doc_dir(tmp_path: Path) -> Path:
 
 
 def test_document_init_with_dir(
-    baker_config: Path, baker_options: PDFBakerOptions, doc_dir: Path
+    baker_config: Path, baker_options: BakerOptions, doc_dir: Path
 ) -> None:
     """Test document initialization with directory."""
     baker = PDFBaker(config_file=baker_config, options=baker_options)
@@ -88,7 +89,7 @@ def test_document_init_with_dir(
 
 
 def test_document_init_with_file(
-    tmp_path: Path, baker_config: Path, baker_options: PDFBakerOptions
+    tmp_path: Path, baker_config: Path, baker_options: BakerOptions
 ) -> None:
     """Test document initialization with config file."""
     # Create document config
@@ -134,7 +135,7 @@ def test_document_init_missing_pages(tmp_path: Path, baker_config: Path) -> None
 
 
 def test_document_custom_bake(
-    baker_config: Path, baker_options: PDFBakerOptions, doc_dir: Path
+    baker_config: Path, baker_options: BakerOptions, doc_dir: Path
 ) -> None:
     """Test document processing with custom bake module."""
     # Create custom bake module
@@ -151,7 +152,7 @@ def process_document(document):
 
 
 def test_document_custom_bake_error(
-    baker_config: Path, baker_options: PDFBakerOptions, doc_dir: Path
+    baker_config: Path, baker_options: BakerOptions, doc_dir: Path
 ) -> None:
     """Test document processing with invalid custom bake module."""
     # Create invalid bake module
@@ -165,7 +166,7 @@ def test_document_custom_bake_error(
 
 
 def test_document_variants(
-    baker_config: Path, baker_options: PDFBakerOptions, doc_dir: Path
+    baker_config: Path, baker_options: BakerOptions, doc_dir: Path
 ) -> None:
     """Test document processing with variants."""
     # Update config file
@@ -189,7 +190,7 @@ def test_document_variants(
 
 
 def test_document_variants_with_different_pages(
-    tmp_path: Path, baker_config: Path, baker_options: PDFBakerOptions
+    tmp_path: Path, baker_config: Path, baker_options: BakerOptions
 ) -> None:
     """Test document with variants where each variant has different pages."""
     # Create document config with variants but no pages
@@ -266,7 +267,7 @@ def test_document_variants_with_different_pages(
 
 def test_document_teardown(
     baker_config: Path,
-    baker_options: PDFBakerOptions,
+    baker_options: BakerOptions,
     doc_dir: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:

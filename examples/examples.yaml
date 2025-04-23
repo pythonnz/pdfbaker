@@ -4,3 +4,8 @@ documents:
   - variants
   - ./custom_locations/your_directory
   - custom_processing
+
+custom_stuff:
+  - year: 2025
+  - nested:
+      - anything: really

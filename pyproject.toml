@@ -9,8 +9,10 @@ dependencies = [
     "cairosvg",
     "click",
     "jinja2",
+    "pydantic",
     "pypdf",
-    "pyyaml",
+    "pyyaml",   # FIXME: remove once fully migrated to ruamel
+    "ruamel.yaml",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"

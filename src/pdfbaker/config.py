@@ -2,19 +2,210 @@
 
 import logging
 import pprint
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
 import yaml
 from jinja2 import Template
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    model_validator,
+)
+from ruamel.yaml import YAML
 
 from .errors import ConfigurationError
-from .logging import truncate_strings
+from .logging import LoggingMixin, truncate_strings
 from .types import PathSpec
 
 __all__ = ["PDFBakerConfiguration", "deep_merge", "render_config"]
 
 logger = logging.getLogger(__name__)
+
+
+# #####################################################################
+# New Pydantic models
+# #####################################################################
+
+# TODO: show names instead of index numbers for error locations
+#       https://docs.pydantic.dev/latest/errors/errors/#customize-error-messages
+
+
+class NewPathSpec(BaseModel):
+    """File/Directory location in YAML config."""
+
+    # Relative paths may not exist until resolved against root,
+    # so we have to check existence later
+    # path: FilePath | DirectoryPath
+    path: Path
+    name: str = Field(default_factory=lambda data: data["path"].stem)
+
+    @model_validator(mode="before")
+    @classmethod
+    def ensure_pathspec(cls, data: Any) -> Any:
+        """Coerce what was given"""
+        if isinstance(data, str):
+            data = {"name": data}
+        if isinstance(data, dict) and "path" not in data:
+            data["path"] = Path(data["name"])
+        return data
+
+
+class ImageSpec(NewPathSpec):
+    """Image specification."""
+
+    type: str | None = None
+    data: str | None = None
+
+
+class StyleDict(BaseModel):
+    """Style configuration."""
+
+    highlight_color: str | None = None
+
+
+class DirectoriesConfig(BaseModel):
+    """Directories configuration."""
+
+    root: NewPathSpec
+    build: NewPathSpec
+    dist: NewPathSpec
+    documents: NewPathSpec
+    pages: NewPathSpec
+    templates: NewPathSpec
+    images: NewPathSpec
+
+    @model_validator(mode="after")
+    def resolve_paths(self) -> Any:
+        """Resolve all paths relative to the root directory."""
+        self.root.path = self.root.path.resolve()
+        for field_name, value in self.__dict__.items():
+            if field_name != "root" and isinstance(value, NewPathSpec):
+                value.path = (self.root.path / value.path).resolve()
+        return self
+
+
+class PageConfig(BaseModel, LoggingMixin):
+    """Page configuration."""
+
+    directories: DirectoriesConfig
+    template: NewPathSpec
+    model_config = ConfigDict(
+        strict=True,  # don't try to coerce values
+        extra="allow",  # will go in __pydantic_extra__ dict
+    )
+
+
+class DocumentConfig(BaseModel, LoggingMixin):
+    """Document configuration.
+
+    Lazy-loads page configs.
+    """
+
+    directories: DirectoriesConfig
+    pages: list[Path | PageConfig]
+    model_config = ConfigDict(
+        strict=True,  # don't try to coerce values
+        extra="allow",  # will go in __pydantic_extra__ dict
+    )
+
+
+class DocumentVariantConfig(DocumentConfig):
+    """Document variant configuration."""
+
+
+class TemplateRenderer(Enum):
+    """Possible values for template_renderers."""
+
+    RENDER_HIGHLIGHT = "render_highlight"
+
+
+class TemplateFilter(Enum):
+    """Possible values for template_filters."""
+
+    WORDWRAP = "wordwrap"
+
+
+class SVG2PDFBackend(Enum):
+    """Possible values for svg2pdf_backend."""
+
+    CAIROSVG = "cairosvg"
+    INKSCAPE = "inkscape"
+
+
+class BakerConfig(BaseModel, LoggingMixin):
+    """Baker configuration.
+
+    Lazy-loads document configs.
+    """
+
+    directories: DirectoriesConfig
+    # TODO: lazy/forgiving documents parsing
+    # documents: list[Path | DocumentConfig]
+    documents: list[str]
+    template_renderers: list[TemplateRenderer] = [TemplateRenderer.RENDER_HIGHLIGHT]
+    template_filters: list[TemplateFilter] = [TemplateFilter.WORDWRAP]
+    svg2pdf_backend: SVG2PDFBackend | None = SVG2PDFBackend.CAIROSVG
+    compress_pdf: bool = False
+    model_config = ConfigDict(
+        strict=True,  # don't try to coerce values
+        extra="allow",  # will go in __pydantic_extra__ dict
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def load_config(cls, data: Any) -> Any:
+        """Load documents from YAML file."""
+        if isinstance(data, dict) and "config_file" in data:
+            config_file = data.pop("config_file")
+            config_data = YAML().load(config_file.read_text())
+            config_data.update(data)  # let kwargs override values from YAML
+            return config_data
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_directories(cls, data: Any) -> Any:
+        """Set default directories."""
+        if isinstance(data, dict):
+            directories = data.setdefault("directories", {})
+            directories.setdefault("root", ".")
+            directories.setdefault("build", "build")
+            directories.setdefault("dist", "dist")
+            directories.setdefault("documents", ".")
+            directories.setdefault("pages", "pages")
+            directories.setdefault("templates", "templates")
+            directories.setdefault("images", "images")
+        return data
+
+    @property
+    def custom_config(self) -> dict[str, Any]:
+        """Dictionary of all custom user-defined configuration."""
+        return self.__pydantic_extra__
+
+
+class BakerOptions(BaseModel):
+    """Options for controlling PDFBaker behavior.
+
+    Attributes:
+        quiet: Show errors only
+        verbose: Show debug information
+        trace: Show trace information (even more detailed than debug)
+        keep_build: Keep build artifacts after processing
+        default_config_overrides: Dictionary of values to override the built-in defaults
+            before loading the main configuration
+    """
+
+    quiet: bool = False
+    verbose: bool = False
+    trace: bool = False
+    keep_build: bool = False
+    default_config_overrides: dict[str, Any] | None = None
+
+
+# #####################################################################
 
 
 def deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:

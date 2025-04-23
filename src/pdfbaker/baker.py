@@ -6,16 +6,15 @@ Is given a configuration file and sets up logging.
 bake() delegates to its documents and reports back the end result.
 """
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .config import PDFBakerConfiguration, deep_merge
+from .config import BakerOptions, PDFBakerConfiguration, deep_merge
 from .document import PDFBakerDocument
 from .errors import ConfigurationError, DocumentNotFoundError
 from .logging import LoggingMixin, setup_logging
 
-__all__ = ["PDFBaker", "PDFBakerOptions"]
+__all__ = ["PDFBaker"]
 
 
 DEFAULT_BAKER_CONFIG = {
@@ -30,26 +29,6 @@ DEFAULT_BAKER_CONFIG = {
     # Make all filters available by default
     "template_filters": ["wordwrap"],
 }
-
-
-@dataclass
-class PDFBakerOptions:
-    """Options for controlling PDFBaker behavior.
-
-    Attributes:
-        quiet: Show errors only
-        verbose: Show debug information
-        trace: Show trace information (even more detailed than debug)
-        keep_build: Keep build artifacts after processing
-        default_config_overrides: Dictionary of values to override the built-in defaults
-            before loading the main configuration
-    """
-
-    quiet: bool = False
-    verbose: bool = False
-    trace: bool = False
-    keep_build: bool = False
-    default_config_overrides: dict[str, Any] | None = None
 
 
 class PDFBaker(LoggingMixin):
@@ -82,7 +61,7 @@ class PDFBaker(LoggingMixin):
     def __init__(
         self,
         config_file: Path,
-        options: PDFBakerOptions | None = None,
+        options: BakerOptions | None = None,
     ) -> None:
         """Initialize PDFBaker with config file path. Set logging level.
 
@@ -91,7 +70,7 @@ class PDFBaker(LoggingMixin):
             options: Optional options for logging and build behavior
         """
         super().__init__()
-        options = options or PDFBakerOptions()
+        options = options or BakerOptions()
         setup_logging(quiet=options.quiet, trace=options.trace, verbose=options.verbose)
         self.keep_build = options.keep_build
 
