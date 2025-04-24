@@ -157,8 +157,11 @@ class BakerConfig(BaseModel, LoggingMixin):
     @model_validator(mode="before")
     @classmethod
     def load_config(cls, data: Any) -> Any:
-        """Load documents from YAML file."""
+        """Load main configuration from YAML file."""
         if isinstance(data, dict) and "config_file" in data:
+            # FIXME: save config_file path in model
+            # then load in "after" validator
+            # nice side effect: just change config_file to reload
             config_file = data.pop("config_file")
             config_data = YAML().load(config_file.read_text())
             config_data.update(data)  # let kwargs override values from YAML
@@ -171,7 +174,7 @@ class BakerConfig(BaseModel, LoggingMixin):
         """Set default directories."""
         if isinstance(data, dict):
             directories = data.setdefault("directories", {})
-            directories.setdefault("root", ".")
+            directories.setdefault("root", ".")  # FIXME: should be config parent
             directories.setdefault("build", "build")
             directories.setdefault("dist", "dist")
             directories.setdefault("documents", ".")
