@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/pypi/dw/pdfbaker?color=blue)](https://pypistats.org/packages/pdfbaker)
 
 [![tests](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml/badge.svg)](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml)
-[![codecov](https://codecov.io/gh/pythonnz/pdfbaker/branch/main/graph/badge.svg)](https://codecov.io/gh/pythonnz/pdfbaker)
+[![codecov](https://img.shields.io/codecov/c/github/pythonnz/pdfbaker)](https://codecov.io/gh/pythonnz/pdfbaker)
 
 [![Last commit](https://img.shields.io/github/last-commit/pythonnz/pdfbaker?color=lightgrey)](https://github.com/pythonnz/pdfbaker/commits/main)
 [![License](https://img.shields.io/github/license/pythonnz/pdfbaker?color=lightgrey)](https://github.com/pythonnz/pdfbaker/blob/main/LICENSE)
