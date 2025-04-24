@@ -1,12 +1,14 @@
 # pdfbaker
 
-[![PyPI version](https://img.shields.io/pypi/v/pdfbaker)](https://pypi.org/project/pdfbaker/)
+[![PyPI version](https://img.shields.io/pypi/v/pdfbaker?color=blue)](https://pypi.org/project/pdfbaker/)
+[![Python](https://img.shields.io/python/required-version-toml?color=blue&tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fpythonnz%2Fpdfbaker%2Fmain%2Fpyproject.toml)](https://github.com/pythonnz/pdfbaker/blob/main/pyproject.toml)
+[![Downloads](https://img.shields.io/pypi/dw/pdfbaker?color=blue)](https://pypistats.org/packages/pdfbaker)
+
 [![tests](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml/badge.svg)](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml)
-[![Last commit](https://img.shields.io/github/last-commit/pythonnz/pdfbaker)](https://github.com/pythonnz/pdfbaker/commits/main)
-[![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fpythonnz%2Fpdfbaker%2Frefs%2Fheads%2Fmain%2Fpyproject.toml)](https://github.com/pythonnz/pdfbaker/blob/main/pyproject.toml)
 [![codecov](https://codecov.io/gh/pythonnz/pdfbaker/branch/main/graph/badge.svg)](https://codecov.io/gh/pythonnz/pdfbaker)
-[![Downloads](https://img.shields.io/pypi/dw/pdfbaker)](https://pypistats.org/packages/pdfbaker)
-[![License](https://img.shields.io/github/license/pythonnz/pdfbaker)](https://github.com/pythonnz/pdfbaker/blob/main/LICENSE)
+
+[![Last commit](https://img.shields.io/github/last-commit/pythonnz/pdfbaker?color=lightgrey)](https://github.com/pythonnz/pdfbaker/commits/main)
+[![License](https://img.shields.io/github/license/pythonnz/pdfbaker?color=lightgrey)](https://github.com/pythonnz/pdfbaker/blob/main/LICENSE)
 
 Create PDF documents from YAML-configured SVG templates.
 
