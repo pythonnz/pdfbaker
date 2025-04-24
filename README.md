@@ -1,7 +1,6 @@
 # pdfbaker
 
 [![PyPI version](https://img.shields.io/pypi/v/pdfbaker)](https://pypi.org/project/pdfbaker/)
-
 [![tests](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml/badge.svg)](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml)
 [![Last commit](https://img.shields.io/github/last-commit/pythonnz/pdfbaker)](https://github.com/pythonnz/pdfbaker)[![Python](https://img.shields.io/pypi/pyversions/pdfbaker)](https://github.com/pythonnz/pdfbaker/)
 [![codecov](https://codecov.io/gh/pythonnz/pdfbaker/branch/main/graph/badge.svg)](https://codecov.io/gh/pythonnz/pdfbaker)
