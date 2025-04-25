@@ -1,4 +1,4 @@
-"""PDFBakerDocument class.
+"""Document class.
 
 Document-level processing, variants, custom bake modules.
 
@@ -9,131 +9,35 @@ combines and compresses the result and reports back to its baker.
 import importlib
 import os
 from pathlib import Path
-from typing import Any
 
 from .config import (
-    PDFBakerConfiguration,
-    deep_merge,
+    DocumentConfig,
+    DocumentVariantConfig,
+    PathSpec,
     render_config,
 )
 from .errors import (
-    ConfigurationError,
     PDFBakerError,
     PDFCombineError,
     PDFCompressionError,
 )
 from .logging import LoggingMixin
-from .page import PDFBakerPage
+from .page import Page
 from .pdf import (
     combine_pdfs,
     compress_pdf,
 )
 
-DEFAULT_DOCUMENT_CONFIG = {
-    # Default to directories relative to the config file
-    "directories": {
-        "pages": "pages",
-        "templates": "templates",
-        "images": "images",
-    },
-}
-DEFAULT_DOCUMENT_CONFIG_FILE = "config.yaml"
-
-__all__ = ["PDFBakerDocument"]
+__all__ = ["Document"]
 
 
-class PDFBakerDocument(LoggingMixin):
-    """A document being processed."""
+class Document(LoggingMixin):
+    """Document class."""
 
-    class Configuration(PDFBakerConfiguration):
-        """PDFBaker document-specific configuration."""
-
-        def __init__(
-            self,
-            document: "PDFBakerDocument",
-            base_config: "PDFBakerConfiguration",  # type: ignore # noqa: F821
-            config_path: Path,
-        ) -> None:
-            """Initialize document configuration.
-
-            Args:
-                base_config: The PDFBaker configuration to merge with
-                config_file: The document configuration (YAML file)
-            """
-            self.document = document
-
-            if config_path.is_dir():
-                self.name = config_path.name
-                config_path = config_path / DEFAULT_DOCUMENT_CONFIG_FILE
-            else:
-                self.name = config_path.stem
-
-            base_config = deep_merge(base_config, DEFAULT_DOCUMENT_CONFIG)
-
-            self.document.log_trace_section(
-                "Loading document configuration: %s", config_path
-            )
-            super().__init__(base_config, config_path)
-            self.document.log_trace(self.pretty())
-
-            self.bake_path = self["directories"]["config"] / "bake.py"
-            self.build_dir = self["directories"]["build"] / self.name
-            self.dist_dir = self["directories"]["dist"] / self.name
-
-            # The "pages" may be defined in the variants rather than
-            # the document itself (when different variants have different pages)
-            if "pages" not in self:
-                if "variants" in self:
-                    # A variant not defining pages will fail to process
-                    self.document.log_debug(
-                        'Pages of document "%s" will be determined per variant',
-                        self.name,
-                    )
-                else:
-                    self.document.log_warning(
-                        f'Document "{self.name}" has neither "pages" nor "variants"'
-                    )
-                    raise ConfigurationError(
-                        f'Cannot determine pages of document "{self.name}"'
-                    )
-            # Actual pages will be determined during processing
-            self.pages = []
-
-        def determine_pages(self, config: dict[str, Any]) -> list[Path]:
-            """Determine pages for the give (document/variant) configuration."""
-            if "pages" not in config:
-                raise ConfigurationError(f'Cannot determine pages for "{self.name}"')
-            pages = []
-            for page_spec in config["pages"]:
-                if isinstance(page_spec, dict) and "path" in page_spec:
-                    # Path was specified: relative to this config file
-                    page = self.resolve_path(
-                        page_spec["path"], directory=config["directories"]["config"]
-                    )
-                else:
-                    # Only name was specified: relative to the pages directory
-                    page = self.resolve_path(
-                        page_spec, directory=config["directories"]["pages"]
-                    )
-                if not page.suffix:
-                    page = page.with_suffix(".yaml")
-                pages.append(page)
-            self.pages = pages
-
-    def __init__(
-        self,
-        baker: "PDFBaker",  # type: ignore # noqa: F821
-        base_config: dict[str, Any],
-        config_path: Path,
-    ):
-        """Initialize a document."""
-        super().__init__()
-        self.baker = baker
-        self.config = self.Configuration(
-            document=self,
-            base_config=base_config,
-            config_path=config_path,
-        )
+    def __init__(self, config_path: PathSpec, **kwargs):
+        self.log_trace_section("Loading document configuration: %s", config_path.name)
+        self.config = DocumentConfig(config_path=config_path, **kwargs)
+        self.log_trace(self.config.readable())
 
     def process_document(self) -> tuple[Path | list[Path] | None, str | None]:
         """Process the document - use custom bake module if it exists.
@@ -147,15 +51,18 @@ class PDFBakerDocument(LoggingMixin):
         """
         self.log_info_section('Processing document "%s"...', self.config.name)
 
-        self.config.build_dir.mkdir(parents=True, exist_ok=True)
-        self.config.dist_dir.mkdir(parents=True, exist_ok=True)
+        self.config.directories.build.mkdir(parents=True, exist_ok=True)
+        self.config.directories.dist.mkdir(parents=True, exist_ok=True)
 
+        bake_path = self.config.bake_path.path
         try:
-            if self.config.bake_path.exists():
-                return self._process_with_custom_bake(self.config.bake_path), None
+            if bake_path.exists():
+                return self._process_with_custom_bake(bake_path), None
             return self.process(), None
         except PDFBakerError as exc:
             return None, str(exc)
+
+    # ##############################################################
 
     def _process_with_custom_bake(self, bake_path: Path) -> Path | list[Path]:
         """Process document using custom bake module."""
@@ -177,31 +84,89 @@ class PDFBakerDocument(LoggingMixin):
 
     def process(self) -> Path | list[Path]:
         """Process document using standard processing."""
-        if "variants" in self.config:
+        if self.config.variants:
             # Multiple PDF documents
             pdf_files = []
-            for variant in self.config["variants"]:
-                self.log_info_subsection('Processing variant "%s"...', variant["name"])
-                variant_config = deep_merge(self.config, variant)
+            for variant_config in self.config.variants:
+                self.log_info_subsection(
+                    'Processing variant "%s"...', variant_config.name
+                )
+                _ = """
+                # variant_config = deep_merge(self.config, variant)
                 # self.log_trace(variant_config)
-                variant_config["variant"] = variant
-                variant_config = render_config(variant_config)
-                page_pdfs = self._process_pages(variant_config)
-                pdf_files.append(self._finalize(page_pdfs, variant_config))
+                self.config.update(variant_config)
+                # variant_config = render_config(variant_config)
+                page_pdfs = self._process_pages(self.config)
+                pdf_files.append(self._finalize(page_pdfs, self.config))
+                """
+
+                # FIXME: Too much logic here, should be in DocumentVariantConfig
+
+                # Create a document config with the variant info
+                merged_config = self.config.model_dump()
+                variant_data = variant_config.model_dump()
+                merged_config["variant"] = variant_data
+
+                # Update other config values from the variant
+                # FIXME: should use deep_merge?
+                # FIXME: pages could be defined in page but not variant or vice versa
+                for key, value in variant_data.items():
+                    if key not in ["directories", "pages"]:
+                        merged_config[key] = value
+                # if variant_data.get("pages"):
+                #    merged_config["pages"] = variant_data["pages"]
+
+                variant_settings = self.config.variant_settings
+                merged_config.update(variant_settings)
+                merged_config = render_config(merged_config)
+
+                doc_with_variant = DocumentVariantConfig(**merged_config)
+
+                # Process with the variant-enhanced config
+                page_pdfs = self._process_pages(doc_with_variant)
+                pdf_files.append(self._finalize(page_pdfs, doc_with_variant))
+
             return pdf_files
 
         # Single PDF document
-        doc_config = render_config(self.config)
-        page_pdfs = self._process_pages(doc_config)
-        return self._finalize(page_pdfs, doc_config)
+        # doc_config = render_config(self.config)
+        page_pdfs = self._process_pages(self.config)
+        return self._finalize(page_pdfs, self.config)
 
-    def _process_pages(self, config: dict[str, Any]) -> list[Path]:
+    def _process_pages(
+        self, config: DocumentConfig | DocumentVariantConfig
+    ) -> list[Path]:
         """Process pages with given configuration."""
-        self.config.determine_pages(config)
         self.log_debug_subsection("Pages to process:")
-        self.log_debug(self.config.pages)
+        self.log_debug(config.pages)
         pdf_files = []
-        for page_num, page_config_path in enumerate(self.config.pages, start=1):
+
+        # FIXME: Too much logic here, should be in DocumentVariantConfig
+
+        for page_num, page_config_path in enumerate(config.pages, start=1):
+            # if "variant" in config:
+            #    base_config = DocumentVariantConfig(
+            #        variant=config["variant"],
+            #        directories=config.directories,
+            #        pages=config.pages,
+            #    )
+            # else:
+            #    base_config = config
+
+            # Get the settings (includes variant if present)
+            base_config = config.page_settings
+            if "config_path" in base_config:
+                # Fix for variant
+                del base_config["config_path"]
+
+            page = Page(
+                config_path=page_config_path,
+                number=page_num,
+                **base_config,
+            )
+            pdf_files.append(page.process())
+
+            _ = """
             page_name = page_config_path.stem
             base_config = config.copy()
 
@@ -225,24 +190,27 @@ class PDFBakerDocument(LoggingMixin):
                 config_path=page_config_path,
             )
             pdf_files.append(page.process())
+            """
 
         return pdf_files
 
-    def _finalize(self, pdf_files: list[Path], doc_config: dict[str, Any]) -> Path:
+    def _finalize(
+        self, pdf_files: list[Path], doc_config: DocumentConfig | DocumentVariantConfig
+    ) -> Path:
         """Combine PDF pages and optionally compress."""
         self.log_debug_subsection("Finalizing document...")
         self.log_debug("Combining PDF pages...")
         try:
             combined_pdf = combine_pdfs(
                 pdf_files,
-                self.config.build_dir / f"{doc_config['filename']}.pdf",
+                self.config.directories.build / f"{doc_config.filename}.pdf",
             )
         except PDFCombineError as exc:
             raise PDFBakerError(f"Failed to combine PDFs: {exc}") from exc
 
-        output_path = self.config.dist_dir / f"{doc_config['filename']}.pdf"
+        output_path = self.config.directories.dist / f"{doc_config.filename}.pdf"
 
-        if doc_config.get("compress_pdf", False):
+        if doc_config.compress_pdf:
             self.log_debug("Compressing PDF document...")
             try:
                 compress_pdf(combined_pdf, output_path)
@@ -259,19 +227,20 @@ class PDFBakerDocument(LoggingMixin):
         self.log_info("Created %s", output_path.name)
         return output_path
 
+    # ##############################################################
+
     def teardown(self) -> None:
         """Clean up build directory after processing."""
-        self.log_debug_subsection(
-            "Tearing down build directory: %s", self.config.build_dir
-        )
-        if self.config.build_dir.exists():
+        build_dir = self.config.directories.build
+        self.log_debug_subsection("Tearing down build directory: %s", build_dir)
+        if build_dir.exists():
             self.log_debug("Removing files in build directory...")
-            for file_path in self.config.build_dir.iterdir():
+            for file_path in build_dir.iterdir():
                 if file_path.is_file():
                     file_path.unlink()
 
             try:
                 self.log_debug("Removing build directory...")
-                self.config.build_dir.rmdir()
+                build_dir.rmdir()
             except OSError:
                 self.log_warning("Build directory not empty - not removing")

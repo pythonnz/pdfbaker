@@ -52,5 +52,4 @@ repos:
           - "pydantic"
           - "pypdf"
           - "pytest"
-          - "pyyaml" # FIXME: remove once fully migrated to ruamel
           - "ruamel.yaml"

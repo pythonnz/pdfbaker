@@ -6,10 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from pdfbaker.baker import PDFBaker
-from pdfbaker.config import BakerOptions
+from pdfbaker.baker import Baker, BakerOptions
 from pdfbaker.errors import ConfigurationError
 from pdfbaker.logging import TRACE
+
+# FIXME: default_config_overrides no longer needed, just throw kwargs at Baker init
 
 
 # BakerOptions tests
@@ -34,7 +35,7 @@ def test_baker_options_logging_levels() -> None:
 
     examples_config = Path(__file__).parent.parent / "examples" / "examples.yaml"
     for options, expected_level in test_cases:
-        PDFBaker(examples_config, options=options)
+        Baker(examples_config, options=options)
         assert logging.getLogger().level == expected_level
 
 
@@ -53,7 +54,7 @@ def test_baker_options_default_config_overrides(tmp_path: Path) -> None:
         }
     )
 
-    baker = PDFBaker(config_file, options=options)
+    baker = Baker(config_file, options=options)
     assert str(baker.config["directories"]["documents"]) == str(custom_dir)
 
 
@@ -65,7 +66,7 @@ def test_baker_init_invalid_config(tmp_path: Path) -> None:
     config_file.write_text("title: test")
 
     with pytest.raises(ConfigurationError, match=".*documents.*missing.*"):
-        PDFBaker(config_file)
+        Baker(config_file)
 
 
 # PDFBaker functionality tests
@@ -92,7 +93,7 @@ def test_baker_examples() -> None:
     )
 
     try:
-        baker = PDFBaker(examples_config, options=options)
+        baker = Baker(examples_config, options=options)
         baker.bake()
     finally:
         # Clean up test directories

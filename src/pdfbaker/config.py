@@ -1,59 +1,83 @@
 """Base configuration for pdfbaker classes."""
 
+import io
 import logging
-import pprint
+from collections.abc import Mapping, Sequence
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import yaml
+import ruamel.yaml
 from jinja2 import Template
+from jinja2.exceptions import TemplateError as JinjaTemplateError
 from pydantic import (
     BaseModel,
     ConfigDict,
-    Field,
+    PrivateAttr,
+    ValidationError,
     model_validator,
 )
 from ruamel.yaml import YAML
 
 from .errors import ConfigurationError
-from .logging import LoggingMixin, truncate_strings
-from .types import PathSpec
+from .logging import LoggingMixin
 
-__all__ = ["PDFBakerConfiguration", "deep_merge", "render_config"]
+__all__ = [
+    "BakerConfig",
+    "deep_merge",
+    "DocumentConfig",
+    "DocumentVariantConfig",
+    "PageConfig",
+    "render_config",
+]
 
 logger = logging.getLogger(__name__)
 
+# FIXME: need to achieve the same effect as the old render_config()
+# variables within variables resolved, e.g. {{ variant.name }} in "filename"
+# TODO: change examples from images_dir to use directories.images (breaking change)
+# TODO: allow directories.images to be either a PathSpec or a list of Pathspecs
 
-# #####################################################################
-# New Pydantic models
-# #####################################################################
+DEFAULT_DIRECTORIES = {
+    "build": "build",
+    "dist": "dist",
+    "documents": ".",
+    "pages": "pages",
+    "templates": "templates",
+    "images": "images",
+}
+DEFAULT_DOCUMENT_CONFIG_FILE = "config.yaml"
 
-# TODO: show names instead of index numbers for error locations
-#       https://docs.pydantic.dev/latest/errors/errors/#customize-error-messages
 
+class PathSpec(BaseModel):
+    """File/Directory location (relative or absolute) in YAML config."""
 
-class NewPathSpec(BaseModel):
-    """File/Directory location in YAML config."""
-
-    # Relative paths may not exist until resolved against root,
-    # so we have to check existence later
-    # path: FilePath | DirectoryPath
     path: Path
-    name: str = Field(default_factory=lambda data: data["path"].stem)
+    name: str
 
     @model_validator(mode="before")
     @classmethod
     def ensure_pathspec(cls, data: Any) -> Any:
-        """Coerce what was given"""
-        if isinstance(data, str):
-            data = {"name": data}
-        if isinstance(data, dict) and "path" not in data:
-            data["path"] = Path(data["name"])
+        """Coerce string/Path or partial dict into full dict with 'path' and 'name'."""
+        if isinstance(data, str | Path):
+            path = Path(data)
+            data = {"path": path, "name": path.stem}
+        elif isinstance(data, dict):
+            if "path" not in data:
+                raise ValueError("path is required")
+            path = Path(data["path"])
+            data = {"path": path, "name": data.get("name", path.stem)}
         return data
 
+    def resolve_relative_to(self, base: Path) -> "PathSpec":
+        """Resolve relative paths relative to a base directory."""
+        path = self.path
+        if not path.is_absolute():
+            path = (base / path).resolve()
+        return PathSpec(path=path, name=self.name)
 
-class ImageSpec(NewPathSpec):
+
+class ImageSpec(PathSpec):
     """Image specification."""
 
     type: str | None = None
@@ -69,51 +93,262 @@ class StyleDict(BaseModel):
 class DirectoriesConfig(BaseModel):
     """Directories configuration."""
 
-    root: NewPathSpec
-    build: NewPathSpec
-    dist: NewPathSpec
-    documents: NewPathSpec
-    pages: NewPathSpec
-    templates: NewPathSpec
-    images: NewPathSpec
+    root: Path
+    build: Path
+    dist: Path
+    documents: Path
+    pages: Path
+    templates: Path
+    images: Path
 
-    @model_validator(mode="after")
-    def resolve_paths(self) -> Any:
-        """Resolve all paths relative to the root directory."""
-        self.root.path = self.root.path.resolve()
-        for field_name, value in self.__dict__.items():
-            if field_name != "root" and isinstance(value, NewPathSpec):
-                value.path = (self.root.path / value.path).resolve()
-        return self
+    def resolved(self) -> "DirectoriesConfig":
+        """Resolve relative paths relative to the root directory."""
+        root = self.root.resolve()
+        resolved = {}
+        for field in self.__class__.model_fields.keys():
+            path = getattr(self, field)
+            resolved[field] = path if path.is_absolute() else (root / path).resolve()
+        return DirectoriesConfig(**resolved)
 
 
-class PageConfig(BaseModel, LoggingMixin):
-    """Page configuration."""
+class BaseConfig(BaseModel, LoggingMixin):
+    """Base configuration class for pages, documents/variants, baker."""
 
-    directories: DirectoriesConfig
-    template: NewPathSpec
     model_config = ConfigDict(
         strict=True,  # don't try to coerce values
         extra="allow",  # will go in __pydantic_extra__ dict
     )
 
+    def readable(self, max_chars: int = 60) -> str:
+        """Return YAML representation with truncated strings for readability."""
+        yaml_instance = get_readable_yaml(max_chars=max_chars)
+        stream = io.StringIO()
+        yaml_instance.dump(self.model_dump(), stream)
+        return f"\n{stream.getvalue()}"
 
-class DocumentConfig(BaseModel, LoggingMixin):
+
+class PageConfig(BaseConfig):
+    """Page configuration."""
+
+    config_path: PathSpec
+    directories: DirectoriesConfig
+    _resolved_directories: DirectoriesConfig = PrivateAttr()
+    template: PathSpec
+
+    @model_validator(mode="before")
+    @classmethod
+    def load_config(cls, data: Any) -> Any:
+        """Load document configuration from YAML file."""
+        if isinstance(data, dict) and "config_path" in data:
+            config_data = YAML().load(data["config_path"].path.read_text())
+            config_data.update(data)  # kwargs override YAML values
+            data = config_data
+
+            data["directories"]["root"] = data["config_path"].path.parent
+
+        return data
+
+    @model_validator(mode="after")
+    def resolve_paths(self) -> "PageConfig":
+        """Resolve relative paths relative to the root directory."""
+        self._resolved_directories = self.directories.resolved()
+
+        # Resolve template path
+        templates_dir = self._resolved_directories.templates
+        page_root = self._resolved_directories.root
+        if len(self.template.path.parts) > 1:
+            # Relative to document root or absolute path
+            self.template.path = (page_root / self.template.path).resolve()
+        else:
+            # Simple string - relative to templates directory
+            self.template.path = self.template.resolve_relative_to(templates_dir).path
+        self.template.name = self.template.path.name  # not just stem
+
+        return self
+
+    @property
+    def name(self) -> str:
+        """Page name is the 'name' of its config file."""
+        return self.config_path.name
+
+    @property
+    def settings(self) -> dict[str, Any]:
+        """All configuration settings in a dictionary."""
+        return self.model_dump()
+
+    @property
+    def user_defined(self) -> dict[str, Any]:
+        """Dictionary of all custom user-defined settings."""
+        # FIXME: remove if not neeeded (at least for debugging)
+        return getattr(self, "__pydantic_extra__", {}) or {}
+
+
+class DocumentVariantConfig(BaseConfig):
+    """Document variant configuration.
+
+    Like a document without a config file or own variants
+    """
+
+    name: str
+    directories: DirectoriesConfig
+    pages: list[PathSpec]
+
+    @model_validator(mode="after")
+    def resolve_paths(self) -> "DocumentConfig":
+        """Resolve relative paths relative to the root directory."""
+        # Resolve page paths
+        pages_dir = self.directories.pages
+        document_root = self.directories.root
+        for page in self.pages:
+            if not page.path.suffix:
+                page.path = page.path.with_suffix(".yaml")
+
+            if len(page.path.parts) > 1:
+                # Relative to document root or absolute path
+                page.path = (document_root / page.path).resolve()
+            else:
+                # Simple string - relative to pages directory
+                page.path = page.resolve_relative_to(pages_dir).path
+
+        return self
+
+    @property
+    def page_settings(self) -> dict[str, Any]:
+        """All configuration settings in a dictionary. Given to pages."""
+        return self.model_dump(
+            exclude={
+                "pages",
+            }
+        )
+
+
+class DocumentConfig(BaseConfig):
     """Document configuration.
 
     Lazy-loads page configs.
     """
 
+    config_path: PathSpec
     directories: DirectoriesConfig
-    pages: list[Path | PageConfig]
-    model_config = ConfigDict(
-        strict=True,  # don't try to coerce values
-        extra="allow",  # will go in __pydantic_extra__ dict
-    )
+    _resolved_directories: DirectoriesConfig = PrivateAttr()
+    variants: list[DocumentVariantConfig] = []
+    pages: list[PathSpec] = []
+    bake_path: PathSpec | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def load_config(cls, data: Any) -> Any:
+        """Load document configuration from YAML file."""
+        if isinstance(data, dict) and "config_path" in data:
+            if data["config_path"].path.is_dir():
+                # Keep name but change path
+                data["config_path"].path /= DEFAULT_DOCUMENT_CONFIG_FILE
 
-class DocumentVariantConfig(DocumentConfig):
-    """Document variant configuration."""
+            config_data = YAML().load(data["config_path"].path.read_text())
+            config_data.update(data)  # kwargs override YAML values
+            data = config_data
+
+            data["directories"]["root"] = data["config_path"].path.parent
+
+            variants_data = data.get("variants", [])
+            valid_variants = []
+            for vdata in variants_data:
+                try:
+                    # FIXME: doc without pages
+                    if "pages" in data:
+                        variant = DocumentVariantConfig(
+                            directories=data["directories"],
+                            pages=data["pages"],
+                            **vdata,
+                        )
+                    else:
+                        # This should fail if no pages in doc and also not in variant
+                        variant = DocumentVariantConfig(
+                            directories=data["directories"],
+                            **vdata,
+                        )
+                    valid_variants.append(variant)
+                except ValidationError as e:
+                    print(f"⚠️ Skipping invalid variant '{vdata.get('name')}': {e}")
+
+            data["variants"] = valid_variants
+
+        return data
+
+    @model_validator(mode="after")
+    def resolve_paths(self) -> "DocumentConfig":
+        """Resolve relative paths relative to the root directory."""
+        self.directories.build = self.directories.build / self.name
+        self.directories.dist = self.directories.dist / self.name
+        self._resolved_directories = self.directories.resolved()
+
+        # Resolve page paths
+        pages_dir = self._resolved_directories.pages
+        document_root = self._resolved_directories.root
+        for page in self.pages:
+            if not page.path.suffix:
+                page.path = page.path.with_suffix(".yaml")
+
+            if len(page.path.parts) > 1:
+                # Relative to document root or absolute path
+                page.path = (document_root / page.path).resolve()
+            else:
+                # Simple string - relative to pages directory
+                page.path = page.resolve_relative_to(pages_dir).path
+
+        if not self.bake_path:
+            self.bake_path = PathSpec(
+                path=self._resolved_directories.root / "bake.py",
+                name="bake.py",
+            )
+
+        return self
+
+    @model_validator(mode="after")
+    def check_pages_or_variants(self) -> "DocumentConfig":
+        """Check if pages or variants are defined."""
+        # The "pages" may be defined in the variants rather than
+        # the document itself (when different variants have different pages)
+        if not self.pages:
+            if self.variants:
+                # A variant not defining pages will fail to process
+                self.log_debug(
+                    'Pages of document "%s" will be determined per variant',
+                    self.name,
+                )
+            else:
+                self.log_warning(
+                    'Document "%s" has neither pages nor variants', self.name
+                )
+                raise ConfigurationError(
+                    f'Cannot determine pages of document "{self.name}"'
+                )
+        return self
+
+    @property
+    def name(self) -> str:
+        """Document name is the 'name' of its config file."""
+        return self.config_path.name
+
+    @property
+    def variant_settings(self) -> dict[str, Any]:
+        """Variant settings."""
+        # FIXME: see document.py variant processing - need elegance
+        settings = {"directories": {}}
+        for directory in self.directories.__class__.model_fields.keys():
+            settings["directories"][directory] = getattr(
+                self._resolved_directories, directory
+            )
+        return settings
+
+    @property
+    def page_settings(self) -> dict[str, Any]:
+        """All configuration settings in a dictionary. Given to pages."""
+        settings = self.model_dump(exclude={"config_path", "variants", "pages"})
+        settings["directories"]["pages"] = self._resolved_directories.pages
+        settings["directories"]["templates"] = self._resolved_directories.templates
+        settings["directories"]["images"] = self._resolved_directories.images
+        return settings
 
 
 class TemplateRenderer(Enum):
@@ -135,80 +370,121 @@ class SVG2PDFBackend(Enum):
     INKSCAPE = "inkscape"
 
 
-class BakerConfig(BaseModel, LoggingMixin):
+class BakerConfig(BaseConfig):
     """Baker configuration.
 
     Lazy-loads document configs.
     """
 
+    config_file: Path
     directories: DirectoriesConfig
-    # TODO: lazy/forgiving documents parsing
-    # documents: list[Path | DocumentConfig]
-    documents: list[str]
+    _resolved_directories: DirectoriesConfig = PrivateAttr()
+    documents: list[PathSpec]
+    # FIXME: jinja2_extensions set for just a page not picked up
+    jinja2_extensions: list[str] = []
     template_renderers: list[TemplateRenderer] = [TemplateRenderer.RENDER_HIGHLIGHT]
     template_filters: list[TemplateFilter] = [TemplateFilter.WORDWRAP]
     svg2pdf_backend: SVG2PDFBackend | None = SVG2PDFBackend.CAIROSVG
     compress_pdf: bool = False
-    model_config = ConfigDict(
-        strict=True,  # don't try to coerce values
-        extra="allow",  # will go in __pydantic_extra__ dict
-    )
+    keep_build: bool = False
 
     @model_validator(mode="before")
     @classmethod
     def load_config(cls, data: Any) -> Any:
         """Load main configuration from YAML file."""
         if isinstance(data, dict) and "config_file" in data:
-            # FIXME: save config_file path in model
-            # then load in "after" validator
-            # nice side effect: just change config_file to reload
-            config_file = data.pop("config_file")
-            config_data = YAML().load(config_file.read_text())
-            config_data.update(data)  # let kwargs override values from YAML
-            return config_data
+            if isinstance(data["config_file"], str):
+                data["config_file"] = Path(data["config_file"])
+            if isinstance(data["config_file"], Path):
+                data["config_file"] = data["config_file"].resolve()
+
+            config_data = YAML().load(data["config_file"].read_text())
+            config_data.update(data)  # kwargs override YAML values
+            data = config_data
+
+            # Set default directories
+            if "directories" not in data:
+                data["directories"] = {}
+            directories = data["directories"]
+            directories.setdefault("root", data["config_file"].parent)
+            for key, default in DEFAULT_DIRECTORIES.items():
+                directories.setdefault(key, default)
+
+            if "documents" not in data:
+                raise ValueError(
+                    'Key "documents" missing - is this the main configuration file?'
+                )
+
         return data
 
-    @model_validator(mode="before")
-    @classmethod
-    def set_default_directories(cls, data: Any) -> Any:
-        """Set default directories."""
-        if isinstance(data, dict):
-            directories = data.setdefault("directories", {})
-            directories.setdefault("root", ".")  # FIXME: should be config parent
-            directories.setdefault("build", "build")
-            directories.setdefault("dist", "dist")
-            directories.setdefault("documents", ".")
-            directories.setdefault("pages", "pages")
-            directories.setdefault("templates", "templates")
-            directories.setdefault("images", "images")
-        return data
+    @model_validator(mode="after")
+    def resolve_paths(self) -> "BakerConfig":
+        """Resolve relative paths relative to the root directory."""
+        self._resolved_directories = self.directories.resolved()
+
+        # Resolve build/dist, they are fixed unless re-defined
+        self.directories.build = self._resolved_directories.build
+        self.directories.dist = self._resolved_directories.dist
+
+        # Resolve document paths
+        root = self.directories.root.resolve()
+        self.documents = [doc.resolve_relative_to(root) for doc in self.documents]
+
+        return self
 
     @property
-    def custom_config(self) -> dict[str, Any]:
-        """Dictionary of all custom user-defined configuration."""
-        return self.__pydantic_extra__
+    def document_settings(self) -> dict[str, Any]:
+        """All configuration settings relevant for a document."""
+        return self.model_dump(exclude={"config_file", "documents"})
 
 
-class BakerOptions(BaseModel):
-    """Options for controlling PDFBaker behavior.
+def register_representers(yaml_instance, class_tag_map, use_multi_for=()):
+    """Register representer..
 
-    Attributes:
-        quiet: Show errors only
-        verbose: Show debug information
-        trace: Show trace information (even more detailed than debug)
-        keep_build: Keep build artifacts after processing
-        default_config_overrides: Dictionary of values to override the built-in defaults
-            before loading the main configuration
+    If a class is in use_multi_for, subclasses will also be covered.
+    (like PosixPath is a subclass of Path)
     """
 
-    quiet: bool = False
-    verbose: bool = False
-    trace: bool = False
-    keep_build: bool = False
-    default_config_overrides: dict[str, Any] | None = None
+    def simple_representer(tag):
+        """Represent object as a string."""
+        return lambda representer, data: representer.represent_scalar(tag, str(data))
+
+    for cls, tag in class_tag_map.items():
+        func = simple_representer(tag)
+        if cls in use_multi_for:
+            # Add a representer for the class and all subclasses.
+            yaml_instance.representer.add_multi_representer(cls, func)
+        else:
+            # Add a representer for this exact class only.
+            yaml_instance.representer.add_representer(cls, func)
 
 
-# #####################################################################
+def get_readable_yaml(max_chars: int = 60) -> ruamel.yaml.YAML:
+    """Get a YAML instance with string truncation for readable output."""
+    yaml = ruamel.yaml.YAML()
+    yaml.indent(offset=4)
+    yaml.default_flow_style = False
+
+    register_representers(
+        yaml,
+        {
+            Path: "!path",
+            SVG2PDFBackend: "!svg2pdf_backend",
+            TemplateRenderer: "!template_renderer",
+            TemplateFilter: "!template_filter",
+        },
+        use_multi_for=(Path,),
+    )
+
+    # Add string truncation representer
+    def truncating_representer(representer, data):
+        if len(data) > max_chars:
+            data = data[:max_chars] + "..."
+        return representer.represent_scalar("tag:yaml.org,2002:str", data)
+
+    yaml.representer.add_representer(str, truncating_representer)
+
+    return yaml
 
 
 def deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
@@ -222,141 +498,38 @@ def deep_merge(base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-class PDFBakerConfiguration(dict):
-    """Base  class for handling config loading/merging/parsing."""
-
-    def __init__(
-        self,
-        base_config: dict[str, Any],
-        config_file: Path,
-    ) -> None:
-        """Initialize configuration from a file.
-
-        Args:
-            base_config: Existing base configuration
-            config: Path to YAML file to merge with base_config
-        """
-        try:
-            with open(config_file, encoding="utf-8") as f:
-                config = yaml.safe_load(f)
-        except yaml.scanner.ScannerError as exc:
-            raise ConfigurationError(
-                f"Invalid YAML syntax in config file {config_file}: {exc}"
-            ) from exc
-        except Exception as exc:
-            raise ConfigurationError(f"Failed to load config file: {exc}") from exc
-
-        # Determine all relevant directories
-        self["directories"] = directories = {"config": config_file.parent.resolve()}
-        for directory in (
-            "documents",
-            "pages",
-            "templates",
-            "images",
-            "build",
-            "dist",
-        ):
-            if directory in config.get("directories", {}):
-                # Set in this config file, relative to this config file
-                directories[directory] = self.resolve_path(
-                    config["directories"][directory]
-                )
-            elif directory in base_config.get("directories", {}):
-                # Inherited (absolute) or default (relative to _this_ config)
-                directories[directory] = self.resolve_path(
-                    str(base_config["directories"][directory])
-                )
-        super().__init__(deep_merge(base_config, config))
-        self["directories"] = directories
-
-    def resolve_path(self, spec: PathSpec, directory: Path | None = None) -> Path:
-        """Resolve a possibly relative path specification.
-
-        Args:
-            spec: Path specification (string or dict with path/name)
-            directory: Optional directory to use for resolving paths
-        Returns:
-            Resolved Path object
-        """
-        directory = directory or self["directories"]["config"]
-        if isinstance(directory, str):
-            directory = Path(directory)
-
-        if isinstance(spec, str):
-            return directory / spec
-
-        if "path" not in spec and "name" not in spec:
-            raise ConfigurationError("Invalid path specification: needs path or name")
-
-        if "path" in spec:
-            return Path(spec["path"])
-
-        return directory / spec["name"]
-
-    def pretty(self, max_chars: int = 60) -> str:
-        """Return readable presentation (for debugging)."""
-        truncated = truncate_strings(self, max_chars=max_chars)
-        return pprint.pformat(truncated, indent=2)
-
-
-def _convert_paths_to_strings(config: dict[str, Any]) -> dict[str, Any]:
-    """Convert all Path objects in config to strings."""
-    result = {}
-    for key, value in config.items():
-        if isinstance(value, Path):
-            result[key] = str(value)
-        elif isinstance(value, dict):
-            result[key] = _convert_paths_to_strings(value)
-        elif isinstance(value, list):
-            result[key] = [
-                _convert_paths_to_strings(item)
-                if isinstance(item, dict)
-                else str(item)
-                if isinstance(item, Path)
-                else item
-                for item in value
-            ]
-        else:
-            result[key] = value
-    return result
-
-
-def render_config(config: dict[str, Any]) -> dict[str, Any]:
-    """Resolve all template strings in config using its own values.
-
-    This allows the use of "{{ variant }}" in the "filename" etc.
-
-    Args:
-        config: Configuration dictionary to render
-
-    Returns:
-        Resolved configuration dictionary
-
-    Raises:
-        ConfigurationError: If maximum number of iterations is reached
-            (circular references)
-    """
-    max_iterations = 10
-    current_config = dict(config)
-    current_config = _convert_paths_to_strings(current_config)
-
+def render_config(config: dict[str, Any], max_iterations: int = 10) -> dict[str, Any]:
+    """Render config with its own values."""
+    current = dict(config)
     for _ in range(max_iterations):
-        config_yaml = Template(yaml.dump(current_config))
-        resolved_yaml = config_yaml.render(**current_config)
-        new_config = yaml.safe_load(resolved_yaml)
-
-        # Check for direct self-references
-        for key, value in new_config.items():
-            if isinstance(value, str) and f"{{{{ {key} }}}}" in value:
-                raise ConfigurationError(
-                    f"Circular reference detected: {key} references itself"
-                )
-
-        if new_config == current_config:  # No more changes
-            return new_config
-        current_config = new_config
-
+        new = _render_object(current, context=current)
+        if new == current:
+            return new
+        current = new
     raise ConfigurationError(
-        "Maximum number of iterations reached. "
-        "Check for circular references in your configuration."
+        "Maximum number of iterations reached — possible circular reference"
     )
+
+
+def _render_object(obj, context, seen_keys=None):
+    if seen_keys is None:
+        seen_keys = set()
+
+    if isinstance(obj, str):
+        for key in seen_keys:
+            if f"{{{{ {key} }}}}" in obj:
+                raise ConfigurationError(
+                    f"Circular/self reference detected: '{key}' in '{obj}'"
+                )
+        try:
+            return Template(obj).render(**context)
+        except JinjaTemplateError as e:
+            raise ConfigurationError(f"Error rendering template '{obj}': {e}") from e
+
+    elif isinstance(obj, Mapping):
+        return {k: _render_object(v, context, seen_keys | {k}) for k, v in obj.items()}
+
+    elif isinstance(obj, Sequence) and not isinstance(obj, str):
+        return [_render_object(i, context, seen_keys) for i in obj]
+
+    return obj

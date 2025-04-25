@@ -6,9 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from pdfbaker.baker import PDFBaker
-from pdfbaker.config import BakerOptions
-from pdfbaker.document import PDFBakerDocument
+from pdfbaker.baker import Baker, BakerOptions
+from pdfbaker.document import Document
 from pdfbaker.errors import ConfigurationError
 
 
@@ -73,8 +72,8 @@ def test_document_init_with_dir(
     baker_config: Path, baker_options: BakerOptions, doc_dir: Path
 ) -> None:
     """Test document initialization with directory."""
-    baker = PDFBaker(config_file=baker_config, options=baker_options)
-    doc = PDFBakerDocument(
+    baker = Baker(config_file=baker_config, options=baker_options)
+    doc = Document(
         baker=baker,
         base_config=baker.config,
         config_path=doc_dir,  # this will default to config.yaml in the directory
@@ -114,8 +113,8 @@ def test_document_init_with_file(
         '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>'
     )
 
-    baker = PDFBaker(baker_config, options=baker_options)
-    doc = PDFBakerDocument(baker, baker.config, config_file)
+    baker = Baker(baker_config, options=baker_options)
+    doc = Document(baker, baker.config, config_file)
     assert doc.config.name == "test_doc"
     assert doc.config["pages"] == ["page1.yaml"]
 
@@ -129,9 +128,9 @@ def test_document_init_missing_pages(tmp_path: Path, baker_config: Path) -> None
         build: build
     """)
 
-    baker = PDFBaker(baker_config)
+    baker = Baker(baker_config)
     with pytest.raises(ConfigurationError, match="Cannot determine pages"):
-        PDFBakerDocument(baker, baker.config, config_file)
+        Document(baker, baker.config, config_file)
 
 
 def test_document_custom_bake(
@@ -145,8 +144,8 @@ def process_document(document):
     return document.config.build_dir / "custom.pdf"
 """)
 
-    baker = PDFBaker(baker_config, options=baker_options)
-    doc = PDFBakerDocument(baker, baker.config, doc_dir)
+    baker = Baker(baker_config, options=baker_options)
+    doc = Document(baker, baker.config, doc_dir)
     assert doc.config.name == "test_doc"
     assert doc.config["pages"] == ["page1.yaml"]
 
@@ -159,8 +158,8 @@ def test_document_custom_bake_error(
     bake_file = doc_dir / "bake.py"
     bake_file.write_text("raise Exception('Test error')")
 
-    baker = PDFBaker(baker_config, options=baker_options)
-    doc = PDFBakerDocument(baker, baker.config, doc_dir)
+    baker = Baker(baker_config, options=baker_options)
+    doc = Document(baker, baker.config, doc_dir)
     assert doc.config.name == "test_doc"
     assert doc.config["pages"] == ["page1.yaml"]
 
@@ -182,8 +181,8 @@ def test_document_variants(
           filename: variant2
     """)
 
-    baker = PDFBaker(baker_config, options=baker_options)
-    doc = PDFBakerDocument(baker, baker.config, doc_dir)
+    baker = Baker(baker_config, options=baker_options)
+    doc = Document(baker, baker.config, doc_dir)
     assert doc.config.name == "test_doc"
     assert doc.config["pages"] == ["page1.yaml"]
     assert len(doc.config["variants"]) == 2
@@ -233,8 +232,8 @@ def test_document_variants_with_different_pages(
         '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>'
     )
 
-    baker = PDFBaker(baker_config, options=baker_options)
-    doc = PDFBakerDocument(baker, baker.config, config_file)
+    baker = Baker(baker_config, options=baker_options)
+    doc = Document(baker, baker.config, config_file)
 
     # Check that document initialization works without pages at doc level
     assert doc.config.name == "test_doc"
@@ -278,8 +277,8 @@ def test_document_teardown(
     (build_dir / "file1.pdf").write_text("test")
     (build_dir / "file2.pdf").write_text("test")
 
-    baker = PDFBaker(baker_config, options=baker_options)
-    doc = PDFBakerDocument(baker, baker.config, doc_dir)
+    baker = Baker(baker_config, options=baker_options)
+    doc = Document(baker, baker.config, doc_dir)
     assert doc.config.name == "test_doc"
     assert doc.config["pages"] == ["page1.yaml"]
 

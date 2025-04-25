@@ -2,7 +2,8 @@ documents:
   - minimal
   - regular
   - variants
-  - ./custom_locations/your_directory
+  - path: ./custom_locations/your_directory
+    name: custom_locations
   - custom_processing
 
 custom_stuff:

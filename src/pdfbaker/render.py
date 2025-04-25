@@ -3,14 +3,14 @@
 import base64
 import re
 from collections.abc import Sequence
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
 import jinja2
 
 from . import processing
-from .config import render_config
-from .types import ImageSpec, StyleDict
+from .config import ImageSpec, StyleDict, render_config
 
 __all__ = [
     "create_env",
@@ -81,7 +81,10 @@ def create_env(
     env.template_class = PDFBakerTemplate
 
     if template_filters:
-        for filter_name in template_filters:
+        for filter_spec in template_filters:
+            filter_name = (
+                filter_spec.value if isinstance(filter_spec, Enum) else filter_spec
+            )
             if hasattr(processing, filter_name):
                 env.filters[filter_name] = getattr(processing, filter_name)
 
@@ -100,7 +103,8 @@ def prepare_template_context(
         images_dir: Directory containing images to encode
     """
     # Render configuration to resolve template strings inside strings
-    context = render_config(config)
+    # FIXME: maybe don't do this here - separation of concerns
+    context = render_config(config.model_dump())
 
     # Resolve style references to actual theme colors
     if "style" in context and "theme" in context:

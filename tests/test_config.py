@@ -3,9 +3,12 @@
 from pathlib import Path
 
 import pytest
-import yaml
 
-from pdfbaker.config import PDFBakerConfiguration, deep_merge, render_config
+# FIXME: now using ruamel.yaml
+# import yaml
+from pdfbaker.config import BakerConfig
+
+# FIXME: no more deep_merge, no more render_config
 from pdfbaker.errors import ConfigurationError
 
 
@@ -110,7 +113,7 @@ def test_configuration_init_with_dict(tmp_path: Path) -> None:
     config_file = tmp_path / "test.yaml"
     config_file.write_text(yaml.dump({"title": "Document"}))
 
-    config = PDFBakerConfiguration({}, config_file)
+    config = BakerConfig({}, config_file)
     assert config["title"] == "Document"
 
 
@@ -119,7 +122,7 @@ def test_configuration_init_with_path(tmp_path: Path) -> None:
     config_file = tmp_path / "test.yaml"
     config_file.write_text(yaml.dump({"title": "Document"}))
 
-    config = PDFBakerConfiguration({}, config_file)
+    config = BakerConfig({}, config_file)
     assert config["title"] == "Document"
     assert config["directories"]["config"] == tmp_path
 
@@ -129,7 +132,7 @@ def test_configuration_init_with_directory(tmp_path: Path) -> None:
     config_file = tmp_path / "test.yaml"
     config_file.write_text(yaml.dump({"title": "Document"}))
 
-    config = PDFBakerConfiguration({}, config_file)
+    config = BakerConfig({}, config_file)
     assert config["title"] == "Document"
     assert config["directories"]["config"] == tmp_path
 
@@ -140,7 +143,7 @@ def test_configuration_init_invalid_yaml(tmp_path: Path) -> None:
     config_file.write_text("invalid: [yaml: content")
 
     with pytest.raises(ConfigurationError, match="Failed to load config file"):
-        PDFBakerConfiguration({}, config_file)
+        BakerConfig({}, config_file)
 
 
 # Path resolution tests
@@ -149,7 +152,7 @@ def test_configuration_resolve_path(tmp_path: Path) -> None:
     config_file = tmp_path / "test.yaml"
     config_file.write_text(yaml.dump({"template": "test.yaml"}))
 
-    config = PDFBakerConfiguration({}, config_file)
+    config = BakerConfig({}, config_file)
 
     # Test relative path
     assert config.resolve_path("test.yaml") == tmp_path / "test.yaml"
@@ -168,7 +171,7 @@ def test_configuration_resolve_path_invalid(tmp_path: Path) -> None:
     config_file = tmp_path / "test.yaml"
     config_file.write_text(yaml.dump({}))
 
-    config = PDFBakerConfiguration({}, config_file)
+    config = BakerConfig({}, config_file)
     with pytest.raises(ConfigurationError, match="Invalid path specification"):
         config.resolve_path({})
 
@@ -201,8 +204,8 @@ def test_render_config_circular() -> None:
 
 
 # Utility method tests
-def test_configuration_pretty(tmp_path: Path) -> None:
-    """Test configuration pretty printing."""
+def test_configuration_readable(tmp_path: Path) -> None:
+    """Test configuration readable printing."""
     config_file = tmp_path / "test.yaml"
     config_file.write_text(
         yaml.dump(
@@ -213,7 +216,7 @@ def test_configuration_pretty(tmp_path: Path) -> None:
         )
     )
 
-    config = PDFBakerConfiguration({}, config_file)
-    pretty = config.pretty(max_chars=20)
-    assert "…" in pretty  # Should show truncation
-    assert "Test" in pretty
+    config = BakerConfig({}, config_file)
+    readable = config.readable(max_chars=20)
+    assert "(...)" in readable  # Should show truncation
+    assert "Test" in readable
