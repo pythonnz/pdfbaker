@@ -135,9 +135,9 @@ class Document(LoggingMixin):
 
             specific_config = getattr(config, page_name, None)
             if specific_config:
+                source = "Variant" if config.is_variant else "Document"
                 self.log_debug_subsection(
-                    f'{config.is_variant and 'Variant' or 'Document'} "{config.name}" '
-                    f'provides settings for page "{page_name}"'
+                    f'{source} "{config.name}" provides settings for page "{page_name}"'
                 )
                 self.log_trace(specific_config)
                 page.config = page.config.merge(specific_config)
