@@ -3,25 +3,41 @@
 from pathlib import Path
 
 import pytest
+from ruamel.yaml import YAML
+from ruamel.yaml.parser import ParserError
 
-# FIXME: now using ruamel.yaml
-# import yaml
-from pdfbaker.config import BakerConfig
-
-# FIXME: no more deep_merge, no more render_config
+from pdfbaker.config import BaseConfig, Directories
+from pdfbaker.config.baker import BakerConfig
 from pdfbaker.errors import ConfigurationError
 
 
-# Dictionary merging tests
-def test_deep_merge_basic() -> None:
-    """Test basic dictionary merging."""
-    base = {
-        "title": "Document",
-        "style": {
+# Function to help with creating YAML content for tests
+def write_yaml(path, data):
+    """Write data to a YAML file using ruamel.yaml."""
+    yaml = YAML()
+    with open(path, "w", encoding="utf-8") as file:
+        yaml.dump(data, file)
+
+
+# BaseConfig merger tests
+def test_base_config_merge_basic(default_directories) -> None:
+    """Test basic config merging with BaseConfig."""
+
+    class TestConfig(BaseConfig):
+        """Test configuration class for basic merging."""
+
+        title: str
+        style: dict
+
+    base = TestConfig(
+        title="Document",
+        style={
             "font": "Helvetica",
             "size": 12,
         },
-    }
+        directories=default_directories,
+    )
+
     update = {
         "title": "Updated Document",
         "style": {
@@ -29,35 +45,40 @@ def test_deep_merge_basic() -> None:
         },
         "author": "John Doe",
     }
-    expected = {
-        "title": "Updated Document",
-        "style": {
-            "font": "Helvetica",
-            "size": 14,
-        },
-        "author": "John Doe",
-    }
-    assert deep_merge(base, update) == expected
+
+    merged = base.merge(update)
+    assert merged.title == "Updated Document"
+    assert merged.style == {"font": "Helvetica", "size": 14}
+    assert merged.user_defined_settings.get("author") == "John Doe"
 
 
-def test_deep_merge_nested() -> None:
-    """Test nested dictionary merging."""
-    base = {
-        "document": {
+def test_base_config_merge_nested(default_directories) -> None:
+    """Test nested config merging with BaseConfig."""
+
+    class NestedConfig(BaseConfig):
+        """Test configuration class for nested merging."""
+
+        document: dict
+        style: dict
+
+    base = NestedConfig(
+        document={
             "title": "Main Document",
             "meta": {
                 "author": "Jane Smith",
                 "date": "2024-01-01",
             },
         },
-        "style": {
+        style={
             "font": "Arial",
             "colors": {
                 "text": "black",
                 "background": "white",
             },
         },
-    }
+        directories=default_directories,
+    )
+
     update = {
         "document": {
             "meta": {
@@ -71,152 +92,180 @@ def test_deep_merge_nested() -> None:
             },
         },
     }
-    expected = {
-        "document": {
-            "title": "Main Document",
-            "meta": {
-                "author": "Jane Smith",
-                "date": "2024-04-01",
-                "version": "1.0",
-            },
-        },
-        "style": {
-            "font": "Arial",
-            "colors": {
-                "text": "navy",
-                "background": "white",
-            },
-        },
-    }
-    assert deep_merge(base, update) == expected
+
+    merged = base.merge(update)
+    assert merged.document["title"] == "Main Document"
+    assert merged.document["meta"]["author"] == "Jane Smith"
+    assert merged.document["meta"]["date"] == "2024-04-01"
+    assert merged.document["meta"]["version"] == "1.0"
+    assert merged.style["font"] == "Arial"
+    assert merged.style["colors"]["text"] == "navy"
+    assert merged.style["colors"]["background"] == "white"
 
 
-def test_deep_merge_empty() -> None:
-    """Test merging with empty dictionaries."""
-    base = {
-        "title": "Document",
-        "style": {
+def test_base_config_merge_empty(default_directories) -> None:
+    """Test merging with empty dictionary."""
+
+    class SimpleConfig(BaseConfig):
+        """Test configuration class for empty dict merging."""
+
+        title: str
+        style: dict
+
+    base = SimpleConfig(
+        title="Document",
+        style={
             "font": "Helvetica",
         },
-    }
+        directories=default_directories,
+    )
+
     update = {}
-    # Merging empty into non-empty should return non-empty
-    assert deep_merge(base, update) == base
-    # Merging non-empty into empty should return non-empty
-    # pylint: disable=arguments-out-of-order
-    assert deep_merge(update, base) == base
+    # Merging empty into non-empty should return equivalent of non-empty
+    merged = base.merge(update)
+    assert merged.title == base.title
+    assert merged.style == base.style
 
 
 # Configuration initialization tests
-def test_configuration_init_with_dict(tmp_path: Path) -> None:
-    """Test initializing Configuration with a dictionary."""
+def test_baker_config_init_with_file(
+    tmp_path: Path, default_directories: Directories
+) -> None:
+    """Test initializing BakerConfig with a file."""
     config_file = tmp_path / "test.yaml"
-    config_file.write_text(yaml.dump({"title": "Document"}))
+    write_yaml(
+        config_file,
+        {
+            "documents": [
+                {"path": "doc1", "name": "doc1"},
+                {"path": "doc2", "name": "doc2"},
+            ],
+            "directories": default_directories.model_dump(mode="json"),
+        },
+    )
 
-    config = BakerConfig({}, config_file)
-    assert config["title"] == "Document"
+    config = BakerConfig(config_file=config_file)
+    assert len(config.documents) == 2
+    assert config.config_file == config_file
 
 
-def test_configuration_init_with_path(tmp_path: Path) -> None:
-    """Test initializing Configuration with a file path."""
+def test_baker_config_custom_directories(
+    tmp_path: Path, default_directories: Directories
+) -> None:
+    """Test initializing BakerConfig with custom directories."""
     config_file = tmp_path / "test.yaml"
-    config_file.write_text(yaml.dump({"title": "Document"}))
+    custom_dirs = default_directories.model_dump(mode="json")
+    custom_dirs["build"] = str(tmp_path / "custom_build")
 
-    config = BakerConfig({}, config_file)
-    assert config["title"] == "Document"
-    assert config["directories"]["config"] == tmp_path
+    config_data = {
+        "documents": [{"path": "doc1", "name": "doc1"}],
+        "directories": custom_dirs,
+    }
+
+    write_yaml(config_file, config_data)
+    config = BakerConfig(config_file=config_file)
+
+    assert config.config_file == config_file
+    assert len(config.documents) == 1
+    assert config.documents[0].name == "doc1"
 
 
-def test_configuration_init_with_directory(tmp_path: Path) -> None:
-    """Test initializing Configuration with custom directory."""
-    config_file = tmp_path / "test.yaml"
-    config_file.write_text(yaml.dump({"title": "Document"}))
-
-    config = BakerConfig({}, config_file)
-    assert config["title"] == "Document"
-    assert config["directories"]["config"] == tmp_path
-
-
-def test_configuration_init_invalid_yaml(tmp_path: Path) -> None:
+def test_baker_config_init_invalid_yaml(tmp_path: Path) -> None:
     """Test configuration with invalid YAML."""
     config_file = tmp_path / "invalid.yaml"
-    config_file.write_text("invalid: [yaml: content")
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("invalid: [yaml: content")
 
-    with pytest.raises(ConfigurationError, match="Failed to load config file"):
-        BakerConfig({}, config_file)
+    # Use ruamel.yaml's specific exception
+    with pytest.raises(ParserError):
+        BakerConfig(config_file=config_file)
 
 
 # Path resolution tests
-def test_configuration_resolve_path(tmp_path: Path) -> None:
+def test_config_resolve_path(tmp_path: Path, default_directories: Directories) -> None:
     """Test path resolution."""
-    config_file = tmp_path / "test.yaml"
-    config_file.write_text(yaml.dump({"template": "test.yaml"}))
 
-    config = BakerConfig({}, config_file)
+    # Create a basic config for testing path resolution
+    class TestConfig(BaseConfig):
+        """Test configuration class for path resolution."""
 
-    # Test relative path
-    assert config.resolve_path("test.yaml") == tmp_path / "test.yaml"
+        directories: Directories
 
-    # Test absolute path
-    assert config.resolve_path({"path": "/absolute/path.yaml"}) == Path(
-        "/absolute/path.yaml"
+    config = TestConfig(
+        directories=default_directories,
     )
 
-    # Test named path
-    assert config.resolve_path({"name": "test.yaml"}) == tmp_path / "test.yaml"
+    # Test relative path
+    path = Path("test.yaml")
+    resolved = config.resolve_path(path)
+    assert resolved == tmp_path / "test.yaml"
 
-
-def test_configuration_resolve_path_invalid(tmp_path: Path) -> None:
-    """Test invalid path specification."""
-    config_file = tmp_path / "test.yaml"
-    config_file.write_text(yaml.dump({}))
-
-    config = BakerConfig({}, config_file)
-    with pytest.raises(ConfigurationError, match="Invalid path specification"):
-        config.resolve_path({})
+    # Test subdirectory path
+    path = Path("subdir/test.yaml")
+    resolved = config.resolve_path(path)
+    assert resolved == tmp_path / "subdir/test.yaml"
 
 
 # Configuration rendering tests
-def test_render_config_basic() -> None:
+def test_config_render_basic(default_directories) -> None:
     """Test basic template rendering in configuration."""
-    config = {
-        "name": "test",
-        "title": "{{ name }} document",
-        "nested": {
+
+    class RenderConfig(BaseConfig):
+        """Test configuration class for rendering templates."""
+
+        name: str
+        title: str
+        nested: dict
+
+    config = RenderConfig(
+        name="test",
+        title="{{ name }} document",
+        nested={
             "value": "{{ title }}",
         },
-    }
+        directories=default_directories,
+    )
 
-    rendered = render_config(config)
-    assert rendered["title"] == "test document"
-    assert rendered["nested"]["value"] == "test document"
+    rendered = config.resolve_variables()
+    assert rendered.title == "test document"
+    assert rendered.nested["value"] == "test document"
 
 
-def test_render_config_circular() -> None:
+def test_config_render_circular(default_directories) -> None:
     """Test detection of circular references in config rendering."""
-    config = {
-        "a": "{{ b }}",
-        "b": "{{ a }}",
-    }
+
+    class CircularConfig(BaseConfig):
+        """Test configuration class for circular reference detection."""
+
+        a: str
+        b: str
+
+    config = CircularConfig(
+        a="{{ b }}",
+        b="{{ a }}",
+        directories=default_directories,
+    )
 
     with pytest.raises(ConfigurationError, match="(?i).*circular.*"):
-        render_config(config)
+        config.resolve_variables()
 
 
 # Utility method tests
-def test_configuration_readable(tmp_path: Path) -> None:
+def test_config_readable(default_directories) -> None:
     """Test configuration readable printing."""
-    config_file = tmp_path / "test.yaml"
-    config_file.write_text(
-        yaml.dump(
-            {
-                "title": "Test",
-                "content": "A" * 100,  # Long string that should be truncated
-            }
-        )
+
+    class ReadableConfig(BaseConfig):
+        """Test configuration class for readable output."""
+
+        title: str
+        content: str
+
+    config = ReadableConfig(
+        title="Test",
+        content="A" * 100,  # Long string that should be truncated
+        directories=default_directories,
     )
 
-    config = BakerConfig({}, config_file)
     readable = config.readable(max_chars=20)
-    assert "(...)" in readable  # Should show truncation
+    assert "..." in readable  # Should show truncation
     assert "Test" in readable

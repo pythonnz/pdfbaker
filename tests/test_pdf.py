@@ -188,35 +188,26 @@ def test_convert_svg_to_pdf_cairosvg(tmp_path: Path) -> None:
     assert output_file.exists()
 
 
-def test_convert_svg_to_pdf_unknown_backend(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
-) -> None:
+def test_convert_svg_to_pdf_unknown_backend(tmp_path: Path) -> None:
     """Test SVG to PDF conversion with unknown backend."""
     svg_file = tmp_path / "test.svg"
     svg_file.write_text(
         '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">'
         '<rect width="100" height="100" fill="red"/></svg>'
     )
-
     output_file = tmp_path / "output.pdf"
-    with caplog.at_level(logging.WARNING):
-        # Manually reinstall caplog handler to the root logger
-        logging.getLogger().addHandler(caplog.handler)
+    with pytest.raises(SVGConversionError) as exc_info:
         convert_svg_to_pdf(svg_file, output_file, backend="unknown")
-    assert "Unknown svg2pdf backend: unknown - falling back to cairosvg" in caplog.text
+    assert "Unknown svg2pdf backend" in str(exc_info.value)
 
 
 def test_convert_svg_to_pdf_invalid_svg(tmp_path: Path) -> None:
     """Test SVG to PDF conversion with invalid SVG."""
-    # Create an invalid SVG file
     svg_file = tmp_path / "test.svg"
     svg_file.write_text("Not an SVG file")
-
     output_file = tmp_path / "output.pdf"
     with pytest.raises(SVGConversionError) as exc_info:
         convert_svg_to_pdf(svg_file, output_file)
-
-    # Check for the specific error
     assert "syntax error: line 1, column 0" in str(exc_info.value)
 
 

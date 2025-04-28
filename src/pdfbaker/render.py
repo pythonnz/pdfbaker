@@ -10,7 +10,7 @@ from typing import Any
 import jinja2
 
 from . import processing
-from .config import ImageSpec, StyleDict, render_config
+from .config import ImageSpec, StyleDict
 
 __all__ = [
     "create_env",
@@ -20,7 +20,7 @@ __all__ = [
 
 
 class PDFBakerTemplate(jinja2.Template):  # pylint: disable=too-few-public-methods
-    """A Jinja template with custom rendering capabilities for PDFBaker.
+    """A Jinja template with custom rendering capabilities for pdfbaker.
 
     This template class extends the base Jinja template to apply
     additional rendering transformations to the template output.
@@ -92,7 +92,7 @@ def create_env(
 
 
 def prepare_template_context(
-    config: dict[str], images_dir: Path | None = None
+    context: dict[str], images_dir: Path | None = None
 ) -> dict[str]:
     """Prepare template context with variables/styles/images
 
@@ -102,10 +102,6 @@ def prepare_template_context(
         config: Configuration with optional styles and images
         images_dir: Directory containing images to encode
     """
-    # Render configuration to resolve template strings inside strings
-    # FIXME: maybe don't do this here - separation of concerns
-    context = render_config(config.model_dump())
-
     # Resolve style references to actual theme colors
     if "style" in context and "theme" in context:
         style = context["style"]

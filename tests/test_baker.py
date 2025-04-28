@@ -5,12 +5,18 @@ import shutil
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
+from ruamel.yaml import YAML
 
 from pdfbaker.baker import Baker, BakerOptions
-from pdfbaker.errors import ConfigurationError
 from pdfbaker.logging import TRACE
 
-# FIXME: default_config_overrides no longer needed, just throw kwargs at Baker init
+
+def write_yaml(path, data):
+    """Write data to a YAML file using ruamel.yaml."""
+    yaml = YAML()
+    with open(path, "w", encoding="utf-8") as file:
+        yaml.dump(data, file)
 
 
 # BakerOptions tests
@@ -21,7 +27,6 @@ def test_baker_options_defaults() -> None:
     assert not options.verbose
     assert not options.trace
     assert not options.keep_build
-    assert options.default_config_overrides is None
 
 
 def test_baker_options_logging_levels() -> None:
@@ -39,33 +44,14 @@ def test_baker_options_logging_levels() -> None:
         assert logging.getLogger().level == expected_level
 
 
-def test_baker_options_default_config_overrides(tmp_path: Path) -> None:
-    """Test BakerOptions with default_config_overrides."""
-    # Create a minimal valid config
-    config_file = tmp_path / "test.yaml"
-    config_file.write_text("documents: [test]")
-
-    custom_dir = tmp_path / "custom"
-    options = BakerOptions(
-        default_config_overrides={
-            "directories": {
-                "documents": str(custom_dir),
-            }
-        }
-    )
-
-    baker = Baker(config_file, options=options)
-    assert str(baker.config["directories"]["documents"]) == str(custom_dir)
-
-
 # PDFBaker initialization tests
 def test_baker_init_invalid_config(tmp_path: Path) -> None:
     """Test PDFBaker initialization with invalid configuration."""
     # Create an invalid config file (missing 'documents' key)
     config_file = tmp_path / "invalid.yaml"
-    config_file.write_text("title: test")
+    write_yaml(config_file, {"title": "test", "directories": {"base": str(tmp_path)}})
 
-    with pytest.raises(ConfigurationError, match=".*documents.*missing.*"):
+    with pytest.raises(ValidationError, match=".*documents.*missing.*"):
         Baker(config_file)
 
 
@@ -84,16 +70,17 @@ def test_baker_examples() -> None:
     options = BakerOptions(
         quiet=True,
         keep_build=True,
-        default_config_overrides={
-            "directories": {
-                "build": str(build_dir),
-                "dist": str(dist_dir),
-            }
-        },
     )
 
     try:
-        baker = Baker(examples_config, options=options)
+        baker = Baker(
+            examples_config,
+            options=options,
+            directories={
+                "build": str(build_dir),
+                "dist": str(dist_dir),
+            },
+        )
         baker.bake()
     finally:
         # Clean up test directories
