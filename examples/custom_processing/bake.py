@@ -5,12 +5,12 @@ import json
 import urllib.request
 from datetime import datetime
 
-from pdfbaker.document import PDFBakerDocument
+from pdfbaker.document import Document
 from pdfbaker.errors import PDFBakerError
 from pdfbaker.processing import wordwrap
 
 
-def process_document(document: PDFBakerDocument) -> None:
+def process_document(document: Document) -> None:
     """Process document with live XKCD comic."""
     try:
         # Fetch latest XKCD
@@ -29,7 +29,7 @@ def process_document(document: PDFBakerDocument) -> None:
         wrapped_alt_text = wordwrap(data["alt"], max_chars=60)
 
         # Update config/template context with XKCD info
-        document.config["xkcd"] = {
+        document.config.xkcd = {
             "title": data["title"],
             "alt_text": data["alt"],
             "alt_text_lines": wrapped_alt_text,

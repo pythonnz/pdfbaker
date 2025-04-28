@@ -43,12 +43,11 @@ repos:
     rev: v3.3.4
     hooks:
       - id: pylint
-        args:
-          - --rcfile=.pylintrc
         additional_dependencies:
           - "cairosvg"
           - "click"
           - "jinja2"
+          - "pydantic"
           - "pypdf"
           - "pytest"
-          - "pyyaml"
+          - "ruamel.yaml"

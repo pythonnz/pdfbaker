@@ -3,14 +3,14 @@
 import base64
 import re
 from collections.abc import Sequence
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
 import jinja2
 
 from . import processing
-from .config import render_config
-from .types import ImageSpec, StyleDict
+from .config import ImageSpec, StyleDict
 
 __all__ = [
     "create_env",
@@ -20,7 +20,7 @@ __all__ = [
 
 
 class PDFBakerTemplate(jinja2.Template):  # pylint: disable=too-few-public-methods
-    """A Jinja template with custom rendering capabilities for PDFBaker.
+    """A Jinja template with custom rendering capabilities for pdfbaker.
 
     This template class extends the base Jinja template to apply
     additional rendering transformations to the template output.
@@ -81,7 +81,10 @@ def create_env(
     env.template_class = PDFBakerTemplate
 
     if template_filters:
-        for filter_name in template_filters:
+        for filter_spec in template_filters:
+            filter_name = (
+                filter_spec.value if isinstance(filter_spec, Enum) else filter_spec
+            )
             if hasattr(processing, filter_name):
                 env.filters[filter_name] = getattr(processing, filter_name)
 
@@ -89,7 +92,7 @@ def create_env(
 
 
 def prepare_template_context(
-    config: dict[str], images_dir: Path | None = None
+    context: dict[str], images_dir: Path | None = None
 ) -> dict[str]:
     """Prepare template context with variables/styles/images
 
@@ -99,9 +102,6 @@ def prepare_template_context(
         config: Configuration with optional styles and images
         images_dir: Directory containing images to encode
     """
-    # Render configuration to resolve template strings inside strings
-    context = render_config(config)
-
     # Resolve style references to actual theme colors
     if "style" in context and "theme" in context:
         style = context["style"]

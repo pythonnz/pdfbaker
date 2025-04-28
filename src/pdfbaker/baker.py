@@ -1,4 +1,4 @@
-"""PDFBaker class.
+"""Baker class.
 
 Overall orchestration and logging.
 
@@ -6,34 +6,20 @@ Is given a configuration file and sets up logging.
 bake() delegates to its documents and reports back the end result.
 """
 
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
-from .config import PDFBakerConfiguration, deep_merge
-from .document import PDFBakerDocument
-from .errors import ConfigurationError, DocumentNotFoundError
+from pydantic import BaseModel, ValidationError
+
+from .config import PathSpec
+from .config.baker import BakerConfig
+from .document import Document
+from .errors import DocumentNotFoundError
 from .logging import LoggingMixin, setup_logging
 
-__all__ = ["PDFBaker", "PDFBakerOptions"]
+__all__ = ["Baker", "BakerOptions"]
 
 
-DEFAULT_BAKER_CONFIG = {
-    # Default to directories relative to the config file
-    "directories": {
-        "documents": ".",
-        "build": "build",
-        "dist": "dist",
-    },
-    # Highlighting support enabled by default
-    "template_renderers": ["render_highlight"],
-    # Make all filters available by default
-    "template_filters": ["wordwrap"],
-}
-
-
-@dataclass
-class PDFBakerOptions:
+class BakerOptions(BaseModel):
     """Options for controlling PDFBaker behavior.
 
     Attributes:
@@ -49,139 +35,45 @@ class PDFBakerOptions:
     verbose: bool = False
     trace: bool = False
     keep_build: bool = False
-    default_config_overrides: dict[str, Any] | None = None
 
 
-class PDFBaker(LoggingMixin):
-    """Main class for PDF document generation."""
-
-    class Configuration(PDFBakerConfiguration):
-        """PDFBaker configuration."""
-
-        def __init__(
-            self, baker: "PDFBaker", base_config: dict[str, Any], config_file: Path
-        ) -> None:
-            """Initialize baker configuration (needs documents)."""
-            self.baker = baker
-            self.name = config_file.name
-            self.baker.log_debug_section("Loading main configuration: %s", config_file)
-            super().__init__(base_config, config_file)
-            self.baker.log_trace(self.pretty())
-            if "documents" not in self:
-                raise ConfigurationError(
-                    'Key "documents" missing - is this the main configuration file?'
-                )
-            self.build_dir = self["directories"]["build"]
-            self.documents = []
-            for doc_spec in self["documents"]:
-                doc_path = self.resolve_path(
-                    doc_spec, directory=self["directories"]["documents"]
-                )
-                self.documents.append({"name": doc_path.name, "path": doc_path})
+class Baker(LoggingMixin):
+    """Baker class."""
 
     def __init__(
         self,
         config_file: Path,
-        options: PDFBakerOptions | None = None,
+        options: BakerOptions | None = None,
+        **kwargs,
     ) -> None:
-        """Initialize PDFBaker with config file path. Set logging level.
-
-        Args:
-            config_file: Path to config file
-            options: Optional options for logging and build behavior
-        """
-        super().__init__()
-        options = options or PDFBakerOptions()
+        """Set up logging and load configuration."""
+        options = options or BakerOptions()
         setup_logging(quiet=options.quiet, trace=options.trace, verbose=options.verbose)
-        self.keep_build = options.keep_build
-
-        base_config = DEFAULT_BAKER_CONFIG.copy()
-        if options and options.default_config_overrides:
-            base_config = deep_merge(base_config, options.default_config_overrides)
-        base_config["directories"]["config"] = config_file.parent.resolve()
-
-        self.config = self.Configuration(
-            baker=self,
-            base_config=base_config,
+        self.log_debug_section("Loading main configuration: %s", config_file)
+        self.config = BakerConfig(
             config_file=config_file,
+            keep_build=options.keep_build,
+            **kwargs,
         )
+        self.log_trace(self.config.readable())
 
-    def _get_documents_to_process(
-        self, selected_document_names: tuple[str, ...] | None = None
-    ) -> list[Path]:
-        """Get the document paths to process based on optional filtering.
-
-        Args:
-            document_names: Optional tuple of document names to process
-
-        Returns:
-            List of document paths to process
-        """
-        if not selected_document_names:
-            return self.config.documents
-
-        available_doc_names = [doc["name"] for doc in self.config.documents]
-        missing_docs = [
-            name for name in selected_document_names if name not in available_doc_names
-        ]
-        if missing_docs:
-            available_str = ", ".join([f'"{name}"' for name in available_doc_names])
-            self.log_info(f"Documents in {self.config.name}: {available_str}")
-            missing_str = ", ".join([f'"{name}"' for name in missing_docs])
-            raise DocumentNotFoundError(
-                f"Document{'s' if len(missing_docs) != 1 else ''} not found "
-                f"in configuration: {missing_str}."
-            )
-
-        return [
-            doc
-            for doc in self.config.documents
-            if doc["name"] in selected_document_names
-        ]
-
-    def bake(self, document_names: tuple[str, ...] | None = None) -> bool:
-        """Create PDFs for all documents or only the specified ones.
-
-        Args:
-            document_names: Optional tuple of document names to process
-
-        Returns:
-        bool: True if all documents were processed successfully, False if any failed
-        """
-        pdfs_created: list[Path] = []
-        failed_docs: list[tuple[str, str]] = []
-
-        documents = self._get_documents_to_process(document_names)
-
+    def bake(self, document_names: tuple[str, ...] | None = None) -> None:
+        """Bake the documents."""
+        docs = self._get_selected_documents(document_names)
         self.log_debug_subsection("Documents to process:")
-        self.log_debug(documents)
-        for doc_config in documents:
-            doc = PDFBakerDocument(
-                baker=self,
-                base_config=self.config,
-                config_path=doc_config["path"],
-            )
-            pdf_files, error_message = doc.process_document()
-            if error_message:
-                self.log_error(
-                    "Failed to process document '%s': %s",
-                    doc.config.name,
-                    error_message,
-                )
-                failed_docs.append((doc.config.name, error_message))
-            else:
-                if isinstance(pdf_files, Path):
-                    pdf_files = [pdf_files]
-                pdfs_created.extend(pdf_files)
-            if not self.keep_build:
-                doc.teardown()
+        self.log_debug(docs)
+
+        pdfs_created, failed_docs = self._process_documents(docs)
 
         if pdfs_created:
             self.log_info("Successfully created PDFs:")
             for pdf in pdfs_created:
-                self.log_info("  %s", pdf)
+                self.log_info("  ✅ %s", pdf)
         else:
             self.log_warning("No PDFs were created.")
+
+        if not self.config.keep_build:
+            self.teardown()
 
         if failed_docs:
             self.log_warning(
@@ -189,22 +81,80 @@ class PDFBaker(LoggingMixin):
                 len(failed_docs),
                 "" if len(failed_docs) == 1 else "s",
             )
-            for doc_name, error in failed_docs:
-                self.log_error("  %s: %s", doc_name, error)
-
-        if not self.keep_build:
-            self.teardown()
+            for failed_doc, error_message in failed_docs:
+                name = failed_doc.name
+                if isinstance(failed_doc, Document) and failed_doc.is_variant:
+                    name += f' variant "{failed_doc.variant["name"]}"'
+                self.log_error("  %s: %s", name, error_message)
 
         return not failed_docs
 
+    def _get_selected_documents(
+        self, selected_names: tuple[str, ...] | None = None
+    ) -> list[PathSpec]:
+        """Return the document paths to actually process as selected."""
+        if not selected_names:
+            return self.config.documents
+
+        available = [doc.name for doc in self.config.documents]
+        missing = [name for name in selected_names if name not in available]
+        if missing:
+            available_str = ", ".join([f'"{name}"' for name in available])
+            self.log_info(
+                f"Documents in {self.config.config_file.name}: {available_str}"
+            )
+            missing_str = ", ".join([f'"{name}"' for name in missing])
+            raise DocumentNotFoundError(
+                f"Document{'s' if len(missing) != 1 else ''} not found "
+                f"in configuration file: {missing_str}."
+            )
+
+        return [doc for doc in self.config.documents if doc.name in selected_names]
+
+    def _process_documents(
+        self, docs: list[PathSpec]
+    ) -> tuple[list[Path], list[tuple[PathSpec, str]]]:
+        pdfs_created: list[Path] = []
+        failed_docs: list[tuple[PathSpec, str]] = []
+
+        for config_path in docs:
+            try:
+                document = Document(
+                    config_path=config_path, **self.config.document_settings
+                )
+            except ValidationError as e:
+                error_message = f'Invalid config for document "{config_path.name}": {e}'
+                self.log_error(error_message)
+                failed_docs.append((config_path, error_message))
+                continue
+
+            pdf_files, error_message = document.process_document()
+
+            if error_message:
+                self.log_error(
+                    "Failed to process document '%s': %s",
+                    document.config.name,
+                    error_message,
+                )
+                failed_docs.append((document, error_message))
+            else:
+                if isinstance(pdf_files, Path):
+                    pdf_files = [pdf_files]
+                pdfs_created.extend(pdf_files)
+            if not self.config.keep_build:
+                document.teardown()
+
+        return pdfs_created, failed_docs
+
     def teardown(self) -> None:
         """Clean up (top-level) build directory after processing."""
+        build_dir = self.config.directories.build
         self.log_debug_subsection(
-            "Tearing down top-level build directory: %s", self.config.build_dir
+            "Tearing down top-level build directory: %s", build_dir
         )
-        if self.config.build_dir.exists():
+        if build_dir.exists():
             try:
                 self.log_debug("Removing top-level build directory...")
-                self.config.build_dir.rmdir()
+                build_dir.rmdir()
             except OSError:
                 self.log_warning("Top-level build directory not empty - not removing")

@@ -10,6 +10,7 @@ from pathlib import Path
 import pypdf
 from cairosvg import svg2pdf
 
+from .config import SVG2PDFBackend
 from .errors import (
     PDFCombineError,
     PDFCompressionError,
@@ -161,7 +162,7 @@ def compress_pdf(
 def convert_svg_to_pdf(
     svg_path: Path,
     pdf_path: Path,
-    backend: str = "cairosvg",
+    backend: SVG2PDFBackend | str = SVG2PDFBackend.CAIROSVG,
 ) -> Path | SVGConversionError:
     """Convert an SVG file to PDF.
 
@@ -177,7 +178,15 @@ def convert_svg_to_pdf(
     Raises:
         SVGConversionError: If SVG conversion fails, includes the backend used and cause
     """
-    if backend == "inkscape":
+    if isinstance(backend, str):
+        try:
+            backend = SVG2PDFBackend(backend)
+        except ValueError as exc:
+            raise SVGConversionError(
+                svg_path, backend, f'Unknown svg2pdf backend: "{backend}"'
+            ) from exc
+
+    if backend == SVG2PDFBackend.INKSCAPE:
         try:
             _run_subprocess_logged(
                 [
@@ -189,11 +198,6 @@ def convert_svg_to_pdf(
         except subprocess.SubprocessError as exc:
             raise SVGConversionError(svg_path, backend, str(exc)) from exc
     else:
-        if backend != "cairosvg":
-            logger.warning(
-                "Unknown svg2pdf backend: %s - falling back to cairosvg",
-                backend,
-            )
         try:
             with open(svg_path, "rb") as svg_file:
                 svg2pdf(file_obj=svg_file, write_to=str(pdf_path))
