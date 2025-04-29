@@ -1,6 +1,6 @@
 [project]
 name = "pdfbaker"
-version = "0.5.2"
+version = "0.6.1"
 description = "SVG Jinja templates + YAML config = PDF documents"
 authors = [
     { name = "Danny W. Adair", email = "danny.adair@unfold.nz" }
@@ -26,8 +26,13 @@ build-backend = "hatchling.build"
 [tool.uv]
 managed = true
 dev-dependencies = [
+    # --- Testing
     "pytest",
     "pytest-cov",
+
+    # --- Security
+    "pip-audit",
+    "bandit"
 ]
 
 [tool.hatch.metadata]

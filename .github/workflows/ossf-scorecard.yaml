@@ -1,0 +1,19 @@
+name: OSSF Scorecard
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run OSS Scorecard
+        uses: ossf/scorecard-action@v2
+        with:
+          repo: ${{ github.repository }}

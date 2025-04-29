@@ -5,6 +5,9 @@
 [![Downloads](https://img.shields.io/pypi/dw/pdfbaker?color=blue)](https://pypistats.org/packages/pdfbaker)
 [![tests](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml/badge.svg)](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml)
 [![codecov](https://img.shields.io/codecov/c/github/pythonnz/pdfbaker)](https://codecov.io/gh/pythonnz/pdfbaker)
+[![OSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/pythonnz/pdfbaker?label=OSSF%20Scorecard)](https://scorecard.dev/viewer/?uri=github.com/pythonnz/pdfbaker)
+[![pip-audit](https://img.shields.io/github/actions/workflow/status/pythonnz/pdfbaker/pip-audit.yaml?label=pip-audit&logo=python)](https://github.com/pythonnz/pdfbaker/actions/workflows/pip-audit.yaml)
+[![bandit](https://img.shields.io/github/actions/workflow/status/pythonnz/pdfbaker/bandit.yaml?label=bandit&logo=python)](https://github.com/pythonnz/pdfbaker/actions/workflows/bandit.yaml)
 [![Last commit](https://img.shields.io/github/last-commit/pythonnz/pdfbaker?color=lightgrey)](https://github.com/pythonnz/pdfbaker/commits/main)
 [![License](https://img.shields.io/github/license/pythonnz/pdfbaker?color=lightgrey)](https://github.com/pythonnz/pdfbaker/blob/main/LICENSE)
 

@@ -1,0 +1,28 @@
+name: pip-audit
+
+on:
+  pull_request:
+    branches:
+      - "main*"
+  push:
+    branches:
+      - "main"
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv and sync dev dependencies
+        run: |
+          pip install uv
+          uv venv
+          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+          uv sync --dev
+      - name: Run pip-audit
+        run: |
+          pip-audit
