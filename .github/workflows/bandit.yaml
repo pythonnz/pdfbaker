@@ -25,4 +25,4 @@ jobs:
           uv sync --dev
       - name: Run Bandit
         run: |
-          bandit -r pdfbaker/
+          bandit -r src/pdfbaker/
