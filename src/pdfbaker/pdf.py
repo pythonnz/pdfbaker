@@ -3,7 +3,7 @@
 import logging
 import os
 import select
-import subprocess
+import subprocess  # nosec B404
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -85,7 +85,7 @@ def _run_subprocess_logged(cmd: list[str], env: dict[str, str] | None = None) ->
     env = env or os.environ.copy()
     env["PYTHONUNBUFFERED"] = "True"
 
-    with subprocess.Popen(
+    with subprocess.Popen(  # nosec B603
         cmd,
         bufsize=1,
         text=True,
