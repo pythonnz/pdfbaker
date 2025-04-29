@@ -6,9 +6,9 @@ on:
   # To guarantee Maintained check is occasionally updated. See
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   schedule:
-    - cron: '16 20 * * 1'
+    - cron: "16 20 * * 1"
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions: read-all
 
@@ -16,7 +16,9 @@ jobs:
   analysis:
     name: Scorecard analysis
     runs-on: ubuntu-latest
-    if: github.event.repository.default_branch == github.ref_name || github.event_name == 'pull_request'
+    if:
+      github.event.repository.default_branch == github.ref_name || github.event_name ==
+      'pull_request'
     permissions:
       security-events: write
       id-token: write
