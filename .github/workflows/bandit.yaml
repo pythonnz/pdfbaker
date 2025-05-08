@@ -1,4 +1,4 @@
-name: bandit
+name: Bandit
 
 on:
   pull_request:
