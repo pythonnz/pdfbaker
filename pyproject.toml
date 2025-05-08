@@ -78,3 +78,31 @@ version_source = "tag"
 tag_format = "{version}"
 commit_version_number = true
 commit_message = "RELEASE: {version}"
+
+[tool.semantic_release.commit_parser]
+pattern = "^(?P<type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\((?P<scope>[^()\s]+)\))?:\s(?P<message>.+)"
+field_pattern = "^(?P<type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\((?P<scope>[^()\s]+)\))?:\s(?P<message>.+)"
+
+[tool.semantic_release.changelog_sections]
+feat = "Features"
+fix = "Bug Fixes"
+docs = "Documentation"
+style = "Style"
+refactor = "Refactor"
+perf = "Performance"
+test = "Tests"
+build = "Build"
+ci = "CI"
+chore = "Chores"
+revert = "Reverts"
+
+[tool.semantic_release.changelog_exclude]
+types = ["style", "test", "build", "ci", "chore"]
+
+[tool.semantic_release.changelog_section_headers]
+feat = "### Features"
+fix = "### Bug Fixes"
+docs = "### Documentation"
+refactor = "### Refactor"
+perf = "### Performance"
+revert = "### Reverts"
