@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.3 (2025-05-08)
+
+### Bug Fixes
+
+- Don't re-trigger release, cater for some concurrency issues
+  ([`be08d84`](https://github.com/pythonnz/pdfbaker/commit/be08d84b1ccfd5ffea1c213c44392ce6133dc6f7))
+
+
 ## v0.8.2 (2025-05-08)
 
 ### Bug Fixes
