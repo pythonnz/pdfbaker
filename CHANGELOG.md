@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.8.1 (2025-05-08)
+
+### Bug Fixes
+
+- Checking where uv gets installed
+  ([`966ffff`](https://github.com/pythonnz/pdfbaker/commit/966ffff0ff5cf04e93a944b0848d31a252d925ad))
+
+- Specify path to uv
+  ([`ed71ff7`](https://github.com/pythonnz/pdfbaker/commit/ed71ff7494504798af94db2c5ecef4b538cb86f3))
+
+python-semantic-release runs `build_command` in a new shell...
+
+
 ## v0.8.0 (2025-05-08)
 
 ### Features
