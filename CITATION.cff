@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use pdfbaker in your work, please cite it using the following metadata."
+title: "pdfbaker"
+version: "0.8.7"
+date-released: 2024-04-23
+repository-code: "https://github.com/pythonnz/pdfbaker"
+license: "MIT"
+authors:
+  - family-names: Adair
+    given-names: Danny
+    orcid: "https://orcid.org/0009-0004-8327-955X"
+keywords:
+  - PDF
+  - SVG
+  - YAML
+  - CLI
+  - Python
