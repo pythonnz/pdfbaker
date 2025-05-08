@@ -1,6 +1,48 @@
 # CHANGELOG
 
 
+## v0.8.10 (2025-05-08)
+
+### Bug Fixes
+
+- Add PSR default templates
+  ([`b29b68c`](https://github.com/pythonnz/pdfbaker/commit/b29b68c896d486bdd3f004d25800d9bb63503e64))
+
+It's not clever enough to only pick up custom templates, must copy their templates as a starting
+  point for customisation.
+
+
+## v0.8.9 (2025-05-08)
+
+### Bug Fixes
+
+- Show PSR output (was getting consumed for evaluation)
+  ([`4cb4c85`](https://github.com/pythonnz/pdfbaker/commit/4cb4c85dc90cfdb7765443f0d0d4818ae4ed08e3))
+
+
+## v0.8.8 (2025-05-08)
+
+### Bug Fixes
+
+- Remove version variable for CITATION.cff (now in template)
+  ([`ee7bd69`](https://github.com/pythonnz/pdfbaker/commit/ee7bd69126abcc5802570e8270a21715c7cd89a4))
+
+- Use PSR's templating mechanism instead of a script
+  ([`2e608f9`](https://github.com/pythonnz/pdfbaker/commit/2e608f9131822e624b47f03cb36351b935990f17))
+
+### Continuous Integration
+
+- Remove unused version
+  ([`4b21a43`](https://github.com/pythonnz/pdfbaker/commit/4b21a4376b9df7df2bcf5b9796cd252aff8c0d38))
+
+The tag is already set correctly
+
+### Documentation
+
+- Add CITATION.cff and update its version and date during release
+  ([`812b098`](https://github.com/pythonnz/pdfbaker/commit/812b098b24ed29def14d7e219f8b626523aa9f76))
+
+
 ## v0.8.7 (2025-05-08)
 
 ### Bug Fixes
