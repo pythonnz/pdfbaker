@@ -69,7 +69,7 @@ score = "no"
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
 branch = "main"
-build_command = "${VIRTUAL_ENV}/bin/uv build"
+build_command = "uv build"
 tag_format = "{version}"
 commit_version_number = true
 commit_message = "RELEASE: {version}"

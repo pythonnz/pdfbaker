@@ -40,6 +40,8 @@ jobs:
       - name: Python Semantic Release
         id: release
         run: |
+          which uv
+          echo $PATH
           if semantic-release version; then
             echo "released=true" >> $GITHUB_OUTPUT
           else
