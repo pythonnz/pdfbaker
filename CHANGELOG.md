@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.6 (2025-05-08)
+
+### Bug Fixes
+
+- Need to capture also stderr
+  ([`cb6d2a9`](https://github.com/pythonnz/pdfbaker/commit/cb6d2a9c76f618274dacffbc884ce34a4a55fc83))
+
+
 ## v0.8.5 (2025-05-08)
 
 ### Bug Fixes
