@@ -1,6 +1,16 @@
 # CHANGELOG
 
 
+## v0.8.5 (2025-05-08)
+
+### Bug Fixes
+
+- Add some debug logging
+  ([`83060f4`](https://github.com/pythonnz/pdfbaker/commit/83060f4d06425dd184f712795b3e94003003d32e))
+
+Still not determining correctly whether a release is needed.
+
+
 ## v0.8.4 (2025-05-08)
 
 ### Bug Fixes
