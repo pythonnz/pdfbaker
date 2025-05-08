@@ -1,6 +1,16 @@
 # CHANGELOG
 
 
+## v0.8.0 (2025-05-08)
+
+### Features
+
+- Add names to stages
+  ([`83db7fd`](https://github.com/pythonnz/pdfbaker/commit/83db7fd562153865d7bcc916b2d0c7fd79374ed0))
+
+Not a real feature, want to trigger new release
+
+
 ## v0.7.1 (2025-05-08)
 
 ### Bug Fixes
