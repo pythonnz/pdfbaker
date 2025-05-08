@@ -68,7 +68,6 @@ score = "no"
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
-version_variables = ["CITATION.cff:version"]
 branch = "main"
 build_command = "uv build"
 tag_format = "{version}"
