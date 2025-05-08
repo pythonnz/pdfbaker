@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.12 (2025-05-08)
+
+### Bug Fixes
+
+- Uv.lock was always a release behind
+  ([`5ac00cc`](https://github.com/pythonnz/pdfbaker/commit/5ac00cca59f0931d3a09872d652513fe3bc50797))
+
+
 ## v0.8.11 (2025-05-08)
 
 ### Bug Fixes
