@@ -50,6 +50,7 @@ jobs:
           GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
         run: |
           output=$(semantic-release version 2>&1)
+          echo "$output"
           if echo "$output" | grep -q "The next version is"; then
             echo "released=true" >> $GITHUB_OUTPUT
           else
