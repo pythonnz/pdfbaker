@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v0.6.3 (2025-05-08)
+
+### Bug Fixes
+
+- Need to double backslash escape in .toml
+  ([`b9db84e`](https://github.com/pythonnz/pdfbaker/commit/b9db84e13e89d4a3a956c9a21e1e08b096d66bbd))
+
+- Remove invalid "commit-parser" section (using default "angular" anyway)
+  ([`cc4a985`](https://github.com/pythonnz/pdfbaker/commit/cc4a985be47df22a7c5f6da775b7969fdf6af3e8))
+
+### Continuous Integration
+
+- Delete .releaserc in favour of all settings in pyproject.toml
+  ([`178cd75`](https://github.com/pythonnz/pdfbaker/commit/178cd7537f72d0e638572d927cf97038971d5840))
+
+
 ## v0.6.2 (2025-05-08)
 
 ### Bug Fixes
