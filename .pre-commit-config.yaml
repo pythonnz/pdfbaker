@@ -1,6 +1,7 @@
 default_language_version:
   python: python3
   node: "22.9.0"
+exclude: ^CHANGELOG\.md$
 repos:
   - repo: local
     hooks:
