@@ -21,7 +21,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
+          #ssh-key: ${{ secrets.DEPLOY_KEY }}
+          token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Python
@@ -42,8 +43,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
         run: |
-          which uv
-          echo $PATH
           if semantic-release version; then
             echo "released=true" >> $GITHUB_OUTPUT
           else
