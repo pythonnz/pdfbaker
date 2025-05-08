@@ -36,7 +36,7 @@ jobs:
           github_token: ${{ secrets.DEPLOY_KEY }}
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@v1
+        uses: pypa/gh-action-pypi-publish@release/v1
         if: steps.release.outputs.released == 'true'
 
       - name: Publish package distributions to GitHub Releases
