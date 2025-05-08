@@ -49,13 +49,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
         run: |
-          output=$(semantic-release version)
+          output=$(semantic-release version 2>&1)
           echo "Debug - Full output:"
           echo "$output"
-          echo "Debug - Checking for version:"
+          version=$(echo "$output" | head -n 1)
+          echo "version=$version" >> $GITHUB_OUTPUT
           if echo "$output" | grep -q "The next version is"; then
             echo "released=true" >> $GITHUB_OUTPUT
-            echo "version=$(echo "$output" | grep -oP 'The next version is: \K[0-9.]+')" >> $GITHUB_OUTPUT
           else
             echo "released=false" >> $GITHUB_OUTPUT
           fi
