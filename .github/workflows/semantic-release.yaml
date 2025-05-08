@@ -14,16 +14,22 @@ jobs:
     name: Release
     needs: [pre-commit, tests]
     runs-on: ubuntu-latest
-    concurrency: release
+    concurrency:
+      group: ${{ github.workflow }}-release-${{ github.ref_name }}
+      cancel-in-progress: false
     permissions:
       id-token: write
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          #ssh-key: ${{ secrets.DEPLOY_KEY }}
           token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
+
+      - name: Force release branch to workflow SHA
+        run: git reset --hard ${{ github.sha }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -43,7 +49,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
         run: |
-          if semantic-release version; then
+          output=$(semantic-release version)
+          if [[ $output == *"The next version is"* ]]; then
             echo "released=true" >> $GITHUB_OUTPUT
           else
             echo "released=false" >> $GITHUB_OUTPUT
