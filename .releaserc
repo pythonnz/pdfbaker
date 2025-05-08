@@ -1,0 +1,30 @@
+[build_command]
+command = "pip install build && python -m build"
+
+[commit_parser]
+pattern = "^(?P<type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\((?P<scope>[^()\s]+)\))?:\s(?P<message>.+)"
+field_pattern = "^(?P<type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\((?P<scope>[^()\s]+)\))?:\s(?P<message>.+)"
+
+[changelog_sections]
+feat = "Features"
+fix = "Bug Fixes"
+docs = "Documentation"
+style = "Style"
+refactor = "Refactor"
+perf = "Performance"
+test = "Tests"
+build = "Build"
+ci = "CI"
+chore = "Chores"
+revert = "Reverts"
+
+[changelog_exclude]
+types = ["style", "test", "build", "ci", "chore"]
+
+[changelog_section_headers]
+feat = "### Features"
+fix = "### Bug Fixes"
+docs = "### Documentation"
+refactor = "### Refactor"
+perf = "### Performance"
+revert = "### Reverts" 
