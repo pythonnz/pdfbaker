@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.8.11 (2025-05-08)
+
+### Bug Fixes
+
+- Ensure uv.lock gets updated by a release
+  ([`6a074c8`](https://github.com/pythonnz/pdfbaker/commit/6a074c8ed270da3186eca196277090e2c4719b96))
+
+### Chores
+
+- Add DocumentNotFoundError to errors.__all__
+  ([`02e95e8`](https://github.com/pythonnz/pdfbaker/commit/02e95e8c54d2e93e47f534fbb45a71a843ed5bd9))
+
+
 ## v0.8.10 (2025-05-08)
 
 ### Bug Fixes
