@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.8.2 (2025-05-08)
+
+### Bug Fixes
+
+- Use new personal access token
+  ([`788c60a`](https://github.com/pythonnz/pdfbaker/commit/788c60af19f535ae3211a9a8f5608b1ddc9bef64))
+
+- Use same token for checkout
+  ([`2deb5da`](https://github.com/pythonnz/pdfbaker/commit/2deb5da71207f0fef118e3e83339641123844d69))
+
+
 ## v0.8.1 (2025-05-08)
 
 ### Bug Fixes
