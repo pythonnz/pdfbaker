@@ -7,9 +7,9 @@ on:
 
 jobs:
   pre-commit:
-    uses: ./.github/workflows/pre-commit.yml
+    uses: ./.github/workflows/pre-commit.yaml
   tests:
-    uses: ./.github/workflows/tests.yml
+    uses: ./.github/workflows/tests.yaml
   release:
     name: Release
     needs: [pre-commit, tests]
