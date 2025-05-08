@@ -4,6 +4,7 @@ from pathlib import Path
 
 __all__ = [
     "ConfigurationError",
+    "DocumentNotFoundError",
     "PDFBakerError",
     "PDFCombineError",
     "PDFCompressionError",
