@@ -1,6 +1,16 @@
 # CHANGELOG
 
 
+## v0.7.0 (2025-05-08)
+
+### Features
+
+- First proper release with python-semantic-release
+  ([`f2996cb`](https://github.com/pythonnz/pdfbaker/commit/f2996cbbcfa24cf40996b002e60d828d1471d59d))
+
+Not a real feature, just a minor rename to trigger the release.
+
+
 ## v0.6.3 (2025-05-08)
 
 ### Bug Fixes
