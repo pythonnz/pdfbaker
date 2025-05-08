@@ -69,7 +69,11 @@ score = "no"
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
 branch = "main"
-build_command = "uv build && git add uv.lock"
+build_command = """
+uv lock
+git add uv.lock
+uv build
+"""
 tag_format = "{version}"
 commit_version_number = true
 commit_message = "RELEASE: {version}"
