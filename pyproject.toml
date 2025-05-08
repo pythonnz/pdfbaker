@@ -67,12 +67,8 @@ reports = "no"
 score = "no"
 
 [tool.semantic_release]
-version_toml = [
-    "pyproject.toml:project.version"
-]
+version_toml = ["pyproject.toml:project.version"]
 branch = "main"
-upload_to_pypi = true
-upload_to_release = true
 build_command = "uv build"
 tag_format = "{version}"
 commit_version_number = true
