@@ -74,7 +74,6 @@ branch = "main"
 upload_to_pypi = true
 upload_to_release = true
 build_command = "uv build"
-version_source = "tag"
 tag_format = "{version}"
 commit_version_number = true
 commit_message = "RELEASE: {version}"
