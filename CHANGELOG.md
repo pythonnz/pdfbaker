@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.4 (2025-05-08)
+
+### Bug Fixes
+
+- Use grep to find string in multiline output
+  ([`34e0575`](https://github.com/pythonnz/pdfbaker/commit/34e05755f267d1fe2e69a7a6eba62d46e77dac48))
+
+
 ## v0.8.3 (2025-05-08)
 
 ### Bug Fixes
