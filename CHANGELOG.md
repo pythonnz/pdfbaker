@@ -1,6 +1,16 @@
 # CHANGELOG
 
 
+## v0.8.7 (2025-05-08)
+
+### Bug Fixes
+
+- Remove debug logging
+  ([`dbf2b88`](https://github.com/pythonnz/pdfbaker/commit/dbf2b8826e7dd607310fe28f71c341be8f4540e7))
+
+Finally, this is working.
+
+
 ## v0.8.6 (2025-05-08)
 
 ### Bug Fixes
