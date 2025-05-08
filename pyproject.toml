@@ -79,10 +79,6 @@ tag_format = "{version}"
 commit_version_number = true
 commit_message = "RELEASE: {version}"
 
-[tool.semantic_release.commit_parser]
-pattern = "^(?P<type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\\((?P<scope>[^()\\s]+)\\))?:\\s(?P<message>.+)"
-field_pattern = "^(?P<type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\\((?P<scope>[^()\\s]+)\\))?:\\s(?P<message>.+)"
-
 [tool.semantic_release.changelog_sections]
 feat = "Features"
 fix = "Bug Fixes"
