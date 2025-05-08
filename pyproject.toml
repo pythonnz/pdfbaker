@@ -75,6 +75,9 @@ tag_format = "{version}"
 commit_version_number = true
 commit_message = "RELEASE: {version}"
 
+[tool.semantic_release.changelog]
+template_dir = ".templates"
+
 [tool.semantic_release.changelog_sections]
 feat = "Features"
 fix = "Bug Fixes"
