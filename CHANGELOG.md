@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v0.7.1 (2025-05-08)
+
+### Bug Fixes
+
+- Add GH_TOKEN for creating release, remove invalid "version_source"
+  ([`6e7e99d`](https://github.com/pythonnz/pdfbaker/commit/6e7e99d8f73000e1f7617cd2fe12b5b281c478ce))
+
+- Can't use official release action (docker), it can't run `uv build`
+  ([`c9d4e52`](https://github.com/pythonnz/pdfbaker/commit/c9d4e52d035912fb4a2706d80da9312e0024bac7))
+
+Mimicking `released` output for the subsequent actions
+
+- Correct PyPI action version
+  ([`66801c5`](https://github.com/pythonnz/pdfbaker/commit/66801c52f581ba72c5dc21420c8db0488d27bcb4))
+
+- Need to set up Python and uv for running `uv build`
+  ([`0e353a1`](https://github.com/pythonnz/pdfbaker/commit/0e353a18bd9c9f540383eafb3901f3963ce5a9d1))
+
+- Use official python-semantic-release actions
+  ([`0c86b69`](https://github.com/pythonnz/pdfbaker/commit/0c86b694239b8f333e9dcd21da0886e9a314472d))
+
+
 ## v0.7.0 (2025-05-08)
 
 ### Features
