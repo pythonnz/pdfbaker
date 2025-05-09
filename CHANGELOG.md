@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v0.9.0 (2025-05-09)
+
+### Documentation
+
+- Refactor documentation
+  ([`8efced6`](https://github.com/pythonnz/pdfbaker/commit/8efced682753ad5e92c5a66c16766b04e2edd262))
+
+A first stab at making the documentation up-to-date and useful.
+
+### Features
+
+- Up-to-date documentation
+  ([`1a6ba58`](https://github.com/pythonnz/pdfbaker/commit/1a6ba58aae914f42438ede8c569d0c0e85f783f3))
+
+Marking this as a feature to trigger a new release.
+
+
 ## v0.8.14 (2025-05-09)
 
 ### Bug Fixes
