@@ -28,6 +28,9 @@ def process_document(document: Document) -> None:
         # Note: This is for demonstration. Could use the wordwrap filter in template.
         wrapped_alt_text = wordwrap(data["alt"], max_chars=60)
 
+        # Log a message to show during document processing
+        document.log_info("Setting XKCD data for template context 🙂")
+
         # Update config/template context with XKCD info
         document.config.xkcd = {
             "title": data["title"],
