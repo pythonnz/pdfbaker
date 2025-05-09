@@ -89,12 +89,6 @@ class ImageSpec(PathSpec):
     data: str | None = None
 
 
-class StyleDict(BaseModel):
-    """Style configuration."""
-
-    highlight_color: str | None = None
-
-
 class Directories(BaseModel):
     """Directories configuration."""
 

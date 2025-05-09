@@ -51,16 +51,6 @@ def test_highlighting_template_no_style() -> None:
 
 
 # Context preparation tests
-def test_prepare_template_context_styles() -> None:
-    """Test style resolution in template context."""
-    config = {
-        "style": {"color": "primary"},
-        "theme": {"primary": "#ff0000"},
-    }
-    context = prepare_template_context(config)
-    assert context["style"]["color"] == "#ff0000"
-
-
 def test_prepare_template_context_images(tmp_path: Path) -> None:
     """Test image processing in template context."""
     # Create test image

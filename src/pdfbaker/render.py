@@ -10,7 +10,7 @@ from typing import Any
 import jinja2
 
 from . import processing
-from .config import ImageSpec, StyleDict
+from .config import ImageSpec
 
 __all__ = [
     "create_env",
@@ -94,24 +94,12 @@ def create_env(
 def prepare_template_context(
     context: dict[str], images_dir: Path | None = None
 ) -> dict[str]:
-    """Prepare template context with variables/styles/images
-
-    Resolves variables, styles and encodes images.
+    """Encode images for template context
 
     Args:
-        config: Configuration with optional styles and images
+        config: Configuration with optional images
         images_dir: Directory containing images to encode
     """
-    # Resolve style references to actual theme colors
-    if "style" in context and "theme" in context:
-        style = context["style"]
-        theme = context["theme"]
-        resolved_style: StyleDict = {}
-        for key, value in style.items():
-            resolved_style[key] = theme[value]
-        context["style"] = resolved_style
-
-    # Process image references
     if context.get("images") is not None:
         context["images"] = encode_images(context["images"], images_dir)
 
