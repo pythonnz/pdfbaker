@@ -1,6 +1,16 @@
 # CHANGELOG
 
 
+## v0.9.2 (2025-05-09)
+
+### Bug Fixes
+
+- Disable sigstore signing while waiting on PyPI issue
+  ([`b850286`](https://github.com/pythonnz/pdfbaker/commit/b85028658f1e6c4ad316b35bfff681b01396142e))
+
+https://github.com/pypa/gh-action-pypi-publish/issues/357
+
+
 ## v0.9.1 (2025-05-09)
 
 ### Bug Fixes
