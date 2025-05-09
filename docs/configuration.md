@@ -122,7 +122,7 @@ At least `template` has to be specified.
 
 | Option                         | Type    | Default | Description                                                                                                                                                       |
 | ------------------------------ | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| _any main or document setting_ |         |         | Any of the Main Configuration File settings can be overridden for a particular document.                                                                          |
+| _any main or document setting_ |         |         | Any of the Main/Document Configuration File settings can be overridden for a particular document.                                                                 |
 | `template` **required**        | string  |         | Filename of the SVG template (must be in the document's `templates/` directory)                                                                                   |
 | `images`                       | array   |         | List of images to use in the page. Each image must have a `name` (filename in the document's `images/` directory) and optionally a `type` (defaults to "default") |
 | `page_number` **readonly**     | integer |         | The number of the current page within its document                                                                                                                |
