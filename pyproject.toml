@@ -68,6 +68,7 @@ score = "no"
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/pdfbaker/__init__.py:__version__"]
 branch = "main"
 build_command = """
 uv lock
