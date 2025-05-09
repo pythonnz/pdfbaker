@@ -1,6 +1,20 @@
 # CHANGELOG
 
 
+## v0.8.13 (2025-05-09)
+
+### Bug Fixes
+
+- -v option for main command
+  ([`2d59fde`](https://github.com/pythonnz/pdfbaker/commit/2d59fdeb7153fc650a7999e603dca1176368fa06))
+
+- Preserve exit code of PSR (also run verbose)
+  ([`e86df6b`](https://github.com/pythonnz/pdfbaker/commit/e86df6bd44e0ac7047fa1a3f70dab866cfd0b26b))
+
+The exit code of Python Semantic Release was shadowed by the exit code of the assignment of its
+  output.
+
+
 ## v0.8.12 (2025-05-08)
 
 ### Bug Fixes
