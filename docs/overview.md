@@ -13,14 +13,23 @@ out of the box, it's flexible enough to allow for heavy customisation.
 Use SVG to create documents that need precise positioning, complex layouts with
 overlapping elements, specific fonts or custom shapes:
 
-- Posters
-- Prospectuses
-- Fancy reports
+- Posters and flyers
+- Marketing materials (brochures, prospectuses)
+- Fancy reports and certificates
+- Any document requiring precise design control
 
 Configuring and editing content in plaintext YAML files is great if you create the same
 types of documents again and again.
 
 Use pdfbaker as a command line tool or Python libary.
+
+## When not to use pdfbaker
+
+- When you need something other than PDF
+- When flexible document flow is more important than precise positioning
+
+You may want to consider using an Office Suite, HTML/CSS, Markdown or a text-first tool
+like LaTex, even if your end result is exported to PDF.
 
 ## Advanced features
 
@@ -119,4 +128,5 @@ See the [examples](examples) directory:
 
 ## Getting Help
 
-- [Open an issue](https://github.com/pythonnz/pdfbaker/issues) on GitHub
+If something doesn't work as advertised or is not clearly enough documented, please
+[open an issue](https://github.com/pythonnz/pdfbaker/issues) on GitHub.
