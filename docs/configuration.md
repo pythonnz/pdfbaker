@@ -1,6 +1,7 @@
-# Configuration
+# Configuration Reference
 
-## Example Project Structure
+<details>
+<summary>Example Project Structure</summary>
 
 ```
 project/
@@ -17,42 +18,32 @@ project/
     └── templates/
 ```
 
-## Configuration Workflow
-
-For every page, your main configuration (for all documents), document configuration (for
-all pages of this document) and the page configuration are merged to form the context
-provided to your page template.
-
-```mermaid
-flowchart TD
-    subgraph Configuration
-        Main[YAML Main Config] -->|inherits| Doc[YAML Document Config]
-        Doc -->|inherits| Page[YAML Page Config]
-    end
-
-    subgraph Page Processing
-        Template[SVG Template]
-        Page -->|context| Render[Template Rendering]
-        Template -->|jinja2| Render
-        Render -->|output| SVG[SVG File]
-        SVG -->|cairosvg| PDF[PDF File]
-    end
-```
+</details>
 
 ## Main Configuration File
 
-| Option            | Type    | Default      | Description                                                                                                        |
-| ----------------- | ------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `documents`       | array   | Yes          | List of document directories. Each directory must contain a `config.yaml` file                                     |
-| `style`           | object  | No           | Global style definitions that may reference `theme` values                                                         |
-| `theme`           | object  | No           | Reusable values (colors, fonts, spacing, etc.) used by `style`                                                     |
-| `compress_pdf`    | boolean | `false`      | Whether to compress the final PDF. Requires Ghostscript.                                                           |
-| `svg2pdf_backend` | string  | `"cairosvg"` | Backend to use for SVG to PDF conversion. `"cairosvg"` is built-in, `"inkscape"` requires Inkscape to be installed |
+At least `documents` has to be specified.
 
-You can use `<highlight>text</highlight>` tags in your templates, and they will be
-highlighted in the color specified by the `highlight_color` in your `style`.
+| Option                           | Type    | Default                              | Description                                                                                                                                                                                                                                                             |
+| -------------------------------- | ------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `documents` **required**         | array   | `[]`                                 | List of document configurations. A simple string specifies the name of a directory containing a `config.yaml` file. You can also specify `path` and `name` to a specific configuration YAML file.                                                                       |
+| `directories.base` **read-only** | string  | directory containing the config file | Other directories are relative to this base directory.                                                                                                                                                                                                                  |
+| `directories.build`              | string  | `"build"`                            | Intermediary SVG and PDF files are written here. Deleted unless `bake` is run with `--keep-build`                                                                                                                                                                       |
+| `directories.dist`               | string  | `"dist"`                             | Final PDF files are written here.                                                                                                                                                                                                                                       |
+| `directories.documents`          | string  | `"documents"`                        | Location of document configurations.                                                                                                                                                                                                                                    |
+| `directories.images`             | string  | `"images"`                           | Location of image files.                                                                                                                                                                                                                                                |
+| `directories.pages`              | string  | `"pages"`                            | Location of page configurations.                                                                                                                                                                                                                                        |
+| `directories.templates`          | string  | `"templates"`                        | Final PDF files are written here.                                                                                                                                                                                                                                       |
+| `jinja2_extensions`              | array   | `[]`                                 | jinja2_extensions (like `jinja2.ext.do`) to load and use in templates.                                                                                                                                                                                                  |
+| `template_renderers`             | array   | `["render_highlight"]`               | List of automatically applied renderers. `render_highlight` is currently the only available one and enabled by default. It will replace `<highlight>...</highlight>` with `<tspan>` using the colour `style.color` to let you highlight words inside YAML text.         |
+| `template_filters`               | array   | `["wordwrap"]`                       | List of filters made available to templates. `wordwrap` is currently the only available filter. It splits text into lines so that full words have to fit within the specified total number of character for example `{% set desc_lines = item.desc \| wordwrap(40) %}`. |
+| `svg2pdf_backend`                | string  | `"cairosvg"`                         | Backend to use for SVG to PDF conversion. `"cairosvg"` is built-in, the alternative `"inkscape"` requires Inkscape to be installed                                                                                                                                      |
+| `compress_pdf`                   | boolean | `false`                              | Whether to compress the final PDF. Requires Ghostscript to be installed.                                                                                                                                                                                                |
+| `keep_build`                     | boolean | `false`                              | Whether to keep the `build` directory and its intermediary files. You can also pass `bake --keep-build` on individual calls to do this.                                                                                                                                 |
+| _additional custom setting_      |         |                                      | Any settings you want to make available to all pages of all documents.                                                                                                                                                                                                  |
 
-Example:
+<details>
+<summary>Example Main Configuration File</summary>
 
 ```yaml
 # kiwipycon.yaml
@@ -62,10 +53,12 @@ documents:
   - material_specs
 
 style:
-  highlight_color: teal # Color for <highlight>text</highlight> tags
+  text_color: {{theme.primary}}
   font_family: "Helvetica Neue"
-  heading_size: large # from theme
-  spacing: normal # from theme
+  heading_size: {{theme.large}}
+  spacing: {{theme.normal}}
+  # Color for <highlight>text</highlight> tags
+  highlight_color: {{theme.teal}}
 
 theme:
   primary: "#30987c"
@@ -78,28 +71,32 @@ theme:
 compress_pdf: false
 svg2pdf_backend: inkscape
 
-# Custom content available to all documents:
-content:
-  conference:
-    year: 2025
-    name: "Kiwi PyCon 2025"
-    dates: "November 21-23, 2025"
-  venue:
-    name: "Shed 6, Wellington"
+# Custom settings available to all documents:
+conference:
+  year: 2025
+  name: "Kiwi PyCon 2025"
+  dates: "November 21-23, 2025"
+venue:
+  name: "Shed 6, Wellington"
 ```
+
+</details>
 
 ## Document Configuration File
 
-Document-specific settings and content. The main configuration will be merged with this
-for each document.
+At least `filename` and `pages` has to be specified.
 
-| Option     | Type   | Required | Description                                                                                                                     |
-| ---------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `filename` | string | Yes      | Filename (without extension) of the final PDF document. Can use variables, particularly `variant` (see [Variants](variants.md)) |
-| `pages`    | array  | Yes      | List of page names. Each page must have a corresponding `.yaml` file in the `pages/` directory                                  |
-| `variants` | array  | No       | List of document variants (see [Variants](variants.md))                                                                         |
+| Option                      | Type   | Default     | Description                                                                                                                                                                                                                                                     |
+| --------------------------- | ------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _any main setting_          |        |             | Any of the Main Configuration File settings can be overridden for a particular document.                                                                                                                                                                        |
+| `filename` **required**     | string |             | Filename (without extension) of the final PDF document. Can use variables, particularly `variant` (see [Variants](variants.md))                                                                                                                                 |
+| `pages` **required**        | array  |             | List of page configurations. A simple string specifies a file by the same name with `.yaml` extension in the document's _pages_ directory. You can also specify a `path` and `name` to a specific file (absolute or relative to the document's base directory). |
+| `variants`                  | array  |             | List of document variants (see [Variants](variants.md)). These are their own sections which will be merged with the document configuration. During processing, `variant` will hold the current variant configuration.                                           |
+| `custom_bake`               | string | `"bake.py"` | Python file used for custom processing (if found). A simple string specifies a filename in the document's _base_ directory. You can also specify a `path` and `name` to a specific file (absolute or relative to the document's _base_ directory).              |
+| _additional custom setting_ |        |             | Any settings you want to make available to all pages of this document.                                                                                                                                                                                          |
 
-Example:
+<details>
+<summary>Example Document Configuration File</summary>
 
 ```yaml
 # prospectus/config.yaml
@@ -114,17 +111,22 @@ pages:
   - conference_schedule
 ```
 
+</details>
+
 ## Page Configuration File
 
-Page-specific settings and content. The (already merged) document configuration will be
-merged with this for access to all settings in your template.
+At least `template` has to be specified.
 
-| Option     | Type   | Required | Description                                                                                                                                                       |
-| ---------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `template` | string | Yes      | Filename of the SVG template (must be in the document's `templates/` directory)                                                                                   |
-| `images`   | array  | No       | List of images to use in the page. Each image must have a `name` (filename in the document's `images/` directory) and optionally a `type` (defaults to "default") |
+| Option                         | Type    | Default | Description                                                                                                                                                       |
+| ------------------------------ | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _any main or document setting_ |         |         | Any of the Main Configuration File settings can be overridden for a particular document.                                                                          |
+| `template` **required**        | string  |         | Filename of the SVG template (must be in the document's `templates/` directory)                                                                                   |
+| `images`                       | array   |         | List of images to use in the page. Each image must have a `name` (filename in the document's `images/` directory) and optionally a `type` (defaults to "default") |
+| `page_number` **read-only**    | integer |         | The number of the current page within its document                                                                                                                |
+| _additional custom setting_    |         |         | Any settings you want to make available to this page. This allows you to have a template purely for layout purposes.                                              |
 
-Example:
+<details>
+<summary>Example Page Configuration File</summary>
 
 ```yaml
 # pages/conference_schedule.yaml
@@ -133,8 +135,8 @@ template: list_section.svg.j2
 
 # Override global style settings
 style:
-  background: off_white
-  secondary_text_colour: grey
+  background: {{theme.secondary}}
+  text_colour: {{theme.teal}}
 
 images:
   - name: conference_speaker.jpg
@@ -175,71 +177,82 @@ list_items:
       • Closing
 ```
 
+</details>
+
 ## Template Context
 
-Configuration is merged in this order:
+For every page, your main configuration (for all documents), document configuration (for
+all pages of the document) and the page configuration are merged to form the context
+provided to your page template.
 
-1. Main config
-2. Document config
-3. Variant config (if processing [a variant](variants.md))
-4. Page config
+```mermaid
+flowchart TD
+    subgraph Configuration
+        Main[YAML Main Config] -->|inherits| Doc[YAML Document Config]
+        Doc -->|inherits| Page[YAML Page Config]
+    end
 
-The entire merged configuration is available to your templates. This means:
+    subgraph Page Processing
+        Template[SVG Template]
+        Page -->|context| Render[Template Rendering]
+        Template -->|jinja2| Render
+        Render -->|output| SVG[SVG File]
+        SVG -->|cairosvg| PDF[PDF File]
+    end
+```
 
-1. You can put any data you want in your configuration
-2. The three levels (main, document, page) are just for organisation (Don't Repeat
-   Yourself)
-3. Later levels override earlier ones if keys conflict
+## Advanced Configuration
 
-### Available Variables
+### Document Variants
 
-| Variable       | Description                                                                                                                       |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `style`        | Resolved style definitions (if style/theme are defined)                                                                           |
-| `images`       | List of image objects, each with `name` and `type` (as specified) and also `data` (base64-encoded data for inclusion in the page) |
-| Any other keys | All other configuration is passed through as-is                                                                                   |
-
-You can use `<highlight>text</highlight>` tags in your templates, and they will be
-highlighted in the color specified by the `highlight_color` in your `style` (see "Main
-Configuration File" above).
-
-## Document Variants
-
-Create multiple versions of a document by defining variants in the document
+Create multiple versions of a document by defining `variants` in the document
 configuration:
 
 ```yaml
-# Document config
+# Document configuration
+filename: "{{ variant.name | lower }}_variant"
+pages:
+  - main
 variants:
   - name: Diamond
-    content:
-      price: 10000
-      benefits:
-        - Logo on lanyard
-        - Logo on t-shirt
+    price: 10000
+    benefits:
+      - Logo on lanyard
+      - Logo on t-shirt
+    pages:
+      - main
+      - diamond_bonus
   - name: Platinum
-    content:
-      price: 5000
-      benefits:
-        - Logo on t-shirt
+    price: 5000
+    benefits:
+      - Logo on t-shirt
 ```
 
-## Custom Processing
+When a particular document is processed, each variant's configuration will be merged
+into the document configuration, and `variant` will hold the configuration of the
+current variant.
+
+See [the variants example](../examples/variants) for a simple implementation of this in
+action.
+
+### Custom Processing
 
 For advanced use cases, you can create a `bake.py` file in your document directory to
-customize the document generation process. This allows you to:
+customize the document generation process.
 
-- Add custom preprocessing steps
-- Modify content dynamically
-- Generate content programmatically
-- Handle complex document structures
-
-Basic structure:
+Most importantly, this allows you to inject additional settings from sources like web
+requests or database queries.
 
 ```python
-from pdfbaker.document import PDFBakerDocument
+from pdfbaker.document import Document
 
-def process_document(document: PDFBakerDocument) -> None:
-    # Custom processing logic here
-    pass
+def process_document(document: Document) -> None:
+    """Get settings from other places."""
+    # Inject additional data into document.config
+    document.config.profit_and_loss = query_xero_api()
+    # Continue with regular processing
+    return document.process()
 ```
+
+See [the custom_processing example](../examples/custom_processing) for an implementation
+that insert the latest XKCD comic into your PDF.

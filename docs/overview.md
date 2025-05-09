@@ -1,23 +1,39 @@
 # pdfbaker Overview
 
-pdfbaker is a tool for generating PDF documents from SVG templates and YAML
-configuration. It's designed to be flexible and powerful, allowing you to create complex
-documents with minimal effort.
+pdfbaker creates PDF documents from SVG templates and YAML configuration. Quick and easy
+out of the box, it's flexible enough to allow for heavy customisation.
 
-## Key Features
+- **SVG**: Full control over document layout and design
+- **Jinja2**: Replace static content in your SVG with variables, conditions, loops
+- **YAML**: Configure your content in plain text
+- **PDF**: Your end result, optionally compressed
 
-- **SVG Layout Control**: Full control over document layout and design
-- **Simple Configuration**: YAML for easy content management
-- **Dynamic Content**: Jinja2 templating for variable text, conditions, and loops
-- **Document Variants**: Create multiple versions of the same document
-- **Custom Processing**: Extend the processing workflow with Python
-- **PDF Compression**: Optional compression of final PDFs
+## Use cases
 
-## Quickstart
+Use SVG to create documents that need precise positioning, complex layouts with
+overlapping elements, specific fonts or custom shapes:
 
-For a quick introduction, see the [README](../README.md).
+- Posters
+- Prospectuses
+- Fancy reports
+
+Configuring and editing content in plaintext YAML files is great if you create the same
+types of documents again and again.
+
+Use pdfbaker as a command line tool or Python libary.
+
+## Advanced features
+
+- [Configuration Reference](configuration.md) - All available settings
+- [Document Variants](variants.md) - Create multiple versions of the same document
+- [Custom Processing](custom_processing.md) - Provide page content from anywhere
 
 ## Workflow
+
+1. Create your document in an SVG editor or convert to SVG
+2. Replace text with variables, add conditions and loops using Jinja2
+3. Configure your content and settings in YAML
+4. Generate PDFs with `pdfbaker bake`
 
 ### From configuration to PDF documents
 
@@ -91,12 +107,6 @@ flowchart LR
     end
 ```
 
-## Documentation
-
-- [Configuration](configuration.md) - How to set up your documents
-- [Document Variants](variants.md) - Create multiple versions of a document
-- [Custom Processing](custom_processing.md) - Extend the processing workflow
-
 ## Examples
 
 See the [examples](examples) directory:
@@ -106,41 +116,6 @@ See the [examples](examples) directory:
 - [variants](examples/variants) - Document variants
 - [custom_locations](examples/custom_locations) - Custom file/directory locations
 - [custom_processing](examples/custom_processing) - Custom processing with Python
-
-## Example Project Structure
-
-```
-project/
-├── kiwipycon.yaml        # Main configuration
-├── material_specs/       # A document
-│   ├── config.yaml       # Document configuration
-│   ├── images/           # Images
-│   ├── pages/            # Page configurations
-│   └── templates/        # SVG templates
-└── prospectus/           # Another document
-    ├── config.yaml
-    ├── images/
-    ├── pages/
-    └── templates/
-```
-
-## Workflow
-
-1. Create your document design in an SVG editor
-2. Replace text with variables, add conditions and loops using Jinja2
-3. Configure your content and settings in YAML
-4. Generate PDFs with `pdfbaker bake`
-
-## Use Cases
-
-pdfbaker is ideal for any document that needs precise layout control. Unlike HTML-based
-solutions, SVG gives you:
-
-- Exact positioning of every element
-- Full control over typography
-- Complex layouts with overlapping elements
-- Precise image placement
-- Custom shapes and paths
 
 ## Getting Help
 

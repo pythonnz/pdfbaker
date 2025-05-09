@@ -86,10 +86,10 @@ pdfbaker bake examples/examples.yaml
 
 ## Documentation
 
-- [Overview](docs/overview.md)
-- [Configuration](docs/configuration.md)
-- [Variants](docs/variants.md)
-- [Custom Processing](docs/custom_processing.md)
+- [Overview](docs/overview.md) - Start here
+- [Configuration Reference](docs/configuration.md) - All available settings
+- [Document Variants](docs/variants.md) - Create multiple versions of the same document
+- [Custom Processing](docs/custom_processing.md) - Provide page content from anywhere
 
 ( [on GitHub](https://github.com/pythonnz/pdfbaker/tree/main/docs) )
 
