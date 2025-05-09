@@ -3,6 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/pdfbaker?color=blue)](https://pypi.org/project/pdfbaker/)
 [![Python](https://img.shields.io/python/required-version-toml?color=blue&tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fpythonnz%2Fpdfbaker%2Fmain%2Fpyproject.toml)](https://github.com/pythonnz/pdfbaker/blob/main/pyproject.toml)
 [![Downloads](https://img.shields.io/pypi/dw/pdfbaker?color=blue)](https://pypistats.org/packages/pdfbaker)
+[![sigstore](https://img.shields.io/badge/sigstore-signed-blue)](https://github.com/pythonnz/pdfbaker/releases)
 [![tests](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml/badge.svg)](https://github.com/pythonnz/pdfbaker/actions/workflows/tests.yaml)
 [![codecov](https://img.shields.io/codecov/c/github/pythonnz/pdfbaker)](https://codecov.io/gh/pythonnz/pdfbaker)
 [![OSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/pythonnz/pdfbaker?label=OSSF%20Scorecard)](https://scorecard.dev/viewer/?uri=github.com/pythonnz/pdfbaker)
