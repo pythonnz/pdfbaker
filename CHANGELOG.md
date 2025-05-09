@@ -1,6 +1,32 @@
 # CHANGELOG
 
 
+## v0.9.1 (2025-05-09)
+
+### Bug Fixes
+
+- Sign releases with Sigstore
+  ([`e6b0f62`](https://github.com/pythonnz/pdfbaker/commit/e6b0f62f7c571c3c0e8b94ac9edb2782d03b51e5))
+
+More of a `ci:` but I want to trigger a release to confirm
+
+### Documentation
+
+- Clarify that a page setting can override main or document
+  ([`9b0c40f`](https://github.com/pythonnz/pdfbaker/commit/9b0c40f61235c5666eb02f804b0351038b283ee2))
+
+- Fix default location of documents
+  ([`228df2c`](https://github.com/pythonnz/pdfbaker/commit/228df2cea73defe7063d3534a1f2d80488188017))
+
+(same directory as config file, not another subdirectory)
+
+- Fix description - page overrides for page, not document
+  ([`b43718a`](https://github.com/pythonnz/pdfbaker/commit/b43718a611f13965c1ed3f76174fc7e059aaa048))
+
+- Improve configuration reference, add section on custom locations
+  ([`aeee114`](https://github.com/pythonnz/pdfbaker/commit/aeee114a270eb4e078e89c58f5428fffc72f30b4))
+
+
 ## v0.9.0 (2025-05-09)
 
 ### Documentation
