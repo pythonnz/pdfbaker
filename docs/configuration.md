@@ -8,9 +8,12 @@ project/
 ├── kiwipycon.yaml        # Main configuration
 ├── material_specs/       # A document
 │   ├── config.yaml       # Document configuration
-│   ├── images/           # Images
-│   ├── pages/            # Page configurations
-│   └── templates/        # SVG templates
+│   ├── images/           # The document's images
+│   ├── pages/            # The document's pages
+│   │   ├── cover.yaml    # Page configuration
+│   │   └── main.yaml     # Page configuration
+│   └── templates/        # The document's templates
+│       └── page.svg.j2   # A template
 └── prospectus/           # Another document
     ├── config.yaml
     ├── images/
@@ -68,7 +71,7 @@ theme:
   normal: "12pt"
   small: "10pt"
 
-compress_pdf: false
+compress_pdf: true
 svg2pdf_backend: inkscape
 
 # Custom settings available to all documents:
@@ -256,3 +259,27 @@ def process_document(document: Document) -> None:
 
 See [the custom_processing example](../examples/custom_processing) for an implementation
 that insert the latest XKCD comic into your PDF.
+
+### Custom Locations
+
+The above `directories` settings work out of the box, and expect your files to follow a
+simple naming convention.
+
+- You may not like these locations
+- You may already have images sitting elsewhere and want to avoid multiple copies
+- You want to create a document PDF in a webserver directory for people to download
+
+You can customize all directories / file locations, even on a per-document basis:
+
+```yaml
+# Document configuration
+filename: Monthly Report
+directories:
+  - images: "../../images"
+  - dist: "/var/www/documents"
+pages:
+  - main
+```
+
+See [the custom_locations example](../examples/custom_locations) for an implementation
+that goes off the default path.
