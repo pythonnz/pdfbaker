@@ -59,12 +59,18 @@ jobs:
           fi
           exit $status
 
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Sign the release with Sigstore
         if: steps.release.outputs.released == 'true'
+        uses: sigstore/gh-action-sigstore-python@v3.0.0
+        with:
+          inputs: dist/*
+
+      - name: Publish package distributions to PyPI
+        if: steps.release.outputs.released == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
 
       - name: Publish package distributions to GitHub Releases
-        uses: python-semantic-release/publish-action@v9.21.1
         if: steps.release.outputs.released == 'true'
+        uses: python-semantic-release/publish-action@v9.21.1
         with:
           github_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
