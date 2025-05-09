@@ -49,13 +49,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
         run: |
-          output=$(semantic-release version 2>&1)
+          output=$(semantic-release version -v 2>&1)
+          status=$?
           echo "$output"
           if echo "$output" | grep -q "The next version is"; then
             echo "released=true" >> $GITHUB_OUTPUT
           else
             echo "released=false" >> $GITHUB_OUTPUT
           fi
+          exit $status
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
