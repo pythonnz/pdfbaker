@@ -1,6 +1,38 @@
 # CHANGELOG
 
 
+## v0.8.14 (2025-05-09)
+
+### Bug Fixes
+
+- Remove superfluous theme/color mechanism
+  ([`bdf9fbe`](https://github.com/pythonnz/pdfbaker/commit/bdf9fbe3f3602241979ce29a40049126f24b6b29))
+
+This is technically a breaking change but trivial to resolve in configs: No more special implicit
+  treatment of "theme" to resolve a "style".
+
+Just use regular variables like ``` style: primary_text_colour: {{ theme.off_black }}
+
+secondary_text_colour: {{ theme.off_white }}
+
+theme: off_black: "#2d2a2b"
+
+off_white: "#f5f5f5" ```
+
+### Code Style
+
+- Show how you can add messages to the processing log
+  ([`a2c2b62`](https://github.com/pythonnz/pdfbaker/commit/a2c2b62d0be5c3a9a119c80e0a5a5cb00b81e8ab))
+
+### Continuous Integration
+
+- Don't run pre-commit/tests twice on push to main
+  ([`f721c24`](https://github.com/pythonnz/pdfbaker/commit/f721c24fc68e7ebe3f23e1c7fac255d93d4f26e8))
+
+- Keep static `__version__` in `__init__.py`, update upon release
+  ([`d240591`](https://github.com/pythonnz/pdfbaker/commit/d240591f374ad055838a0a4381ae2591ca74626e))
+
+
 ## v0.8.13 (2025-05-09)
 
 ### Bug Fixes
