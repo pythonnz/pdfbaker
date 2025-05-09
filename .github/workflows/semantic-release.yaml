@@ -59,11 +59,13 @@ jobs:
           fi
           exit $status
 
-      - name: Sign the release with Sigstore
-        if: steps.release.outputs.released == 'true'
-        uses: sigstore/gh-action-sigstore-python@v3.0.0
-        with:
-          inputs: dist/*
+      # Wait for the outcome of
+      # https://github.com/pypa/gh-action-pypi-publish/issues/357
+      #- name: Sign the release with Sigstore
+      #  if: steps.release.outputs.released == 'true'
+      #  uses: sigstore/gh-action-sigstore-python@v3.0.0
+      #  with:
+      #    inputs: dist/*
 
       - name: Publish package distributions to PyPI
         if: steps.release.outputs.released == 'true'
