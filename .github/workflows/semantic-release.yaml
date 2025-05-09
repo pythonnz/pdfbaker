@@ -49,7 +49,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
         run: |
-          output=$(semantic-release version -v 2>&1)
+          output=$(semantic-release -v version 2>&1)
           status=$?
           echo "$output"
           if echo "$output" | grep -q "The next version is"; then
