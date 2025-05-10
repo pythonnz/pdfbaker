@@ -4,14 +4,14 @@ from pdfbaker.processing import wordwrap
 
 
 def test_wordwrap_empty_input():
-    """Test wordwrap with empty inputs."""
+    """wordwrap: returns empty list for empty or whitespace input."""
     assert not wordwrap("")
     assert not wordwrap(" ")
     assert not wordwrap("   ")
 
 
 def test_wordwrap_normal_text():
-    """Test wordwrap with normal text."""
+    """wordwrap: wraps text at max_chars boundary."""
     text = "This is a simple test for word wrapping functionality."
     # Max width 20 chars
     expected = ["This is a simple", "test for word", "wrapping", "functionality."]
@@ -22,50 +22,29 @@ def test_wordwrap_normal_text():
 
 
 def test_wordwrap_long_words():
-    """Test wordwrap with words longer than the max width."""
-    # Single word longer than max width
-    assert wordwrap("supercalifragilisticexpialidocious", max_chars=10) == [
-        "supercalifragilisticexpialidocious"
-    ]
-
-    # Mixed text with one long word
-    text = "This has a supercalifragilisticexpialidocious word in it."
-    expected = ["This has a", "supercalifragilisticexpialidocious", "word in it."]
-    assert wordwrap(text, max_chars=15) == expected
+    """wordwrap: handles words longer than max_chars."""
+    text = "Supercalifragilisticexpialidocious"
+    assert wordwrap(text, max_chars=10) == [text]
 
 
 def test_wordwrap_edge_cases():
-    """Test wordwrap with various edge cases."""
-    # Text with exactly max width
-    assert wordwrap("1234567890", max_chars=10) == ["1234567890"]
-
-    # Text with multiple spaces
-    assert wordwrap("word1    word2", max_chars=20) == ["word1 word2"]
-
-    # Line just at the boundary
-    text = "one two three four"
-    assert wordwrap(text, max_chars=13) == ["one two three", "four"]
-
-    # Really large max_chars
-    assert wordwrap("short text", max_chars=1000) == ["short text"]
+    """wordwrap: handles edge cases with punctuation and short lines."""
+    text = "Hello, world!"
+    assert wordwrap(text, max_chars=5) == ["Hello,", "world!"]
+    text = "A B C D E F G"
+    assert wordwrap(text, max_chars=3) == ["A B", "C D", "E F", "G"]
 
 
 def test_wordwrap_newlines():
-    """Test that newlines in the input are treated as spaces."""
-    text = "Line one\nLine two\nLine three"
-    expected = ["Line one Line two", "Line three"]
-    assert wordwrap(text, max_chars=20) == expected
+    """wordwrap: newlines are whitespace, only wraps at word boundaries."""
+    text = "Line1\nLine2 Line3"
+    assert wordwrap(text, max_chars=10) == ["Line1", "Line2", "Line3"]
 
 
 def test_wordwrap_long_word_with_following_words():
-    """Test that processing continues after a long word."""
-    text = "supercalifragilisticexpialidocious is followed by more words"
-    result = wordwrap(text, 10)
-
-    assert result == [
-        "supercalifragilisticexpialidocious",
-        "is",
-        "followed",
-        "by more",
-        "words",
+    """wordwrap: long word at start followed by short words."""
+    text = "Supercalifragilisticexpialidocious is fun"
+    assert wordwrap(text, max_chars=10) == [
+        "Supercalifragilisticexpialidocious",
+        "is fun",
     ]

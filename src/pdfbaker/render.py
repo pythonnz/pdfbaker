@@ -48,18 +48,25 @@ class PDFBakerTemplate(jinja2.Template):  # pylint: disable=too-few-public-metho
 
 
 def render_highlight(rendered: str, **kwargs: Any) -> str:
-    """Apply highlight tags to the rendered template content.
+    """
+    Apply highlight tags to the rendered template content.
 
-    Convert <highlight> tags to styled <tspan> elements with the highlight color.
+    Recursively convert all <highlight> tags to styled <tspan> elements
+    with the highlight color from the `style.highlight_color` setting.
     """
     if "style" in kwargs and "highlight_color" in kwargs["style"]:
         highlight_color = kwargs["style"]["highlight_color"]
 
+        pattern = re.compile(r"<highlight>(.*?)</highlight>", re.DOTALL)
+
         def replacer(match: re.Match[str]) -> str:
-            content = match.group(1)
+            # Recursively process the content for nested highlights
+            content = render_highlight(match.group(1), **kwargs)
             return f'<tspan style="fill:{highlight_color}">{content}</tspan>'
 
-        rendered = re.sub(r"<highlight>(.*?)</highlight>", replacer, rendered)
+        # Keep replacing until no more <highlight> tags are found
+        while pattern.search(rendered):
+            rendered = pattern.sub(replacer, rendered)
 
     return rendered
 

@@ -54,7 +54,6 @@ source = ["pdfbaker"]
 
 [tool.pylint.main]
 py-version = "3.11"
-ignore-paths = ["tests/"]
 init-hook = "import sys; sys.path.insert(0, 'src')"
 
 [tool.pylint.messages_control]

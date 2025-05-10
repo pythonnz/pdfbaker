@@ -4,38 +4,25 @@ import shutil
 from pathlib import Path
 
 import pytest
-from ruamel.yaml import YAML
+from pydantic import ValidationError
 
 from pdfbaker.baker import Baker, BakerOptions
 from pdfbaker.config import Directories, PathSpec
 from pdfbaker.document import Document
-from pdfbaker.errors import ConfigurationError
-
-
-def write_yaml(path: Path, data: dict) -> None:
-    """Write data to a YAML file using ruamel.yaml."""
-    yaml = YAML()
-    with open(path, "w", encoding="utf-8") as file:
-        yaml.dump(data, file)
 
 
 @pytest.fixture(name="baker_config")
-def fixture_baker_config(tmp_path: Path, default_directories: Directories) -> Path:
+def fixture_baker_config(
+    tmp_path: Path, default_directories: Directories, write_yaml
+) -> Path:
     """Create a baker configuration file."""
     config_file = tmp_path / "config.yaml"
+    dirs = default_directories.model_dump(mode="json")
     write_yaml(
         config_file,
         {
             "documents": [{"path": "test_doc", "name": "test_doc"}],
-            "directories": {
-                "base": str(default_directories.base),
-                "build": str(default_directories.build),
-                "dist": str(default_directories.dist),
-                "documents": str(default_directories.documents),
-                "pages": str(default_directories.pages),
-                "templates": str(default_directories.templates),
-                "images": str(default_directories.images),
-            },
+            "directories": dirs,
         },
     )
     return config_file
@@ -55,25 +42,23 @@ def fixture_baker_options(tmp_path: Path) -> BakerOptions:
 
 
 @pytest.fixture(name="doc_dir")
-def fixture_doc_dir(tmp_path: Path, default_directories: Directories) -> Path:
+def fixture_doc_dir(
+    tmp_path: Path, default_directories: Directories, write_yaml
+) -> Path:
     """Create a document directory with necessary files."""
     doc_path = tmp_path / "test_doc"
     doc_path.mkdir()
 
     config_file = doc_path / "config.yaml"
+    dirs = default_directories.model_dump(mode="json")
+    dirs["base"] = str(doc_path)
+    dirs["build"] = str(doc_path / "build")
+    dirs["dist"] = str(doc_path / "dist")
     write_yaml(
         config_file,
         {
             "pages": [{"path": "page1.yaml", "name": "page1"}],
-            "directories": {
-                "base": str(doc_path),
-                "build": str(doc_path / "build"),
-                "dist": str(doc_path / "dist"),
-                "documents": str(default_directories.documents),
-                "pages": str(default_directories.pages),
-                "templates": str(default_directories.templates),
-                "images": str(default_directories.images),
-            },
+            "directories": dirs,
             "filename": "test_doc",
         },
     )
@@ -96,7 +81,7 @@ def fixture_doc_dir(tmp_path: Path, default_directories: Directories) -> Path:
 def test_document_init_with_dir(
     baker_config: Path, baker_options: BakerOptions, doc_dir: Path
 ) -> None:
-    """Test document initialization with a directory."""
+    """Document: initializes from directory and loads config."""
     baker = Baker(config_file=baker_config, options=baker_options)
     doc_config_path = PathSpec(path=doc_dir, name="test_doc")
     doc = Document(config_path=doc_config_path, **baker.config.document_settings)
@@ -110,22 +95,17 @@ def test_document_init_with_file(
     baker_config: Path,
     baker_options: BakerOptions,
     default_directories: Directories,
+    write_yaml,
 ) -> None:
-    """Test document initialization with a config file."""
+    """Document: initializes from file and loads config."""
     config_file = tmp_path / "test_doc.yaml"
+    dirs = default_directories.model_dump(mode="json")
+    dirs["base"] = str(tmp_path)
     write_yaml(
         config_file,
         {
             "pages": [{"path": "page1.yaml", "name": "page1"}],
-            "directories": {
-                "base": str(default_directories.base),
-                "build": str(default_directories.build),
-                "dist": str(default_directories.dist),
-                "documents": str(default_directories.documents),
-                "pages": str(default_directories.pages),
-                "templates": str(default_directories.templates),
-                "images": str(default_directories.images),
-            },
+            "directories": dirs,
             "filename": "test_doc",
         },
     )
@@ -149,37 +129,25 @@ def test_document_init_with_file(
 
 
 def test_document_init_missing_pages(
-    tmp_path: Path, baker_config: Path, default_directories: Directories
+    baker_options: BakerOptions, tmp_path: Path
 ) -> None:
-    """Test document initialization with missing pages key."""
-    config_file = tmp_path / "test_doc.yaml"
-    write_yaml(
-        config_file,
-        {
-            "title": "Test Document",
-            "directories": {
-                "base": str(default_directories.base),
-                "build": str(default_directories.build),
-                "dist": str(default_directories.dist),
-                "documents": str(default_directories.documents),
-                "pages": str(default_directories.pages),
-                "templates": str(default_directories.templates),
-                "images": str(default_directories.images),
-            },
-            "filename": "test_doc",
-        },
-    )
-
-    baker = Baker(baker_config)
-    doc_config_path = PathSpec(path=config_file, name="test_doc")
-    with pytest.raises(ConfigurationError, match="Cannot determine pages"):
-        Document(config_path=doc_config_path, **baker.config.document_settings)
+    """Document: raises error if pages are missing."""
+    config_file = tmp_path / "missing_pages.yaml"
+    config_file.write_text("""
+name: missing_pages
+directories:
+  base: .
+pages: []
+""")
+    doc_config_path = PathSpec(path=config_file, name="missing_pages")
+    with pytest.raises(ValidationError):
+        Document(config_path=doc_config_path, **baker_options.model_dump())
 
 
 def test_document_custom_bake(
     baker_config: Path, baker_options: BakerOptions, doc_dir: Path
 ) -> None:
-    """Test document processing with a custom bake module."""
+    """Document: custom bake module is used if present."""
     (doc_dir / "bake.py").write_text(
         "def process_document(document):\n"
         "    return document.config.directories.build / 'custom.pdf'\n"
@@ -195,7 +163,7 @@ def test_document_custom_bake(
 def test_document_custom_bake_error(
     baker_config: Path, baker_options: BakerOptions, doc_dir: Path
 ) -> None:
-    """Test document processing with an invalid custom bake module."""
+    """Document: error in custom bake module is reported."""
     (doc_dir / "bake.py").write_text("raise Exception('Test error')")
 
     baker = Baker(config_file=baker_config, options=baker_options)
@@ -210,22 +178,19 @@ def test_document_variants(
     baker_options: BakerOptions,
     doc_dir: Path,
     default_directories: Directories,
+    write_yaml,
 ) -> None:
-    """Test document processing with variants."""
+    """Document: processes all variants and produces PDFs."""
     config_file = doc_dir / "config.yaml"
+    dirs = default_directories.model_dump(mode="json")
+    dirs["base"] = str(doc_dir)
+    dirs["build"] = str(doc_dir / "build")
+    dirs["dist"] = str(doc_dir / "dist")
     write_yaml(
         config_file,
         {
             "pages": [{"path": "page1.yaml", "name": "page1"}],
-            "directories": {
-                "base": str(doc_dir),
-                "build": str(doc_dir / "build"),
-                "dist": str(doc_dir / "dist"),
-                "documents": str(default_directories.documents),
-                "pages": str(default_directories.pages),
-                "templates": str(default_directories.templates),
-                "images": str(default_directories.images),
-            },
+            "directories": dirs,
             "filename": "test_doc",
             "variants": [
                 {"name": "variant1", "filename": "variant1"},
@@ -247,8 +212,9 @@ def test_document_variants_with_different_pages(
     baker_config: Path,
     baker_options: BakerOptions,
     default_directories: Directories,
+    write_yaml,
 ) -> None:
-    """Test document with variants where each variant has different pages."""
+    """Document: variants with different pages are processed correctly."""
     config_file = tmp_path / "test_doc.yaml"
     write_yaml(
         config_file,
