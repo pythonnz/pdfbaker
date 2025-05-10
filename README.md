@@ -130,7 +130,8 @@ pytest --cov=pdfbaker --cov-report=term-missing
 
 ### Pre-commit hook
 
-If you want to commit changes, install [pre-commit](https://pre-commit.com) and run
+If you want to commit changes, install [pre-commit](https://pre-commit.com) (maybe
+[using uv](https://adamj.eu/tech/2025/05/07/pre-commit-install-uv/)) and run
 
 ```bash
 pre-commit install
