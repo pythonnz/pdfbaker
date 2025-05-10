@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v0.9.3 (2025-05-10)
+
+### Bug Fixes
+
+- Improved test suite, tests now also linted
+  ([`11e8bb8`](https://github.com/pythonnz/pdfbaker/commit/11e8bb848114362c9c957351070f73ff084a4adc))
+
+Reviewed all tests. Now 73 tests covering 91%.
+
+### Continuous Integration
+
+- Delete Sigstore signing - PyPI already doing that
+  ([`1e4c7b6`](https://github.com/pythonnz/pdfbaker/commit/1e4c7b656040a2c4920571c83d0f72b35f87becf))
+
+Only now I noticed the `.publish.attestation` files in the releases...
+
+### Documentation
+
+- Add sigstore badge
+  ([`015fc47`](https://github.com/pythonnz/pdfbaker/commit/015fc47b271fb510e7c487805efee9750a4a52b6))
+
+
 ## v0.9.2 (2025-05-09)
 
 ### Bug Fixes
