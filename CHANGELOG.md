@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v0.9.4 (2025-05-11)
+
+### Bug Fixes
+
+- Actually deep-merge configs
+  ([`1069a68`](https://github.com/pythonnz/pdfbaker/commit/1069a68121f126ef1ce6e628d738c28ab8903fec))
+
+### Documentation
+
+- Add link to pre-commit installation with uv
+  ([`c834d30`](https://github.com/pythonnz/pdfbaker/commit/c834d30accdd23bffaad9443dbf60613d0c90c6d))
+
+- Clarify directories, document/page names, variant config
+  ([`c83f5c5`](https://github.com/pythonnz/pdfbaker/commit/c83f5c5eebd96940a68df1d7173c451098d6375f))
+
+- Clarify page `template` setting
+  ([`8de9fc8`](https://github.com/pythonnz/pdfbaker/commit/8de9fc886f916a70008cdf3107d8bbeb4153d2a5))
+
+
 ## v0.9.3 (2025-05-10)
 
 ### Bug Fixes
