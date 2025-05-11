@@ -38,7 +38,7 @@ class BakerConfig(BaseConfig):
                 data["config_file"] = data["config_file"].resolve()
 
             config_data = YAML().load(data["config_file"].read_text())
-            data.update(config_data)  # YAML values override kwargs
+            data = BaseConfig.deep_merge_dicts(data, config_data)
 
             # Set default directories
             if "directories" not in data:

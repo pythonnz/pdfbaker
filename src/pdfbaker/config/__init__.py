@@ -186,27 +186,27 @@ class BaseConfig(BaseModel, LoggingMixin):
         """Return dictionary of user-defined settings."""
         return getattr(self, "__pydantic_extra__", {}) or {}
 
+    @staticmethod
+    def deep_merge_dicts(
+        base: dict[Any, Any], update: dict[Any, Any]
+    ) -> dict[Any, Any]:
+        """Deep merge two dictionaries."""
+        result = base.copy()
+        for key, value in update.items():
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
+                result[key] = BaseConfig.deep_merge_dicts(result[key], value)
+            else:
+                result[key] = value
+        return result
+
     def merge(self, update: dict[str, Any]) -> "BaseConfig":
         """Deep merge a dictionary into a config, returning a new config instance."""
-
-        def _deep_merge(
-            base_dict: dict[str, Any], update_dict: dict[str, Any]
-        ) -> dict[str, Any]:
-            """Deep merge two dictionaries."""
-            result = base_dict.copy()
-            for key, value in update_dict.items():
-                if (
-                    key in result
-                    and isinstance(result[key], dict)
-                    and isinstance(value, dict)
-                ):
-                    result[key] = _deep_merge(result[key], value)
-                else:
-                    result[key] = value
-            return result
-
         base_dict = self.model_dump()
-        merged = _deep_merge(base_dict, update)
+        merged = self.deep_merge_dicts(base_dict, update)
         return self.__class__(**merged)
 
     # ruff: noqa: C901

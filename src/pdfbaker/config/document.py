@@ -46,7 +46,7 @@ class DocumentConfig(BaseConfig):
 
             config_path = data["config_path"]
             config_data = YAML().load(config_path.path.read_text())
-            data.update(config_data)  # YAML values override kwargs
+            data = BaseConfig.deep_merge_dicts(data, config_data)
             data["directories"]["base"] = config_path.path.parent
 
         return data

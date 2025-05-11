@@ -26,7 +26,7 @@ class PageConfig(BaseConfig):
             if isinstance(data["config_path"], dict):
                 data["config_path"] = PathSpec(**data["config_path"])
             config_data = YAML().load(data["config_path"].path.read_text())
-            data.update(config_data)  # YAML values override kwargs
+            data = BaseConfig.deep_merge_dicts(data, config_data)
             data["directories"]["base"] = data["config_path"].path.parent
         return data
 
