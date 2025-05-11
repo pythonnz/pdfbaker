@@ -208,6 +208,21 @@ flowchart TD
     end
 ```
 
+## Always Quote Variables
+
+When using Jinja2 variables as values, always quote them.
+
+Otherwise the curly braces will be interpreted as a YAML mapping and not resolve as you
+would expect.
+
+```yaml
+# ❌ Bad
+primary_text_colour: {{theme.off_black}}
+
+# ✅ Good
+primary_text_colour: "{{theme.off_black}}"
+```
+
 ## Advanced Configuration
 
 ### Document Variants
