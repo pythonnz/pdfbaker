@@ -13,13 +13,8 @@ from pdfbaker.errors import DocumentNotFoundError, PDFBakerError
 logger = logging.getLogger(__name__)
 
 
-@click.group()
+@click.command()
 @click.version_option(version=__version__, prog_name="pdfbaker")
-def cli() -> None:
-    """Generate PDF documents from YAML-configured SVG templates."""
-
-
-@cli.command()
 @click.argument(
     "config_file",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
@@ -36,7 +31,7 @@ def cli() -> None:
 @click.option("--keep-build", is_flag=True, help="Keep build artifacts")
 @click.option("--debug", is_flag=True, help="Debug mode (--verbose and --keep-build)")
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def bake(
+def cli(
     config_file: Path,
     documents: tuple[str, ...],
     quiet: bool,
@@ -44,8 +39,8 @@ def bake(
     trace: bool,
     keep_build: bool,
     debug: bool,
-) -> int:
-    """Parse config file and bake PDFs.
+) -> None:
+    """Generate PDF documents from YAML-configured SVG templates.
 
     Optionally specify one or more document names to only process those documents.
     """
@@ -72,4 +67,4 @@ def bake(
 
 
 if __name__ == "__main__":
-    cli()
+    cli()  # pylint: disable=no-value-for-parameter

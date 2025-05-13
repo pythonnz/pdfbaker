@@ -62,7 +62,7 @@ pipx ensurepath
 4. Generate PDFs with:
 
 ```bash
-pdfbaker bake <config_file>
+pdfbaker <config_file>
 ```
 
 This will produce your PDF files in a `dist/` directory where your configuration file
@@ -82,7 +82,7 @@ For working examples, see the [examples](examples) directory:
 Create all PDFs with:
 
 ```bash
-pdfbaker bake examples/examples.yaml
+pdfbaker examples/examples.yaml
 ```
 
 ## Documentation

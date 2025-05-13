@@ -42,7 +42,7 @@ like LaTex, even if your end result is exported to PDF.
 1. Create your document in an SVG editor or convert to SVG
 2. Replace text with variables, add conditions and loops using Jinja2
 3. Configure your content and settings in YAML
-4. Generate PDFs with `pdfbaker bake`
+4. Generate PDFs with `pdfbaker yourconfig.yaml`
 
 ### From configuration to PDF documents
 

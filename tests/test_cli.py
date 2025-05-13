@@ -18,40 +18,33 @@ def test_cli_version():
 
 
 def test_cli_help():
-    """CLI: --help outputs usage and commands."""
+    """CLI: --help outputs usage and options."""
     runner = CliRunner()
     result = runner.invoke(cli, ["--help"])
     assert result.exit_code == 0
     assert "Usage:" in result.output
-    assert "bake" in result.output
-    assert "version" in result.output
-
-
-def test_cli_bake_help():
-    """CLI: bake --help outputs bake options."""
-    runner = CliRunner()
-    result = runner.invoke(cli, ["bake", "--help"])
-    assert result.exit_code == 0
-    assert "Usage:" in result.output
+    assert "CONFIG_FILE" in result.output
     assert "--quiet" in result.output
     assert "--verbose" in result.output
+    assert "--trace" in result.output
+    assert "version" in result.output
     assert "--keep-build" in result.output
 
 
 def test_cli_bake_missing_config(tmp_path: Path):
-    """CLI: bake with missing config file reports error."""
+    """CLI: with missing config file reports error."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["bake", str(tmp_path / "missing.yaml")])
+    result = runner.invoke(cli, [str(tmp_path / "missing.yaml")])
     assert result.exit_code == 2
     assert "does not exist" in result.output
 
 
 def test_cli_bake_invalid_config(tmp_path: Path):
-    """CLI: bake with invalid config file reports YAML and validation errors."""
+    """CLI: with invalid config file reports YAML and validation errors."""
     config_file = tmp_path / "invalid.yaml"
     config_file.write_text("invalid: yaml: content")
     runner = CliRunner()
-    result = runner.invoke(cli, ["bake", str(config_file)])
+    result = runner.invoke(cli, [str(config_file)])
     assert result.exit_code == 1
     assert result.exception is not None
     assert "mapping values are not allowed here" in str(result.exception)
@@ -59,7 +52,7 @@ def test_cli_bake_invalid_config(tmp_path: Path):
 directories:
   base: /tmp
 """)
-    result = runner.invoke(cli, ["bake", str(config_file)])
+    result = runner.invoke(cli, [str(config_file)])
     assert result.exit_code == 1
     assert result.exception is not None
     exception_str = str(result.exception)
@@ -75,7 +68,7 @@ documents: []
 directories:
   base: /tmp
 """)
-    result = runner.invoke(cli, ["bake", str(abs_config)])
+    result = runner.invoke(cli, [str(abs_config)])
     assert result.exit_code == 0
 
 
@@ -87,15 +80,15 @@ def test_cli_bake_verbosity_flags(tmp_path: Path):
     failing_config = tmp_path / "failing.yaml"
     failing_config.write_text("pages: [page1.yaml]\ndirectories:\n  build: build\n")
     runner = CliRunner()
-    result = runner.invoke(cli, ["bake", "--quiet", str(failing_config)])
+    result = runner.invoke(cli, ["--quiet", str(failing_config)])
     assert result.exit_code == 1
     assert result.output == ""
     success_config = tmp_path / "success.yaml"
     success_config.write_text("documents: []\ndirectories:\n  base: /tmp\n")
-    result = runner.invoke(cli, ["bake", "--quiet", str(success_config)])
+    result = runner.invoke(cli, ["--quiet", str(success_config)])
     assert result.exit_code == 0
     assert result.output == ""
-    result = runner.invoke(cli, ["bake", "--verbose", str(success_config)])
+    result = runner.invoke(cli, ["--verbose", str(success_config)])
     assert result.exit_code == 0
     assert "DEBUG" in result.output
     assert "Loading main configuration" in result.output
