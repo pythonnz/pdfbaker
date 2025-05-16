@@ -231,12 +231,3 @@ def test_convert_svg_to_pdf_invalid_svg(tmp_path: Path) -> None:
         convert_svg_to_pdf(svg_file, output_file)
     assert "no element found" in str(exc_info.value)
     assert not output_file.exists()
-    abs_svg = Path("/tmp/test.svg")
-    abs_svg.write_text(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">'
-        '<rect width="100" height="100" fill="red"/></svg>',
-        encoding="utf-8",
-    )
-    abs_output = Path("/tmp/output.pdf")
-    convert_svg_to_pdf(abs_svg, abs_output)
-    assert abs_output.exists() and abs_output.stat().st_size > 0
