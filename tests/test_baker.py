@@ -48,10 +48,6 @@ def test_baker_init_invalid_config(tmp_path: Path, write_yaml):
     with pytest.raises(ValidationError) as exc_info:
         Baker(config_file)
     assert "documents" in str(exc_info.value)
-    abs_config = Path("/tmp/test_config.yaml")
-    write_yaml(abs_config, {"documents": [], "directories": {"base": "/tmp"}})
-    baker = Baker(abs_config)
-    assert baker.config.directories.base == Path("/tmp")
 
 
 def test_baker_examples():

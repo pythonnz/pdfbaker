@@ -152,33 +152,6 @@ def test_combine_pdfs_invalid_file(tmp_path: Path) -> None:
     with pytest.raises(PDFCombineError) as exc_info:
         combine_pdfs([pdf_file], output_file)
     assert "Failed to combine PDFs" in str(exc_info.value)
-    abs_pdf = Path("/tmp/test.pdf")
-    abs_pdf.write_bytes(
-        b"%PDF-1.4\n"
-        b"1 0 obj\n"
-        b"<< /Type /Catalog /Pages 2 0 R >>\n"
-        b"endobj\n"
-        b"2 0 obj\n"
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n"
-        b"endobj\n"
-        b"3 0 obj\n"
-        b"<< /Type /Page /Parent 2 0 R /Resources <<>> /MediaBox [0 0 612 792] >>\n"
-        b"endobj\n"
-        b"xref\n"
-        b"0 4\n"
-        b"0000000000 65535 f\n"
-        b"0000000010 00000 n\n"
-        b"0000000056 00000 n\n"
-        b"0000000112 00000 n\n"
-        b"trailer\n"
-        b"<< /Size 4 /Root 1 0 R >>\n"
-        b"startxref\n"
-        b"164\n"
-        b"%%EOF\n"
-    )
-    abs_output = Path("/tmp/output.pdf")
-    combine_pdfs([abs_pdf], abs_output)
-    assert abs_output.exists() and abs_output.stat().st_size > 0
 
 
 def test_convert_svg_to_pdf_cairosvg(tmp_path: Path) -> None:

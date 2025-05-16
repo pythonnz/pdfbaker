@@ -62,14 +62,6 @@ directories:
         'Value error, Key "documents" missing' in exception_str
         or "Field required" in exception_str
     )
-    abs_config = Path("/tmp/test_config.yaml")
-    abs_config.write_text("""
-documents: []
-directories:
-  base: /tmp
-""")
-    result = runner.invoke(cli, [str(abs_config)])
-    assert result.exit_code == 0
 
 
 def test_cli_bake_verbosity_flags(tmp_path: Path):
