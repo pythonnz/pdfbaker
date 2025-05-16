@@ -33,6 +33,16 @@ sudo apt install pipx
 pipx ensurepath
 ```
 
+#### Windows Requirements
+
+If you are using Windows, GTK needs to be installed:
+[GTK for Windows Runtime Environment Installer](https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases/download/2022-01-04/gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe)
+
+- Choose Install GTK+ libraries
+- Tick to setup path (otherwise add the install dll folder manually)
+- Choose your installation location
+- Complete the installation
+
 ### Optional Dependencies
 
 - For SVG to PDF conversion, [CairoSVG](https://cairosvg.org/) is used by default. If
