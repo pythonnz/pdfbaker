@@ -119,6 +119,8 @@ class BaseConfig(BaseModel, LoggingMixin):
     svg2pdf_backend: SVG2PDFBackend | None = SVG2PDFBackend.CAIROSVG
     compress_pdf: bool = False
     keep_build: bool = False
+    dry_run: bool = False
+    fail_if_exists: bool = False
 
     model_config = ConfigDict(
         strict=True,  # don't try to coerce values

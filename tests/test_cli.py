@@ -36,7 +36,7 @@ def test_cli_bake_missing_config(tmp_path: Path):
     runner = CliRunner()
     result = runner.invoke(cli, [str(tmp_path / "missing.yaml")])
     assert result.exit_code == 2
-    assert "does not exist" in result.output
+    assert "No such file or directory" in result.output
 
 
 def test_cli_bake_invalid_config(tmp_path: Path):

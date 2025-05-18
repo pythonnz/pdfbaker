@@ -85,8 +85,13 @@ class Page(LoggingMixin):
                     renderer.value for renderer in self.config.template_renderers
                 ],
             )
-            with open(output_svg, "w", encoding="utf-8") as f:
-                f.write(rendered_template)
+            if self.config.dry_run:
+                self.log_debug(
+                    "👀 [DRY RUN] Not writing rendered template to %s", output_svg
+                )
+            else:
+                with open(output_svg, "w", encoding="utf-8") as f:
+                    f.write(rendered_template)
         except TemplateError as exc:
             raise SVGTemplateError(
                 "Failed to render page "
@@ -95,6 +100,9 @@ class Page(LoggingMixin):
         self.log_trace_preview(rendered_template)
 
         self.log_debug("Converting SVG to PDF: %s", output_svg)
+        if self.config.dry_run:
+            self.log_debug("👀 [DRY RUN] Not converting SVG to PDF")
+            return None
         try:
             return convert_svg_to_pdf(
                 output_svg,

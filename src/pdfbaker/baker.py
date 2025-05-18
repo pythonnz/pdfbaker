@@ -27,14 +27,18 @@ class BakerOptions(BaseModel):
         verbose: Show debug information
         trace: Show trace information (even more detailed than debug)
         keep_build: Keep build artifacts after processing
-        default_config_overrides: Dictionary of values to override the built-in defaults
-            before loading the main configuration
+        dry_run: Do not write any files, just log actions
+        fail_if_exists: Abort if a file already exists in the dist directory
+        create_from: Path to SVG file for populating a (new) project
     """
 
     quiet: bool = False
     verbose: bool = False
     trace: bool = False
     keep_build: bool = False
+    fail_if_exists: bool = False
+    dry_run: bool = False
+    create_from: Path | None = None
 
 
 class Baker(LoggingMixin):
@@ -49,13 +53,18 @@ class Baker(LoggingMixin):
         """Set up logging and load configuration."""
         options = options or BakerOptions()
         setup_logging(quiet=options.quiet, trace=options.trace, verbose=options.verbose)
+        self.create_from = options.create_from
+        # FIXME: use create_from to create a new config file
         self.log_debug_section("Loading main configuration: %s", config_file)
         self.config = BakerConfig(
             config_file=config_file,
             keep_build=options.keep_build,
+            fail_if_exists=options.fail_if_exists,
+            dry_run=options.dry_run,
             **kwargs,
         )
         self.log_trace(self.config.readable())
+        self.log_debug("Build directory: %s", self.config.directories.build)
 
     def bake(self, document_names: tuple[str, ...] | None = None) -> None:
         """Bake the documents."""
@@ -65,15 +74,16 @@ class Baker(LoggingMixin):
 
         pdfs_created, failed_docs = self._process_documents(docs)
 
+        self.log_info("─" * 80)
         if pdfs_created:
-            self.log_info("Successfully created PDFs:")
+            if self.config.dry_run:
+                self.log_info("👀 [DRY RUN] Would have created PDFs:")
+            else:
+                self.log_info("Successfully created PDFs:")
             for pdf in pdfs_created:
-                self.log_info("  ✅ %s", pdf)
+                self.log_info("  %s %s", "🟨" if self.config.dry_run else "✅", pdf)
         else:
             self.log_warning("No PDFs were created.")
-
-        if not self.config.keep_build:
-            self.teardown()
 
         if failed_docs:
             self.log_warning(
@@ -82,10 +92,21 @@ class Baker(LoggingMixin):
                 "" if len(failed_docs) == 1 else "s",
             )
             for failed_doc, error_message in failed_docs:
-                name = failed_doc.name
-                if isinstance(failed_doc, Document) and failed_doc.is_variant:
-                    name += f' variant "{failed_doc.variant["name"]}"'
+                name = failed_doc.config.name
+                if isinstance(failed_doc, Document) and failed_doc.config.is_variant:
+                    name += f' variant "{failed_doc.config.variant["name"]}"'
                 self.log_error("  %s: %s", name, error_message)
+                if hasattr(failed_doc, "config"):
+                    self.log_debug(
+                        'Build directory for "%s": %s',
+                        name,
+                        failed_doc.config.directories.build,
+                    )
+
+        if self.config.keep_build:
+            self.log_info("Build files kept in: %s", self.config.directories.build)
+        else:
+            self.teardown()
 
         return not failed_docs
 
@@ -155,6 +176,13 @@ class Baker(LoggingMixin):
         if build_dir.exists():
             try:
                 self.log_debug("Removing top-level build directory...")
-                build_dir.rmdir()
+                if self.config.dry_run:
+                    self.log_debug(
+                        "👀 [DRY RUN] Not removing top-level build directory"
+                    )
+                else:
+                    build_dir.rmdir()
             except OSError:
                 self.log_warning("Top-level build directory not empty - not removing")
+        else:
+            self.log_debug("Top-level build directory does not exist")

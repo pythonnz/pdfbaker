@@ -55,15 +55,13 @@ def test_baker_examples():
     test_dir = Path(__file__).parent
     examples_config_path = test_dir.parent / "examples" / "examples.yaml"
     examples_base_dir = examples_config_path.parent
-    build_dir = examples_base_dir / "build"
     dist_dir = examples_base_dir / "dist"
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
     if dist_dir.exists():
         shutil.rmtree(dist_dir)
     options = BakerOptions(quiet=False, keep_build=True)
     try:
         baker = Baker(examples_config_path, options=options)
+        build_dir = baker.config.directories.build
         success = baker.bake()
         assert success, "baker.bake() reported failure"
         assert build_dir.exists() and any(build_dir.iterdir())
@@ -89,11 +87,8 @@ def test_baker_examples():
                 expected_pdf = doc_output_dir / filename
                 assert expected_pdf.exists() and expected_pdf.stat().st_size > 0
     finally:
-        if build_dir.exists():
-            shutil.rmtree(build_dir)
         if dist_dir.exists():
             shutil.rmtree(dist_dir)
-        assert not build_dir.exists()
         assert not dist_dir.exists()
 
 
@@ -231,3 +226,55 @@ def test_baker_teardown_build_dir_not_empty(tmp_path, write_yaml, default_direct
     baker = Baker(config_file=config_file, options=BakerOptions())
     baker.teardown()  # Should log a warning and not remove the dir
     assert build_dir.exists()
+
+
+def test_baker_dry_run(tmp_path, write_yaml, default_directories, caplog):
+    """Baker: dry run does not create files and logs dry run messages."""
+    config_file = tmp_path / "baker.yaml"
+    write_yaml(
+        config_file,
+        {
+            "documents": [
+                {"path": "doc1.yaml", "name": "doc1"},
+            ],
+            "directories": default_directories.model_dump(mode="json"),
+        },
+    )
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir(exist_ok=True)
+    pages_dir = docs_dir / "pages"
+    pages_dir.mkdir(exist_ok=True)
+    write_yaml(pages_dir / "page1.yaml", {"template": "template.svg"})
+    templates_dir = docs_dir / "templates"
+    templates_dir.mkdir(exist_ok=True)
+    (templates_dir / "template.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>'
+    )
+    doc_dirs = default_directories.model_dump(mode="json")
+    doc_dirs["templates"] = str(templates_dir)
+    doc_dirs["pages"] = str(pages_dir)
+    write_yaml(
+        docs_dir / "doc1.yaml",
+        {
+            "pages": [{"path": "page1.yaml", "name": "page1"}],
+            "directories": doc_dirs,
+            "filename": "doc1",
+        },
+    )
+    with caplog.at_level(logging.INFO):
+        baker = Baker(
+            config_file=config_file,
+            options=BakerOptions(
+                dry_run=True,
+                keep_build=True,
+            ),
+        )
+        # Manually reinstall caplog handler to the root logger
+        logging.getLogger().addHandler(caplog.handler)
+        assert baker.bake(("doc1",)) is True
+    build_dir = baker.config.directories.build
+    dist_dir = default_directories.dist
+    assert not build_dir.exists() or not any(build_dir.iterdir())
+    assert not dist_dir.exists() or not any(dist_dir.iterdir())
+    dry_run_msgs = [r for r in caplog.messages if "👀 [DRY RUN]" in r or "🟨" in r]
+    assert dry_run_msgs, "Expected dry run log messages to be present"

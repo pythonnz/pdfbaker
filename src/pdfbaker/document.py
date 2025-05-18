@@ -7,7 +7,7 @@ combines and compresses the result and reports back to its baker.
 """
 
 import importlib
-import os
+import shutil
 from pathlib import Path
 
 from .config import PathSpec
@@ -49,14 +49,22 @@ class Document(LoggingMixin):
         self.config.directories.dist /= self.config.name
 
         self.log_info_section('Processing document "%s"...', self.config.name)
+
         self.log_debug(
             "Ensuring build directory exists: %s", self.config.directories.build
         )
-        self.config.directories.build.mkdir(parents=True, exist_ok=True)
+        if self.config.dry_run:
+            self.log_debug("👀 [DRY RUN] Not creating build directory")
+        else:
+            self.config.directories.build.mkdir(parents=True, exist_ok=True)
+
         self.log_debug(
             "Ensuring dist directory exists: %s", self.config.directories.dist
         )
-        self.config.directories.dist.mkdir(parents=True, exist_ok=True)
+        if self.config.dry_run:
+            self.log_debug("👀 [DRY RUN] Not creating dist directory")
+        else:
+            self.config.directories.dist.mkdir(parents=True, exist_ok=True)
 
         try:
             if self.config.custom_bake:
@@ -150,31 +158,45 @@ class Document(LoggingMixin):
         """Combine PDF pages and optionally compress."""
         self.log_debug_subsection("Finalizing document...")
         self.log_debug("Combining PDF pages...")
-        try:
-            combined_pdf = combine_pdfs(
-                pdf_files,
-                self.config.directories.build / f"{doc_config.filename}.pdf",
-            )
-        except PDFCombineError as exc:
-            raise PDFBakerError(f"Failed to combine PDFs: {exc}") from exc
+
+        if self.config.dry_run:
+            self.log_debug("👀 [DRY RUN] Not combining PDF pages")
+        else:
+            try:
+                combined_pdf = combine_pdfs(
+                    pdf_files,
+                    self.config.directories.build / f"{doc_config.filename}.pdf",
+                )
+            except PDFCombineError as exc:
+                raise PDFBakerError(f"Failed to combine PDFs: {exc}") from exc
 
         output_path = self.config.directories.dist / f"{doc_config.filename}.pdf"
 
+        if self.config.fail_if_exists and output_path.exists():
+            raise PDFBakerError(f"File already exists: {output_path}")
+
         if doc_config.compress_pdf:
             self.log_debug("Compressing PDF document...")
-            try:
-                compress_pdf(combined_pdf, output_path)
-                self.log_info("PDF compressed successfully")
-            except PDFCompressionError as exc:
-                self.log_warning(
-                    "Compression failed, using uncompressed PDF: %s",
-                    exc,
-                )
-                os.rename(combined_pdf, output_path)
+            if self.config.dry_run:
+                self.log_debug("👀 [DRY RUN] Not compressing PDF document")
+            else:
+                try:
+                    compress_pdf(combined_pdf, output_path)
+                    self.log_info("PDF compressed successfully")
+                except PDFCompressionError as exc:
+                    self.log_warning(
+                        "Compression failed, using uncompressed PDF: %s",
+                        exc,
+                    )
+                    shutil.move(combined_pdf, output_path)
         else:
-            os.rename(combined_pdf, output_path)
+            if not self.config.dry_run:
+                shutil.move(combined_pdf, output_path)
 
-        self.log_info("Created %s", output_path.name)
+        if self.config.dry_run:
+            self.log_info("👀 [DRY RUN] Did not create %s", output_path.name)
+        else:
+            self.log_info("Created %s", output_path.name)
         return output_path
 
     def teardown(self) -> None:
@@ -183,12 +205,21 @@ class Document(LoggingMixin):
         self.log_debug_subsection("Tearing down build directory: %s", build_dir)
         if build_dir.exists():
             self.log_debug("Removing files in build directory...")
-            for file_path in build_dir.iterdir():
-                if file_path.is_file():
-                    file_path.unlink()
+
+            if self.config.dry_run:
+                self.log_debug("👀 [DRY RUN] Not removing files in build directory")
+            else:
+                for file_path in build_dir.iterdir():
+                    if file_path.is_file():
+                        file_path.unlink()
 
             try:
                 self.log_debug("Removing build directory...")
-                build_dir.rmdir()
+                if self.config.dry_run:
+                    self.log_debug("👀 [DRY RUN] Not removing build directory")
+                else:
+                    build_dir.rmdir()
             except OSError:
                 self.log_warning("Build directory not empty - not removing")
+        else:
+            self.log_debug("Build directory does not exist")

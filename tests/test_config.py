@@ -292,6 +292,9 @@ def test_directories_ensure_resolved_base(tmp_path):
     """Test Directories.model_validate ensures base is absolute."""
     dirs = DEFAULT_DIRECTORIES.copy()
     dirs["base"] = str(tmp_path / "relbase")
+    # Explicitly set build dir; Directories.model_validate requires a valid path,
+    # and None would only be handled by BakerConfig (to become a temp dir).
+    dirs["build"] = str(tmp_path / "relbase" / "build")
     d = Directories.model_validate(dirs)
     assert d.base.is_absolute()
 

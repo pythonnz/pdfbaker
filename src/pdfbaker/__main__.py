@@ -17,32 +17,51 @@ logger = logging.getLogger(__name__)
 @click.version_option(version=__version__, prog_name="pdfbaker")
 @click.argument(
     "config_file",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    type=click.Path(exists=False, dir_okay=False, path_type=Path),
 )
-@click.argument("documents", nargs=-1)
-@click.option("-q", "--quiet", is_flag=True, help="Show errors only")
-@click.option("-v", "--verbose", is_flag=True, help="Show debug information")
+@click.argument("document_names", nargs=-1)
+@click.option("-q", "--quiet", is_flag=True, help="Show errors only.")
+@click.option("-v", "--verbose", is_flag=True, help="Show debug information.")
 @click.option(
     "-t",
     "--trace",
     is_flag=True,
-    help="Show trace information (even more detailed than --verbose)",
+    help="Show trace information (maximum details).",
 )
-@click.option("--keep-build", is_flag=True, help="Keep build artifacts")
-@click.option("--debug", is_flag=True, help="Debug mode (--verbose and --keep-build)")
+@click.option(
+    "--keep-build", is_flag=True, help="Keep rendered SVGs and single-page PDFs."
+)
+@click.option(
+    "--debug", is_flag=True, help="Debug mode (implies --verbose and --keep-build)."
+)
+@click.option(
+    "--fail-if-exists",
+    is_flag=True,
+    help="Abort if a target PDF already exists.",
+)
+@click.option("--dry-run", is_flag=True, help="Do not write any files.")
+@click.option(
+    "--create-from",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    metavar="SVG_FILE",
+    help="Scaffold CONFIG_FILE and supporting files for your existing SVG.",
+)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def cli(
     config_file: Path,
-    documents: tuple[str, ...],
+    document_names: tuple[str, ...],
     quiet: bool,
     verbose: bool,
     trace: bool,
     keep_build: bool,
     debug: bool,
+    fail_if_exists: bool,
+    dry_run: bool,
+    create_from: Path | None,
 ) -> None:
     """Generate PDF documents from YAML-configured SVG templates.
 
-    Optionally specify one or more document names to only process those documents.
+    Specify one or more document names to only process those.
     """
     if debug:
         verbose = True
@@ -54,10 +73,16 @@ def cli(
             verbose=verbose,
             trace=trace,
             keep_build=keep_build,
+            fail_if_exists=fail_if_exists,
+            dry_run=dry_run,
+            create_from=create_from,
         )
         baker = Baker(config_file, options=options)
-        success = baker.bake(document_names=documents if documents else None)
+        success = baker.bake(document_names=document_names)
         sys.exit(0 if success else 1)
+    except FileNotFoundError as exc:
+        logger.error("❌ %s", str(exc))
+        sys.exit(2)
     except DocumentNotFoundError as exc:
         logger.error("❌ %s", str(exc))
         sys.exit(2)

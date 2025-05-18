@@ -1,5 +1,6 @@
 """Baker configuration for pdfbaker."""
 
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -9,7 +10,7 @@ from ruamel.yaml import YAML
 from . import BaseConfig, PathSpec
 
 DEFAULT_DIRECTORIES = {
-    "build": "build",
+    "build": None,
     "dist": "dist",
     "documents": ".",
     "pages": "pages",
@@ -47,6 +48,10 @@ class BakerConfig(BaseConfig):
             directories.setdefault("base", data["config_file"].parent)
             for key, default in DEFAULT_DIRECTORIES.items():
                 directories.setdefault(key, default)
+
+            # If build dir is not set, use a temp dir
+            if not directories.get("build"):
+                directories["build"] = tempfile.mkdtemp(prefix="pdfbaker-")
 
             if "documents" not in data:
                 raise ValueError(
