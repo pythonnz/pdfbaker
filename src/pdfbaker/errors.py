@@ -5,12 +5,17 @@ from pathlib import Path
 __all__ = [
     "ConfigurationError",
     "DocumentNotFoundError",
+    "DryRunCreateFromCompleted",
     "PDFBakerError",
     "PDFCombineError",
     "PDFCompressionError",
     "SVGConversionError",
     "SVGTemplateError",
 ]
+
+
+class DryRunCreateFromCompleted(Exception):
+    """Dry-run create-from completed - no further processing."""
 
 
 class PDFBakerError(Exception):

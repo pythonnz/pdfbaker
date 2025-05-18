@@ -8,7 +8,11 @@ import click
 
 from pdfbaker import __version__
 from pdfbaker.baker import Baker, BakerOptions
-from pdfbaker.errors import DocumentNotFoundError, PDFBakerError
+from pdfbaker.errors import (
+    DocumentNotFoundError,
+    DryRunCreateFromCompleted,
+    PDFBakerError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +84,11 @@ def cli(
         baker = Baker(config_file, options=options)
         success = baker.bake(document_names=document_names)
         sys.exit(0 if success else 1)
+    except DryRunCreateFromCompleted:
+        sys.exit(0)
+    except FileExistsError as exc:
+        logger.error("❌ %s", str(exc))
+        sys.exit(2)
     except FileNotFoundError as exc:
         logger.error("❌ %s", str(exc))
         sys.exit(2)

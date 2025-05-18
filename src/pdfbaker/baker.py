@@ -6,14 +6,16 @@ Is given a configuration file and sets up logging.
 bake() delegates to its documents and reports back the end result.
 """
 
+import shutil
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
+from ruamel.yaml import YAML
 
 from .config import PathSpec
 from .config.baker import BakerConfig
 from .document import Document
-from .errors import DocumentNotFoundError
+from .errors import DocumentNotFoundError, DryRunCreateFromCompleted
 from .logging import LoggingMixin, setup_logging
 
 __all__ = ["Baker", "BakerOptions"]
@@ -53,8 +55,17 @@ class Baker(LoggingMixin):
         """Set up logging and load configuration."""
         options = options or BakerOptions()
         setup_logging(quiet=options.quiet, trace=options.trace, verbose=options.verbose)
-        self.create_from = options.create_from
-        # FIXME: use create_from to create a new config file
+
+        if options.create_from:
+            self.create_from(
+                svg_path=options.create_from,
+                config_path=config_file,
+                dry_run=options.dry_run,
+            )
+            if options.dry_run:
+                # Dry run creations don't continue with dry run processing
+                raise DryRunCreateFromCompleted()
+
         self.log_debug_section("Loading main configuration: %s", config_file)
         self.config = BakerConfig(
             config_file=config_file,
@@ -186,3 +197,102 @@ class Baker(LoggingMixin):
                 self.log_warning("Top-level build directory not empty - not removing")
         else:
             self.log_debug("Top-level build directory does not exist")
+
+    def create_from(
+        self, svg_path: Path, config_path: Path, dry_run: bool = False
+    ) -> None:
+        """Create a minimal project structure from an SVG and config path."""
+        project_dir = config_path.parent
+        doc_name = svg_path.stem
+        doc_dir = project_dir / doc_name
+        template_file = doc_dir / "templates" / "main.svg.j2"
+        page_file = doc_dir / "pages" / "main.yaml"
+        doc_config_file = doc_dir / "config.yaml"
+        files_to_create = [config_path, doc_config_file, page_file, template_file]
+        dirs_to_create = [
+            d
+            for d in [project_dir, doc_dir, doc_dir / "pages", doc_dir / "templates"]
+            if not d.exists()
+        ]
+
+        for f in files_to_create:
+            if f.exists():
+                raise FileExistsError(f"File already exists: {f}")
+
+        if dry_run:
+            for d in dirs_to_create:
+                self.log_info("👀 [DRY RUN] Would create directory: %s", d)
+            for f in files_to_create:
+                self.log_info("👀 [DRY RUN] Would create file:      %s", f)
+            self.log_info("👀 [DRY RUN] No files created.")
+            raise DryRunCreateFromCompleted()
+
+        for d in dirs_to_create:
+            d.mkdir(parents=True, exist_ok=True)
+
+        yaml = YAML()
+        yaml.indent(mapping=2, sequence=4, offset=2)
+
+        with open(config_path, "w", encoding="utf-8") as f:
+            f.write("# PDFBaker main config\n\n")
+            yaml.dump({"documents": [doc_name]}, f)
+            f.write(
+                "\n"
+                "# directories:  # Override default directories below\n"
+                "#   dist: dist  # Final PDF files are written here\n"
+                "#   documents: .  # Location of document configurations\n"
+                "#   images: images  # Location of image files\n"
+                "#   pages: pages  # Location of page configurations\n"
+                "#   templates: templates  # Location of SVG template files\n"
+                "# jinja2_extensions: []"
+                "  # Jinja2 extensions to load and use in templates\n"
+                "# template_renderers:  # List of automatically applied renderers\n"
+                "#   - render_highlight\n"
+                "# template_filters:  # List of filters made available to templates\n"
+                "#   - wordwrap\n"
+                "# svg2pdf_backend: cairosvg"
+                "  # Backend to use for SVG to PDF conversion\n"
+                "# compress_pdf: false  # Whether to compress the final PDF\n"
+                "# keep_build: false"
+                "  # Whether to keep the build directory and its intermediary files\n"
+                "\n"
+                "# Example custom variables for all pages of all documents:\n"
+                "# style:\n"
+                "#   font: Arial\n"
+                "#   color: black\n"
+            )
+        self.log_info("Created main config: %s", config_path)
+
+        with open(doc_config_file, "w", encoding="utf-8") as f:
+            f.write("# Document config\n\n")
+            yaml.dump({"filename": doc_name, "pages": ["main"]}, f)
+            f.write(
+                "\n"
+                "# compress_pdf: false"
+                "  # Whether to compress the final PDF for this document\n"
+                "# custom_bake: bake.py"
+                "  # Python file used for custom processing (if found)\n"
+                "# variants:  # List of document variants\n"
+                "\n"
+                "# Example custom variables for all pages of this document:\n"
+                "# style:\n"
+                "#   font: Arial\n"
+                "#   color: black\n"
+            )
+        self.log_info("Created document config: %s", doc_config_file)
+
+        with open(page_file, "w", encoding="utf-8") as f:
+            f.write("# Page config\n\n")
+            yaml.dump({"template": "main.svg.j2", "name": "main"}, f)
+            f.write(
+                "\n"
+                "# images:  # List of images to use in the page\n"
+                "\n"
+                "# Example custom variables for this page:\n"
+                "# title: My Document\n"
+                "# date: 2025-05-19\n"
+            )
+        self.log_info("Created page: %s", page_file)
+
+        shutil.copy(svg_path, template_file)
+        self.log_info("Created template: %s", template_file)
