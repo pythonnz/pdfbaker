@@ -14,9 +14,7 @@
 
 Create PDF documents from YAML-configured SVG templates.
 
-## Quickstart
-
-### Installation
+## Installation
 
 pdfbaker is available on [PyPI](https://pypi.org/project/pdfbaker/) and can be installed
 using [pipx](https://github.com/pypa/pipx):
@@ -33,17 +31,17 @@ sudo apt install pipx
 pipx ensurepath
 ```
 
-#### Windows Requirements
+### Windows Requirements
 
 If you are using Windows, GTK needs to be installed:
 [GTK for Windows Runtime Environment Installer](https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases/download/2022-01-04/gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe)
 
 - Choose Install GTK+ libraries
-- Tick to setup path (otherwise add the install dll folder manually)
+- Tick to setup path (otherwise add the install DLL folder manually)
 - Choose your installation location
 - Complete the installation
 
-### Optional Dependencies
+## Optional Dependencies
 
 - For SVG to PDF conversion, [CairoSVG](https://cairosvg.org/) is used by default. If
   you need [Inkscape](https://inkscape.org/) instead, install it:
@@ -64,30 +62,60 @@ If you are using Windows, GTK needs to be installed:
   sudo apt install fonts-roboto
   ```
 
-### Basic Usage
+## Quickstart: Create templated PDF from an SVG
 
-1. Create your document design in an SVG editor
-2. Replace text with variables using Jinja2 (e.g., `{{ title }}`)
-3. Configure your content in YAML
-4. Generate PDFs with:
+The fastest way to get started is with the `--create-from` option:
 
-```bash
-pdfbaker <config_file>
-```
+1. Design your document in an SVG editor or convert to SVG.
+2. Run pdfbaker with `--create-from` to scaffold a new project and generate your first
+   PDF:
 
-This will produce your PDF files in a `dist/` directory where your configuration file
-lives. It will also create a `build/` directory with intermediate files, which is only
-kept if you specify `--keep-build-files` (or `--debug`).
+   ```bash
+   pdfbaker --create-from mydesign.svg myproject/myproject.yaml
+   ```
+
+   This will create a directory structure like:
+
+   ```bash
+   myproject
+   ├── myproject.yaml
+   └── mydesign
+       ├── config.yaml
+       ├── pages
+       │   └── main.yaml
+       └── templates
+           └── main.svg.j2
+   ```
+
+   and produce your PDF in `myproject/dist/mydesign/mydesign.pdf`.
+
+3. Edit the template and YAML files to customize your content and variables. This
+   directory structure is just a starting point. Add more documents and customize as
+   needed.
+
+4. For future builds, just run:
+
+   ```bash
+   pdfbaker myproject/myproject.yaml
+   ```
+
+   to regenerate your PDFs.
 
 ## Examples
 
-For working examples, see the [examples](examples) directory:
+For working examples, see the
+[examples](https://github.com/pythonnz/pdfbaker/tree/main/examples) directory:
 
-- [minimal](examples/minimal) - Basic usage
-- [regular](examples/regular) - Standard features
-- [variants](examples/variants) - Document variants
-- [custom_locations](examples/custom_locations) - Custom file/directory locations
-- [custom_processing](examples/custom_processing) - Custom processing with Python
+- [minimal](https://github.com/pythonnz/pdfbaker/tree/main/examples/minimal) - Basic
+  usage
+- [regular](https://github.com/pythonnz/pdfbaker/tree/main/examples/regular) - Standard
+  features
+- [variants](https://github.com/pythonnz/pdfbaker/tree/main/examples/variants) -
+  Document variants
+- [custom_locations](https://github.com/pythonnz/pdfbaker/tree/main/examples/custom_locations) -
+  Custom file/directory locations
+- [custom_processing](https://github.com/pythonnz/pdfbaker/tree/main/examples/custom_processing) -
+  Custom processing with Python
 
 Create all PDFs with:
 
@@ -97,12 +125,16 @@ pdfbaker examples/examples.yaml
 
 ## Documentation
 
-- [Overview](docs/overview.md) - Start here
-- [Configuration Reference](docs/configuration.md) - All available settings
-- [Document Variants](docs/variants.md) - Create multiple versions of the same document
-- [Custom Processing](docs/custom_processing.md) - Provide page content from anywhere
-
-( [on GitHub](https://github.com/pythonnz/pdfbaker/tree/main/docs) )
+- [Overview](https://github.com/pythonnz/pdfbaker/blob/main/docs/overview.md) - Start
+  here
+- [Usage](https://github.com/pythonnz/pdfbaker/blob/main/docs/usage.md) - From the CLI
+  or as a library
+- [Configuration Reference](https://github.com/pythonnz/pdfbaker/blob/main/docs/configuration.md) -
+  All available settings
+- [Document Variants](https://github.com/pythonnz/pdfbaker/blob/main/docs/variants.md) -
+  Create multiple versions of the same document
+- [Custom Processing](https://github.com/pythonnz/pdfbaker/blob/main/docs/custom_processing.md) -
+  Provide page content from anywhere
 
 ## Development
 

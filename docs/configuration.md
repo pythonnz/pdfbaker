@@ -294,8 +294,8 @@ You can customize all directories / file locations, even on a per-document basis
 # Document configuration
 filename: Monthly Report
 directories:
-  - images: "../../images"
-  - dist: "/var/www/documents"
+  images: "../../images"
+  dist: "/var/www/documents"
 pages:
   - main
 ```
