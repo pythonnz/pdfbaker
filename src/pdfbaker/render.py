@@ -71,19 +71,85 @@ def render_highlight(rendered: str, **kwargs: Any) -> str:
     return rendered
 
 
+class PDFBakerUndefined(jinja2.Undefined):
+    """Custom Undefined that collects undefined variable names and template file."""
+
+    def __init__(self, *args, undefined_vars=None, template_file=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._undefined_vars = undefined_vars
+        self._template_file = template_file
+        if self._undefined_vars is not None and self._undefined_name is not None:
+            self._undefined_vars.add((self._undefined_name, self._template_file))
+
+    def _fail_with_undefined_error(self, *args, **kwargs):
+        if self._undefined_vars is not None and self._undefined_name is not None:
+            self._undefined_vars.add((self._undefined_name, self._template_file))
+        return ""
+
+    def __str__(self):
+        return self._fail_with_undefined_error()
+
+    def __getattr__(self, name):
+        return self._fail_with_undefined_error()
+
+    def __call__(self, *args, **kwargs):
+        return self._fail_with_undefined_error()
+
+    def __iter__(self):
+        # Allows {% for ... in ... %} to not fail
+        self._fail_with_undefined_error()
+        return iter([])
+
+    def __bool__(self):
+        # Allows {% if ... %} to not fail
+        self._fail_with_undefined_error()
+        return False
+
+    def __len__(self):
+        self._fail_with_undefined_error()
+        return 0
+
+    def __getitem__(self, key):
+        # Allows {{ ...[0].something }} to not fail
+        return self._fail_with_undefined_error()
+
+
 def create_env(
     templates_dir: Path | None = None,
     extensions: list[str] | None = None,
     template_filters: list[str] | None = None,
+    undefined_vars: set | None = None,
+    template_file: str | None = None,
 ) -> jinja2.Environment:
-    """Create and configure the Jinja environment."""
+    """Create and configure the Jinja environment.
+
+    Args:
+        templates_dir: Directory containing templates
+        extensions: List of Jinja2 extensions
+        template_filters: List of template filter names
+        undefined_vars: Set to collect (var, template_file) tuples for undefined vars
+        template_file: Name of the template file being rendered (for error reporting)
+    """
     if templates_dir is None:
         raise ValueError("templates_dir is required")
+
+    # pylint: disable=too-few-public-methods
+    class CustomUndefined(PDFBakerUndefined):
+        """Undefined class that collects undefined variables per template."""
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(
+                *args,
+                undefined_vars=undefined_vars,
+                template_file=template_file,
+                **kwargs,
+            )
 
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(templates_dir)),
         autoescape=jinja2.select_autoescape(),
         extensions=extensions or [],
+        undefined=CustomUndefined,
     )
     env.template_class = PDFBakerTemplate
 

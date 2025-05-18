@@ -8,6 +8,7 @@ converts the result to PDF and returns the path of the new PDF file.
 
 from pathlib import Path
 
+import jinja2
 from jinja2.exceptions import TemplateError, TemplateNotFound
 
 from .config import PathSpec
@@ -30,29 +31,22 @@ class Page(LoggingMixin):
         )
         self.log_trace(self.config.readable())
 
-    def process(self) -> Path:
-        """Render SVG template and convert to PDF."""
-        self.log_debug_subsection(
-            "Processing page %d: %s", self.config.page_number, self.config.name
-        )
-
-        self.log_debug("Loading template: %s", self.config.template.name)
-        if self.logger.isEnabledFor(TRACE):
-            with open(self.config.template.path, encoding="utf-8") as f:
-                self.log_trace_preview(f.read())
-
+    def _load_jinja_template(self, undefined_vars) -> jinja2.Template:
         try:
-            jinja_extensions = self.config.jinja2_extensions
-            if jinja_extensions:
-                self.log_debug("Using Jinja2 extensions: %s", jinja_extensions)
+            if self.config.jinja2_extensions:
+                self.log_debug(
+                    "Using Jinja2 extensions: %s", self.config.jinja2_extensions
+                )
             jinja_env = create_env(
                 templates_dir=self.config.template.path.parent,
-                extensions=jinja_extensions,
+                extensions=self.config.jinja2_extensions,
                 template_filters=[
                     filter.value for filter in self.config.template_filters
                 ],
+                undefined_vars=undefined_vars,
+                template_file=str(self.config.template.path),
             )
-            template = jinja_env.get_template(self.config.template.path.name)
+            return jinja_env.get_template(self.config.template.path.name)
         except TemplateNotFound as exc:
             raise SVGTemplateError(
                 "Failed to load template for page "
@@ -64,6 +58,20 @@ class Page(LoggingMixin):
                 f"{self.config.page_number} ({self.config.name}): {exc}"
             ) from exc
 
+    def process(self) -> Path:
+        """Render SVG template and convert to PDF."""
+        self.log_debug_subsection(
+            "Processing page %d: %s", self.config.page_number, self.config.name
+        )
+
+        self.log_debug("Loading template: %s", self.config.template.name)
+        if self.logger.isEnabledFor(TRACE):
+            with open(self.config.template.path, encoding="utf-8") as f:
+                self.log_trace_preview(f.read())
+
+        undefined_vars = set()
+        template = self._load_jinja_template(undefined_vars)
+
         context = self.config.resolve_variables().model_dump()
         template_context = prepare_template_context(
             context=context,
@@ -71,9 +79,10 @@ class Page(LoggingMixin):
         )
 
         build_dir = self.config.directories.build
-        name = self.config.name
         if self.config.is_variant:
-            name = f'{name}_{self.config.variant["name"]}'
+            name = f'{self.config.name}_{self.config.variant["name"]}'
+        else:
+            name = self.config.name
         output_svg = build_dir / f"{self.config.page_number:03}_{name}.svg"
         output_pdf = build_dir / f"{self.config.page_number:03}_{name}.pdf"
 
@@ -85,6 +94,13 @@ class Page(LoggingMixin):
                     renderer.value for renderer in self.config.template_renderers
                 ],
             )
+            if undefined_vars:
+                for var, template_file in sorted(undefined_vars):
+                    self.log_warning(
+                        'Undefined variable "%s" in template %s',
+                        var,
+                        template_file,
+                    )
             if self.config.dry_run:
                 self.log_debug(
                     "👀 [DRY RUN] Not writing rendered template to %s", output_svg
