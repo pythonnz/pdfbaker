@@ -1,6 +1,63 @@
 # CHANGELOG
 
 
+## v0.10.0 (2025-05-18)
+
+### Code Style
+
+- Remove `bake` action
+  ([`1aff43f`](https://github.com/pythonnz/pdfbaker/commit/1aff43f06e1cd1400ab7c6c9f4878b8e27f372e8))
+
+This is technically a breaking change but only for invoking.
+
+### Documentation
+
+- Add section on always quoting variables
+  ([`7c0d13e`](https://github.com/pythonnz/pdfbaker/commit/7c0d13ef9baa759663a90b7cb4cb7e416e6a1f81))
+
+Just got caught out by that myself :)
+
+- Clarify that Jinja2 extensions to load are strings
+  ([`3a921eb`](https://github.com/pythonnz/pdfbaker/commit/3a921eb15399add0b32cba0f2e8f29538106d1ba))
+
+- Link to official Jinja2 extensions
+  ([`264cb76`](https://github.com/pythonnz/pdfbaker/commit/264cb765658c71212a7e33ffd9824700edb50b24))
+
+- Update README.md to include windows specific instructions
+  ([#33](https://github.com/pythonnz/pdfbaker/pull/33),
+  [`ef2d2f6`](https://github.com/pythonnz/pdfbaker/commit/ef2d2f6c296fd64eaf0e3b3aed78fba4b18c81df))
+
+### Features
+
+- Add `--dry-run`, `--fail-if-exists`, build in temp dir
+  ([`70f956c`](https://github.com/pythonnz/pdfbaker/commit/70f956c0304636da2a519e5653e4850aab190e1c))
+
+Also prep `--create-from` (coming up)
+
+- Don't fail just warn about undefined Jinja variables
+  ([`05cb2c1`](https://github.com/pythonnz/pdfbaker/commit/05cb2c1faed3d000b29124e72840d5bae397a9c9))
+
+Stumbled over this when I used an existing template for --create-from. Maybe introduce a
+  --fail-undefined-vars option later.
+
+- Implement `--create-from`
+  ([`ec24465`](https://github.com/pythonnz/pdfbaker/commit/ec244658dc0f38f88acdc6d3ab2c23d46e153849))
+
+If used in conjunction with `--dry-run`, don't create any files. Otherwise, also process the new
+  configs immediately.
+
+### Testing
+
+- Remove old absolute path test
+  ([`f734b22`](https://github.com/pythonnz/pdfbaker/commit/f734b22f2b723555015a4cb1feee006c5ea772f9))
+
+- Remove old absolute path tests
+  ([`5553497`](https://github.com/pythonnz/pdfbaker/commit/55534974958075560bd92dc4dfc89bc70057a053))
+
+This needs to work properly on Windows. Test to confirm relative and absolute paths lead to the same
+  directories being used (maybe run all tests with both?)
+
+
 ## v0.9.4 (2025-05-11)
 
 ### Bug Fixes
