@@ -115,7 +115,8 @@ class Baker(LoggingMixin):
                     )
 
         if self.config.keep_build:
-            self.log_info("Build files kept in: %s", self.config.directories.build)
+            if not self.config.dry_run:
+                self.log_info("Build files kept in: %s", self.config.directories.build)
         else:
             self.teardown()
 
