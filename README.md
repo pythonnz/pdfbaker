@@ -14,6 +14,11 @@
 
 Create PDF documents from YAML-configured SVG templates.
 
+- **Separation of design and content:** Design your layout visually in SVG, while
+  managing content and configuration in YAML.
+- **Instant templating:** Turn any existing SVG into a configurable template with a
+  single command.
+
 ## Installation
 
 pdfbaker is available on [PyPI](https://pypi.org/project/pdfbaker/) and can be installed
@@ -41,7 +46,7 @@ If you are using Windows, GTK needs to be installed:
 - Choose your installation location
 - Complete the installation
 
-## Optional Dependencies
+### Optional Dependencies
 
 - For SVG to PDF conversion, [CairoSVG](https://cairosvg.org/) is used by default. If
   you need [Inkscape](https://inkscape.org/) instead, install it:
@@ -101,6 +106,19 @@ The fastest way to get started is with the `--create-from` option:
 
    to regenerate your PDFs.
 
+## Documentation
+
+- [Overview](https://github.com/pythonnz/pdfbaker/blob/main/docs/overview.md) - Start
+  here
+- [Usage](https://github.com/pythonnz/pdfbaker/blob/main/docs/usage.md) - From the CLI
+  or as a library
+- [Configuration Reference](https://github.com/pythonnz/pdfbaker/blob/main/docs/configuration.md) -
+  All available settings
+- [Document Variants](https://github.com/pythonnz/pdfbaker/blob/main/docs/variants.md) -
+  Create multiple versions of the same document
+- [Custom Processing](https://github.com/pythonnz/pdfbaker/blob/main/docs/custom_processing.md) -
+  Provide page content from anywhere
+
 ## Examples
 
 For working examples, see the
@@ -122,19 +140,6 @@ Create all PDFs with:
 ```bash
 pdfbaker examples/examples.yaml
 ```
-
-## Documentation
-
-- [Overview](https://github.com/pythonnz/pdfbaker/blob/main/docs/overview.md) - Start
-  here
-- [Usage](https://github.com/pythonnz/pdfbaker/blob/main/docs/usage.md) - From the CLI
-  or as a library
-- [Configuration Reference](https://github.com/pythonnz/pdfbaker/blob/main/docs/configuration.md) -
-  All available settings
-- [Document Variants](https://github.com/pythonnz/pdfbaker/blob/main/docs/variants.md) -
-  Create multiple versions of the same document
-- [Custom Processing](https://github.com/pythonnz/pdfbaker/blob/main/docs/custom_processing.md) -
-  Provide page content from anywhere
 
 ## Development
 
