@@ -123,6 +123,6 @@ options = BakerOptions(
     # create_from=None,
 )
 
-baker = Baker(Path("kiwipycon/poster.yaml"), options=options)
+baker = Baker(Path("kiwipycon/kiwipycon.yaml"), options=options)
 baker.bake()
 ```
