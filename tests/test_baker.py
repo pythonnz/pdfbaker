@@ -276,5 +276,5 @@ def test_baker_dry_run(tmp_path, write_yaml, default_directories, caplog):
     dist_dir = default_directories.dist
     assert not build_dir.exists() or not any(build_dir.iterdir())
     assert not dist_dir.exists() or not any(dist_dir.iterdir())
-    dry_run_msgs = [r for r in caplog.messages if "👀 [DRY RUN]" in r or "🟨" in r]
+    dry_run_msgs = [r for r in caplog.messages if "🚫 [DRY RUN]" in r or "🟨" in r]
     assert dry_run_msgs, "Expected dry run log messages to be present"

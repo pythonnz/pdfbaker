@@ -46,9 +46,9 @@ repos:
       - id: pylint
         additional_dependencies:
           - "cairosvg"
-          - "click"
           - "jinja2"
           - "pydantic"
           - "pypdf"
           - "pytest"
+          - "rich_click"
           - "ruamel.yaml"

@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 import select
 import subprocess  # nosec B404
 from collections.abc import Sequence
@@ -24,6 +25,10 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+# Timestamp regex for deduplication of consecutive identical log lines
+# (the same message at a slightly later time is still a duplicate)
+DEDUPE_TIMESTAMP_RE = re.compile(r"\d{2}:\d{2}:\d{2}\.\d{3}")
 
 
 def combine_pdfs(
@@ -72,16 +77,57 @@ def combine_pdfs(
     return output_file
 
 
-def _run_subprocess_logged(cmd: list[str], env: dict[str, str] | None = None) -> int:
+def _run_subprocess_logged(
+    cmd: list[str],
+    env: dict[str, str] | None = None,
+    *,
+    deduplicate_log: bool = False,
+    log_prefix: str = "",
+    log_suffix: str = "",
+) -> int:
     """Run a subprocess with output redirected to logging.
 
     Args:
         cmd: Command and arguments to run
         env: Optional environment variables to set
+        deduplicate_log: If True, consecutive identical lines are merged and counted.
+        log_prefix: Prefix to prepend to each log line to clarify context
+        log_suffix: Suffix to append to each log line to clarify context
 
     Returns:
         0 if successful, otherwise raises CalledProcessError
     """
+
+    def make_logger(log_func):
+        """Logger factory for deduplication of consecutive identical lines."""
+        if not deduplicate_log:
+            return log_func
+
+        last_line = None
+        count = 0
+
+        def wrapper(line):
+            nonlocal last_line, count
+            norm = DEDUPE_TIMESTAMP_RE.sub("<TIMESTAMP>", line)
+            if norm == last_line:
+                count += 1
+            else:
+                if count > 0:
+                    log_func(f"(repeated {count} times)")
+                log_func(f"{log_prefix}{line}{log_suffix}")
+                last_line = norm
+                count = 0
+
+        def flush():
+            nonlocal last_line, count
+            if count > 0:
+                log_func(f"(repeated {count} times)")
+            last_line = None
+            count = 0
+
+        wrapper.flush = flush
+        return wrapper
+
     env = env or os.environ.copy()
     env["PYTHONUNBUFFERED"] = "True"
 
@@ -93,29 +139,33 @@ def _run_subprocess_logged(cmd: list[str], env: dict[str, str] | None = None) ->
         stderr=subprocess.PIPE,
         env=env,
     ) as proc:
-        # Set up select for both pipes
+        # Create one logger per stream for the process lifetime
         readable = {
-            proc.stdout.fileno(): (proc.stdout, logger.info),
-            proc.stderr.fileno(): (proc.stderr, logger.warning),
+            proc.stdout.fileno(): (proc.stdout, make_logger(logger.info)),
+            proc.stderr.fileno(): (proc.stderr, make_logger(logger.warning)),
         }
+        streams_open = set(readable.keys())
 
-        while (ret_code := proc.poll()) is None:
-            # Wait for output on either pipe
-            ready, _, _ = select.select(readable.keys(), [], [])
-
+        while streams_open:
+            ready, _, _ = select.select(streams_open, [], [])
             for fd in ready:
                 stream, log = readable[fd]
                 line = stream.readline()
-                if line:
-                    log(line.rstrip())
+                if line == "":
+                    streams_open.remove(fd)
+                    continue
+                line = line.rstrip()
+                if not line:
+                    # Skip blank lines; do not log or deduplicate
+                    continue
+                log(line)
 
-        # Read any remaining output after process exits
-        for stream, log in readable.values():
-            for line in stream:
-                if line.strip():
-                    log(line.rstrip())
+        # Flush any remaining deduplication state at the end
+        for _, log in readable.values():
+            if hasattr(log, "flush"):
+                log.flush()
 
-    if ret_code != 0:
+    if ret_code := proc.poll():
         raise subprocess.CalledProcessError(ret_code, cmd)
 
     return 0
@@ -188,12 +238,15 @@ def convert_svg_to_pdf(
 
     if backend == SVG2PDFBackend.INKSCAPE:
         try:
+            # Inkscape is noisy about newlines inside text, so we deduplicate
             _run_subprocess_logged(
                 [
                     "inkscape",
                     f"--export-filename={pdf_path}",
                     str(svg_path),
-                ]
+                ],
+                deduplicate_log=True,
+                log_suffix=f" [{svg_path.name}]",
             )
         except subprocess.SubprocessError as exc:
             raise SVGConversionError(svg_path, backend, str(exc)) from exc

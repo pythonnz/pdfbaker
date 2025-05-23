@@ -1,5 +1,6 @@
 """Tests for CLI functionality."""
 
+import re
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -36,7 +37,7 @@ def test_cli_bake_missing_config(tmp_path: Path):
     runner = CliRunner()
     result = runner.invoke(cli, [str(tmp_path / "missing.yaml")])
     assert result.exit_code == 2
-    assert "No such file or directory" in result.output
+    assert re.search(r"No\s+such\s+file\s+or.*directory", result.output, re.DOTALL)
 
 
 def test_cli_bake_invalid_config(tmp_path: Path):

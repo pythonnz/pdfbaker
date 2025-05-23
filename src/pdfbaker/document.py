@@ -33,7 +33,7 @@ class Document(LoggingMixin):
     def __init__(self, config_path: PathSpec, **kwargs):
         self.log_trace_section("Loading document configuration: %s", config_path.name)
         self.config = DocumentConfig(config_path=config_path, **kwargs)
-        self.log_trace(self.config.readable())
+        self.log_trace_preview(self.config.readable(), syntax="yaml")
 
     def process_document(self) -> tuple[Path | list[Path] | None, str | None]:
         """Process the document - use custom bake module if it exists.
@@ -51,18 +51,23 @@ class Document(LoggingMixin):
         self.log_info_section('Processing document "%s"...', self.config.name)
 
         self.log_debug(
-            "Ensuring build directory exists: %s", self.config.directories.build
+            "Ensuring document build directory exists: %s",
+            self.config.directories.build,
         )
         if self.config.dry_run:
-            self.log_debug("👀 [DRY RUN] Not creating build directory")
+            self.log_debug(
+                ":no_entry_sign: [DRY RUN] Not creating document build directory"
+            )
         else:
             self.config.directories.build.mkdir(parents=True, exist_ok=True)
 
         self.log_debug(
-            "Ensuring dist directory exists: %s", self.config.directories.dist
+            "Ensuring document dist directory exists: %s", self.config.directories.dist
         )
         if self.config.dry_run:
-            self.log_debug("👀 [DRY RUN] Not creating dist directory")
+            self.log_debug(
+                ":no_entry_sign: [DRY RUN] Not creating document dist directory"
+            )
         else:
             self.config.directories.dist.mkdir(parents=True, exist_ok=True)
 
@@ -110,7 +115,7 @@ class Document(LoggingMixin):
                 variant_config.directories.build = self.config.directories.build
                 variant_config.directories.dist = self.config.directories.dist
                 variant_config = variant_config.resolve_variables()
-                self.log_trace(variant_config.readable())
+                self.log_trace_preview(variant_config.readable(), syntax="yaml")
                 page_pdfs = self._process_pages(variant_config)
                 pdf_files.append(self._finalize(page_pdfs, variant_config))
 
@@ -147,7 +152,7 @@ class Document(LoggingMixin):
                 self.log_debug_subsection(
                     f'{source} "{config.name}" provides settings for page "{page_name}"'
                 )
-                self.log_trace(specific_config)
+                self.log_trace_preview(specific_config, syntax="yaml")
                 page.config = page.config.merge(specific_config)
 
             pdf_files.append(page.process())
@@ -160,7 +165,7 @@ class Document(LoggingMixin):
         self.log_debug("Combining PDF pages...")
 
         if self.config.dry_run:
-            self.log_debug("👀 [DRY RUN] Not combining PDF pages")
+            self.log_debug(":no_entry_sign: [DRY RUN] Not combining PDF pages")
         else:
             try:
                 combined_pdf = combine_pdfs(
@@ -178,7 +183,7 @@ class Document(LoggingMixin):
         if doc_config.compress_pdf:
             self.log_debug("Compressing PDF document...")
             if self.config.dry_run:
-                self.log_debug("👀 [DRY RUN] Not compressing PDF document")
+                self.log_debug(":no_entry_sign: [DRY RUN] Not compressing PDF document")
             else:
                 try:
                     compress_pdf(combined_pdf, output_path)
@@ -194,32 +199,42 @@ class Document(LoggingMixin):
                 shutil.move(combined_pdf, output_path)
 
         if self.config.dry_run:
-            self.log_info("👀 [DRY RUN] Did not create %s", output_path.name)
+            self.log_info(
+                ":no_entry_sign: [DRY RUN] Did not create %s", output_path.name
+            )
         else:
             self.log_info("Created %s", output_path.name)
         return output_path
 
     def teardown(self) -> None:
-        """Clean up build directory after processing."""
+        """Clean up document build directory after processing."""
         build_dir = self.config.directories.build
-        self.log_debug_subsection("Tearing down build directory: %s", build_dir)
+        self.log_debug_subsection(
+            "Tearing down document build directory: %s", build_dir
+        )
         if build_dir.exists():
-            self.log_debug("Removing files in build directory...")
+            self.log_debug("Removing files in document build directory...")
 
             if self.config.dry_run:
-                self.log_debug("👀 [DRY RUN] Not removing files in build directory")
+                self.log_debug(
+                    ":no_entry_sign:"
+                    " [DRY RUN] Not removing files in document build directory"
+                )
             else:
                 for file_path in build_dir.iterdir():
                     if file_path.is_file():
                         file_path.unlink()
 
             try:
-                self.log_debug("Removing build directory...")
+                self.log_debug("Removing document build directory...")
                 if self.config.dry_run:
-                    self.log_debug("👀 [DRY RUN] Not removing build directory")
+                    self.log_debug(
+                        ":no_entry_sign:"
+                        " [DRY RUN] Not removing document build directory"
+                    )
                 else:
                     build_dir.rmdir()
             except OSError:
-                self.log_warning("Build directory not empty - not removing")
+                self.log_warning("Document build directory not empty - not removing")
         else:
-            self.log_debug("Build directory does not exist")
+            self.log_debug("Document build directory does not exist")

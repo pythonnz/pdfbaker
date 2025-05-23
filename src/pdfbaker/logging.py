@@ -1,11 +1,17 @@
 """Logging mixin for pdfbaker classes."""
 
 import logging
-import sys
 from typing import Any
+
+from rich.logging import RichHandler
+from rich.syntax import Syntax
+from rich.text import Text
+
+from .console import SYNTAX_THEME, stderr_console, stdout_console
 
 TRACE = 5
 logging.addLevelName(TRACE, "TRACE")
+TRACE_PREVIEW_MAX_CHARS = 500
 
 __all__ = ["LoggingMixin", "setup_logging"]
 
@@ -18,79 +24,145 @@ class LoggingMixin:
         """Return the named logger for this instance."""
         return logging.getLogger(self.__class__.__module__)
 
-    def log_trace(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def _log(
+        self,
+        level: int,
+        msg: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """Internal log method to handle highlighting and markup."""
+        markup = kwargs.pop("markup", True)
+        extra = {"markup": markup}
+        if not kwargs.pop("highlight", True):
+            extra["highlighter"] = None
+        syntax = kwargs.pop("syntax", None)
+        if syntax:
+            msg = Syntax(msg, syntax, theme=SYNTAX_THEME)
+        elif markup:
+            msg = Text.from_markup(msg)
+        self.logger.log(level, msg, *args, stacklevel=3, extra=extra, **kwargs)
+
+    def log_trace(
+        self,
+        msg: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         """Log a trace message (more detailed than debug)."""
-        self.logger.log(TRACE, f"🔍 {msg}", *args, **kwargs)
+        self._log(
+            TRACE,
+            f":magnifying_glass_tilted_left: {msg}",
+            *args,
+            **kwargs,
+        )
 
     def log_trace_preview(
-        self, msg: str, *args: Any, max_chars: int = 500, **kwargs: Any
+        self,
+        msg: str,
+        *args: Any,
+        syntax: str | None = None,
+        max_chars: int = TRACE_PREVIEW_MAX_CHARS,
+        **kwargs: Any,
     ) -> None:
         """Log a trace preview of a potentially large message, truncating if needed."""
-        if len(msg) > max_chars:
+        if max_chars is not None and len(msg) > max_chars:
             msg = msg[:max_chars] + "(...)"
-        self.logger.log(TRACE, f"🔍 \n{msg}", *args, **kwargs)
+        self._log(
+            TRACE,
+            msg,
+            *args,
+            highlight=False,
+            markup=False,
+            syntax=syntax,
+            **kwargs,
+        )
 
     def log_trace_section(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a trace message as a main section header."""
-        self.logger.log(TRACE, f"🔍 ──── {msg} ────", *args, **kwargs)
+        self._log(
+            TRACE, f":magnifying_glass_tilted_left: ──── {msg} ────", *args, **kwargs
+        )
 
     def log_trace_subsection(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a trace message as a subsection header."""
-        self.logger.log(TRACE, f"🔍   ── {msg} ──", *args, **kwargs)
+        self._log(
+            TRACE,
+            f":magnifying_glass_tilted_left:   ── {msg} ──",
+            *args,
+            **kwargs,
+        )
 
     def log_debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a debug message."""
-        self.logger.debug(f"🔧 {msg}", *args, **kwargs)
+        self._log(logging.DEBUG, f":wrench: {msg}", *args, **kwargs)
 
     def log_debug_section(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a debug message as a main section header."""
-        self.logger.debug(f"🔧 ──── {msg} ────", *args, **kwargs)
+        self._log(logging.DEBUG, f":wrench: ──── {msg} ────", *args, **kwargs)
 
     def log_debug_subsection(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a debug message as a subsection header."""
-        self.logger.debug(f"🔧   ── {msg} ──", *args, **kwargs)
+        self._log(logging.DEBUG, f":wrench:   ── {msg} ──", *args, **kwargs)
 
     def log_info(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log an info message."""
-        self.logger.info(msg, *args, **kwargs)
+        self._log(logging.INFO, msg, *args, **kwargs)
 
     def log_info_section(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log an info message as a main section header."""
-        self.logger.info(f"──── {msg} ────", *args, **kwargs)
+        self._log(logging.INFO, f"──── {msg} ────", *args, **kwargs)
 
     def log_info_subsection(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log an info message as a subsection header."""
-        self.logger.info(f"  ── {msg} ──", *args, **kwargs)
+        self._log(logging.INFO, f"  ── {msg} ──", *args, **kwargs)
 
     def log_warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a warning message."""
-        self.logger.warning(f"⚠️ {msg}", *args, **kwargs)
+        self._log(logging.WARNING, f":fire: {msg}", *args, **kwargs)
 
     def log_error(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log an error message."""
-        self.logger.error(f"**** ❌ {msg} ****", *args, **kwargs)
+        self._log(
+            logging.ERROR,
+            f"**** :cross_mark: {msg} ****",
+            *args,
+            **kwargs,
+        )
 
-    def log_critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
-        """Log a critical message."""
-        self.logger.critical(f"**** 🚨 {msg} ****", *args, **kwargs)
+
+class RichHandlerWithSyntax(RichHandler):
+    """Rich handler that prints Syntax objects as given."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if isinstance(record.msg, Syntax):
+            self.console.print(record.msg)
+        else:
+            super().emit(record)
 
 
 def setup_logging(quiet=False, trace=False, verbose=False) -> None:
-    """Set up logging for the application."""
+    """Set up rich logging for the application."""
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    formatter = logging.Formatter("%(levelname)s: %(message)s")
 
-    # stdout handler for TRACE/DEBUG/INFO
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setFormatter(formatter)
-    stdout_handler.setLevel(TRACE)
-    stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
+    # Handler for TRACE/DEBUG/INFO to stdout
+    stdout_handler = RichHandlerWithSyntax(
+        level=TRACE,
+        console=stdout_console,
+        omit_repeated_times=False,
+        rich_tracebacks=True,
+    )
+    stdout_handler.addFilter(lambda record: record.levelno <= logging.INFO)
 
-    # stderr handler for WARNING and above
-    stderr_handler = logging.StreamHandler(sys.stderr)
-    stderr_handler.setFormatter(formatter)
-    stderr_handler.setLevel(logging.WARNING)
+    # Handler for WARNING and above to stderr
+    stderr_handler = RichHandlerWithSyntax(
+        level=logging.WARNING,
+        console=stderr_console,
+        omit_repeated_times=False,
+        show_path=True,
+        rich_tracebacks=True,
+    )
 
     # Remove existing console handlers, add ours
     for handler in logger.handlers[:]:

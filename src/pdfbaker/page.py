@@ -29,7 +29,7 @@ class Page(LoggingMixin):
         self.config = PageConfig(
             config_path=config_path, page_number=page_number, **kwargs
         )
-        self.log_trace(self.config.readable())
+        self.log_trace_preview(self.config.readable(), syntax="yaml")
 
     def _load_jinja_template(self, undefined_vars) -> jinja2.Template:
         try:
@@ -64,10 +64,10 @@ class Page(LoggingMixin):
             "Processing page %d: %s", self.config.page_number, self.config.name
         )
 
-        self.log_debug("Loading template: %s", self.config.template.name)
+        self.log_debug("Loading template: %s", self.config.template.path)
         if self.logger.isEnabledFor(TRACE):
             with open(self.config.template.path, encoding="utf-8") as f:
-                self.log_trace_preview(f.read())
+                self.log_trace_preview(f.read(), syntax="xml")
 
         undefined_vars = set()
         template = self._load_jinja_template(undefined_vars)
@@ -103,7 +103,8 @@ class Page(LoggingMixin):
                     )
             if self.config.dry_run:
                 self.log_debug(
-                    "👀 [DRY RUN] Not writing rendered template to %s", output_svg
+                    ":no_entry_sign: [DRY RUN] Not writing rendered template to %s",
+                    output_svg,
                 )
             else:
                 with open(output_svg, "w", encoding="utf-8") as f:
@@ -113,11 +114,11 @@ class Page(LoggingMixin):
                 "Failed to render page "
                 f"{self.config.page_number} ({self.config.name}): {exc}"
             ) from exc
-        self.log_trace_preview(rendered_template)
+        self.log_trace_preview(rendered_template, syntax="xml")
 
         self.log_debug("Converting SVG to PDF: %s", output_svg)
         if self.config.dry_run:
-            self.log_debug("👀 [DRY RUN] Not converting SVG to PDF")
+            self.log_debug(":no_entry_sign: [DRY RUN] Not converting SVG to PDF")
             return None
         try:
             return convert_svg_to_pdf(

@@ -177,7 +177,7 @@ class BaseConfig(BaseModel, LoggingMixin):
 
         stream = io.StringIO()
         yaml.dump(self.model_dump(), stream)
-        return f"\n{stream.getvalue()}"
+        return stream.getvalue()
 
     def resolve_path(self, path: Path) -> Path:
         """Resolve relative paths relative to the base directory."""

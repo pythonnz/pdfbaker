@@ -7,7 +7,7 @@ authors = [
 ]
 dependencies = [
     "cairosvg",
-    "click",
+    "rich-click",
     "jinja2",
     "pydantic",
     "pypdf",

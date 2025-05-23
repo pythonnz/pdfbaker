@@ -4,10 +4,11 @@ import logging
 import sys
 from pathlib import Path
 
-import click
+import rich_click as click
 
 from pdfbaker import __version__
 from pdfbaker.baker import Baker, BakerOptions
+from pdfbaker.console import HELP_CONFIG
 from pdfbaker.errors import (
     DocumentNotFoundError,
     DryRunCreateFromCompleted,
@@ -50,6 +51,7 @@ logger = logging.getLogger(__name__)
     metavar="SVG_FILE",
     help="Scaffold CONFIG_FILE and supporting files for your existing SVG.",
 )
+@click.rich_config(help_config=HELP_CONFIG)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def cli(
     config_file: Path,
