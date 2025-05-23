@@ -1,6 +1,49 @@
 # CHANGELOG
 
 
+## v0.11.0 (2025-05-23)
+
+### Bug Fixes
+
+- Escape XKCD title and alt text
+  ([`8432a24`](https://github.com/pythonnz/pdfbaker/commit/8432a24eef9eb365149c9d3dbcff67eda8e12394))
+
+Otherwise the SVG can be become invalid...
+
+``` "Applying renormalization to bullies successfully transformed Pete & Pete's Endless Mike into
+  Finite Mike." ``` needs to be escaped to ``` Pete &amp; Pete&#39;s Endless Mike into Finite Mike.
+  ```
+
+### Code Style
+
+- Don't show location of build directory in a dry-run
+  ([`cd4c675`](https://github.com/pythonnz/pdfbaker/commit/cd4c67529a9f690f272fd44a9c297e5fc8a39341))
+
+It wouldn't have been created...
+
+### Documentation
+
+- Add "Usage" document, adjust README and overview, fix custom locations
+  ([`2c390da`](https://github.com/pythonnz/pdfbaker/commit/2c390da73db7da6af718ecd9192bd021d1a81341))
+
+- Fix config file path in library example (same as in CLI example)
+  ([`6c3198a`](https://github.com/pythonnz/pdfbaker/commit/6c3198ac2969c54daee96ff839267c8dfc3e608b))
+
+- Improve README
+  ([`8a22464`](https://github.com/pythonnz/pdfbaker/commit/8a22464ca07e95e98a8ad4ce9145520a885145a5))
+
+- add what you get from using SVG+YAML - add how quickly you can get started - Move "Documentation"
+  to be before "Examples"
+
+### Features
+
+- Improve logging and console UI with rich formatting
+  ([`fcf16ed`](https://github.com/pythonnz/pdfbaker/commit/fcf16ed2960fcba1155b8128857e5c9610edb379))
+
+* Use rich and rich-click - colors, panels etc. * Proper syntax highlighting for SVG and YAML * Show
+  directory tree after --create-from * Don't repeat identical subprocess log messages, count them
+
+
 ## v0.10.0 (2025-05-18)
 
 ### Code Style
