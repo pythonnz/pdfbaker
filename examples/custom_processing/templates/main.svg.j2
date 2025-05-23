@@ -9,7 +9,7 @@
 
   <!-- XKCD Info -->
   <text x="105" y="80" font-family="Arial" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">Latest XKCD:</text>
-  <text x="105" y="95" font-family="Arial" font-size="10" fill="#333" text-anchor="middle">{{ xkcd.title }}</text>
+  <text x="105" y="95" font-family="Arial" font-size="10" fill="#333" text-anchor="middle">{{ xkcd.title|e }}</text>
   <text x="105" y="110" font-family="Arial" font-size="6" fill="#666" text-anchor="middle">Fetched at: {{ xkcd.fetched_at }}</text>
 
   <!-- XKCD Image -->
@@ -17,6 +17,6 @@
 
   <!-- Centered Alt Text (Pre-wrapped in Python) -->
   {% for line in xkcd.alt_text_lines %}
-  <text x="105" y="{{ 260 + loop.index0 * 8 }}" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">{{ line }}</text>
+  <text x="105" y="{{ 260 + loop.index0 * 8 }}" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">{{ line|e }}</text>
   {% endfor %}
 </svg>
