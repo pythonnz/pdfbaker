@@ -14,7 +14,7 @@
 
 Create PDF documents from YAML-configured SVG templates.
 
-- **Separation of design and content:** Design your layout visually in SVG, while
+- **Separation of design and content:** Design your layout visually in SVG while
   managing content and configuration in YAML.
 - **Instant templating:** Turn any existing SVG into a configurable template with a
   single command.
