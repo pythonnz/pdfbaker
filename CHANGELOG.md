@@ -1,6 +1,16 @@
 # CHANGELOG
 
 
+## v0.11.1 (2025-10-16)
+
+### Bug Fixes
+
+- Remove comma to demo release
+  ([`036151b`](https://github.com/pythonnz/pdfbaker/commit/036151bd5fe93b6ff3d96d4c2b56967db5efb899))
+
+This is only for demonstration purposes. Marked as a fix to trigger a release.
+
+
 ## v0.11.0 (2025-05-23)
 
 ### Bug Fixes
