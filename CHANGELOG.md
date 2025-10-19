@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v0.11.3 (2025-10-19)
+
+### Bug Fixes
+
+- Ignore tarfile symlink vulnerability in pip-audit
+  ([`01dad6b`](https://github.com/pythonnz/pdfbaker/commit/01dad6ba101f7569770260b08ab4cc457256714c))
+
+https://github.com/advisories/GHSA-4xh5-x5gv-qwph https://github.com/pypa/pip/issues/13607
+
+As we're not affected, this seems to be the most pragmatic approach for this curveball.
+
+### Continuous Integration
+
+- Bump Ubuntu version for pip-audit to use Python 3.12
+  ([`0d38b57`](https://github.com/pythonnz/pdfbaker/commit/0d38b57e16eca75824ade45016687a27e00d4c27))
+
+- Update pip
+  ([`1dc2ecd`](https://github.com/pythonnz/pdfbaker/commit/1dc2ecdc755d430abf332403921dfbc447685dd7))
+
+The current python action (as bumped by dependabot) seems to still be running pip 25.2 which
+  pip-audit flagged for known vulnerability
+
+
 ## v0.11.2 (2025-10-19)
 
 ### Bug Fixes
