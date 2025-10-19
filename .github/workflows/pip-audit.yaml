@@ -10,12 +10,12 @@ on:
 
 jobs:
   pip-audit:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Install uv and sync dev dependencies
         run: |
           pip install uv
