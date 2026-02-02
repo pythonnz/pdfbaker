@@ -1017,16 +1017,16 @@ wheels = [
 
 [[package]]
 name = "rich-click"
-version = "1.9.3"
+version = "1.9.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9d/90/95cff624a176de6d00a4ddc4fb0238649bca09c19bd37d5b8d1962f8dcfc/rich_click-1.9.3.tar.gz", hash = "sha256:60839150a935604df1378b159da340d3fff91f912903e935da7cb615b5738c1b", size = 73549, upload-time = "2025-10-09T18:00:40.455Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/27/091e140ea834272188e63f8dd6faac1f5c687582b687197b3e0ec3c78ebf/rich_click-1.9.7.tar.gz", hash = "sha256:022997c1e30731995bdbc8ec2f82819340d42543237f033a003c7b1f843fc5dc", size = 74838, upload-time = "2026-01-31T04:29:27.707Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5b/76/5679d9eee13b8670084d2fe5d7933931b50fd896391693ba690f63916d66/rich_click-1.9.3-py3-none-any.whl", hash = "sha256:8ef51bc340db4d048a846c15c035d27b88acf720cbbb9b6fecf6c8b1a297b909", size = 70168, upload-time = "2025-10-09T18:00:39.464Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/e5/d708d262b600a352abe01c2ae360d8ff75b0af819b78e9af293191d928e6/rich_click-1.9.7-py3-none-any.whl", hash = "sha256:2f99120fca78f536e07b114d3b60333bc4bb2a0969053b1250869bcdc1b5351b", size = 71491, upload-time = "2026-01-31T04:29:26.777Z" },
 ]
 
 [[package]]
