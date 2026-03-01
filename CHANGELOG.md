@@ -1,6 +1,375 @@
 # CHANGELOG
 
 
+## v0.11.4 (2026-03-01)
+
+### Bug Fixes
+
+- Security updates to dependencies
+  ([`6833db1`](https://github.com/pythonnz/pdfbaker/commit/6833db165667a328a67a5601755940537da7eff3))
+
+### Chores
+
+- **deps**: Bump actions/cache from 4 to 5 ([#59](https://github.com/pythonnz/pdfbaker/pull/59),
+  [`cc6c5ae`](https://github.com/pythonnz/pdfbaker/commit/cc6c5ae1340737507946fba601d9404c5f2890d4))
+
+Bumps [actions/cache](https://github.com/actions/cache) from 4 to 5. - [Release
+  notes](https://github.com/actions/cache/releases) -
+  [Changelog](https://github.com/actions/cache/blob/main/RELEASES.md) -
+  [Commits](https://github.com/actions/cache/compare/v4...v5)
+
+--- updated-dependencies: - dependency-name: actions/cache dependency-version: '5'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump actions/checkout from 5 to 6 ([#56](https://github.com/pythonnz/pdfbaker/pull/56),
+  [`f4e57a2`](https://github.com/pythonnz/pdfbaker/commit/f4e57a25684cf58b5329743f8c98f12f2e788b1b))
+
+Bumps [actions/checkout](https://github.com/actions/checkout) from 5 to 6. - [Release
+  notes](https://github.com/actions/checkout/releases) -
+  [Commits](https://github.com/actions/checkout/compare/v5...v6)
+
+--- updated-dependencies: - dependency-name: actions/checkout dependency-version: '6'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump actions/setup-python from 5 to 6
+  ([#45](https://github.com/pythonnz/pdfbaker/pull/45),
+  [`f52513b`](https://github.com/pythonnz/pdfbaker/commit/f52513b67589cd7a261278dc3a7aab8fb13feb38))
+
+Bumps [actions/setup-python](https://github.com/actions/setup-python) from 5 to 6. - [Release
+  notes](https://github.com/actions/setup-python/releases) -
+  [Commits](https://github.com/actions/setup-python/compare/v5...v6)
+
+--- updated-dependencies: - dependency-name: actions/setup-python dependency-version: '6'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump actions/upload-artifact from 4.6.2 to 6.0.0
+  ([#61](https://github.com/pythonnz/pdfbaker/pull/61),
+  [`a443b00`](https://github.com/pythonnz/pdfbaker/commit/a443b00f3d9aefede9f3fddee3cef276cf0ac903))
+
+Bumps [actions/upload-artifact](https://github.com/actions/upload-artifact) from 4.6.2 to 6.0.0. -
+  [Release notes](https://github.com/actions/upload-artifact/releases) -
+  [Commits](https://github.com/actions/upload-artifact/compare/ea165f8d65b6e75b540449e92b4886f43607fa02...b7c566a772e6b6bfb58ed0dc250532a479d7789f)
+
+--- updated-dependencies: - dependency-name: actions/upload-artifact dependency-version: 6.0.0
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump filelock from 3.18.0 to 3.20.3
+  ([#74](https://github.com/pythonnz/pdfbaker/pull/74),
+  [`58d40b4`](https://github.com/pythonnz/pdfbaker/commit/58d40b45487f6a47b16b262238d5680e849d69a3))
+
+Bumps [filelock](https://github.com/tox-dev/py-filelock) from 3.18.0 to 3.20.3. - [Release
+  notes](https://github.com/tox-dev/py-filelock/releases) -
+  [Changelog](https://github.com/tox-dev/filelock/blob/main/docs/changelog.rst) -
+  [Commits](https://github.com/tox-dev/py-filelock/compare/3.18.0...3.20.3)
+
+--- updated-dependencies: - dependency-name: filelock dependency-version: 3.20.3
+
+dependency-type: indirect ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump github/codeql-action from 3 to 4
+  ([#43](https://github.com/pythonnz/pdfbaker/pull/43),
+  [`90104ac`](https://github.com/pythonnz/pdfbaker/commit/90104acd1d0434f5ac98ec678810e3931eef0980))
+
+Bumps [github/codeql-action](https://github.com/github/codeql-action) from 3 to 4. - [Release
+  notes](https://github.com/github/codeql-action/releases) -
+  [Changelog](https://github.com/github/codeql-action/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/github/codeql-action/compare/v3...v4)
+
+--- updated-dependencies: - dependency-name: github/codeql-action dependency-version: '4'
+
+dependency-type: direct:production
+
+update-type: version-update:semver-major ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump pillow from 11.1.0 to 12.1.1 ([#76](https://github.com/pythonnz/pdfbaker/pull/76),
+  [`803d4c1`](https://github.com/pythonnz/pdfbaker/commit/803d4c1113b72b9e97b1427e5ee872804180aec6))
+
+Bumps [pillow](https://github.com/python-pillow/Pillow) from 11.1.0 to 12.1.1. - [Release
+  notes](https://github.com/python-pillow/Pillow/releases) -
+  [Changelog](https://github.com/python-pillow/Pillow/blob/main/CHANGES.rst) -
+  [Commits](https://github.com/python-pillow/Pillow/compare/11.1.0...12.1.1)
+
+--- updated-dependencies: - dependency-name: pillow dependency-version: 12.1.1
+
+dependency-type: indirect ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump pip from 25.2 to 26.0 ([#73](https://github.com/pythonnz/pdfbaker/pull/73),
+  [`f998f60`](https://github.com/pythonnz/pdfbaker/commit/f998f60df500f3c38102f58456c1c485271ec7d6))
+
+Bumps [pip](https://github.com/pypa/pip) from 25.2 to 26.0. -
+  [Changelog](https://github.com/pypa/pip/blob/main/NEWS.rst) -
+  [Commits](https://github.com/pypa/pip/compare/25.2...26.0)
+
+--- updated-dependencies: - dependency-name: pip dependency-version: '26.0'
+
+dependency-type: indirect ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump pydantic from 2.12.3 to 2.12.4
+  ([#50](https://github.com/pythonnz/pdfbaker/pull/50),
+  [`c26e69d`](https://github.com/pythonnz/pdfbaker/commit/c26e69d1d98f4380c061637a7f52a8c356fd1485))
+
+Bumps [pydantic](https://github.com/pydantic/pydantic) from 2.12.3 to 2.12.4. - [Release
+  notes](https://github.com/pydantic/pydantic/releases) -
+  [Changelog](https://github.com/pydantic/pydantic/blob/v2.12.4/HISTORY.md) -
+  [Commits](https://github.com/pydantic/pydantic/compare/v2.12.3...v2.12.4)
+
+--- updated-dependencies: - dependency-name: pydantic dependency-version: 2.12.4
+
+dependency-type: direct:production
+
+update-type: version-update:semver-patch ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump pydantic from 2.12.4 to 2.12.5
+  ([#57](https://github.com/pythonnz/pdfbaker/pull/57),
+  [`6ab264e`](https://github.com/pythonnz/pdfbaker/commit/6ab264e3ac3fb94a15c5210b1cdd3d8cde4655c6))
+
+Bumps [pydantic](https://github.com/pydantic/pydantic) from 2.12.4 to 2.12.5. - [Release
+  notes](https://github.com/pydantic/pydantic/releases) -
+  [Changelog](https://github.com/pydantic/pydantic/blob/main/HISTORY.md) -
+  [Commits](https://github.com/pydantic/pydantic/compare/v2.12.4...v2.12.5)
+
+--- updated-dependencies: - dependency-name: pydantic dependency-version: 2.12.5
+
+dependency-type: direct:production
+
+update-type: version-update:semver-patch ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump pypdf from 6.1.1 to 6.1.2 ([#44](https://github.com/pythonnz/pdfbaker/pull/44),
+  [`e70baaa`](https://github.com/pythonnz/pdfbaker/commit/e70baaa20f326cba4ba5b987334ba0ffbed98f32))
+
+Bumps [pypdf](https://github.com/py-pdf/pypdf) from 6.1.1 to 6.1.2. - [Release
+  notes](https://github.com/py-pdf/pypdf/releases) -
+  [Changelog](https://github.com/py-pdf/pypdf/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/py-pdf/pypdf/compare/6.1.1...6.1.2)
+
+--- updated-dependencies: - dependency-name: pypdf dependency-version: 6.1.2
+
+dependency-type: direct:production
+
+update-type: version-update:semver-patch ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump pypdf from 6.1.2 to 6.1.3 ([#46](https://github.com/pythonnz/pdfbaker/pull/46),
+  [`d1898ea`](https://github.com/pythonnz/pdfbaker/commit/d1898eaa8bdd32a25f2f6f45718f51c619d0639a))
+
+Bumps [pypdf](https://github.com/py-pdf/pypdf) from 6.1.2 to 6.1.3. - [Release
+  notes](https://github.com/py-pdf/pypdf/releases) -
+  [Changelog](https://github.com/py-pdf/pypdf/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/py-pdf/pypdf/compare/6.1.2...6.1.3)
+
+--- updated-dependencies: - dependency-name: pypdf dependency-version: 6.1.3
+
+dependency-type: direct:production
+
+update-type: version-update:semver-patch ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump pypdf from 6.1.3 to 6.2.0 ([#51](https://github.com/pythonnz/pdfbaker/pull/51),
+  [`c73a958`](https://github.com/pythonnz/pdfbaker/commit/c73a9584a0a915d8d449f26404ad87ff44083778))
+
+Bumps [pypdf](https://github.com/py-pdf/pypdf) from 6.1.3 to 6.2.0. - [Release
+  notes](https://github.com/py-pdf/pypdf/releases) -
+  [Changelog](https://github.com/py-pdf/pypdf/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/py-pdf/pypdf/compare/6.1.3...6.2.0)
+
+--- updated-dependencies: - dependency-name: pypdf dependency-version: 6.2.0
+
+dependency-type: direct:production
+
+update-type: version-update:semver-minor ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump pypdf from 6.2.0 to 6.7.0 ([#72](https://github.com/pythonnz/pdfbaker/pull/72),
+  [`17a0c1e`](https://github.com/pythonnz/pdfbaker/commit/17a0c1e137f9bb2cd970d1e6ab49514dc0d96451))
+
+Bumps [pypdf](https://github.com/py-pdf/pypdf) from 6.2.0 to 6.7.0. - [Release
+  notes](https://github.com/py-pdf/pypdf/releases) -
+  [Changelog](https://github.com/py-pdf/pypdf/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/py-pdf/pypdf/compare/6.2.0...6.7.0)
+
+--- updated-dependencies: - dependency-name: pypdf dependency-version: 6.7.0
+
+dependency-type: direct:production
+
+update-type: version-update:semver-minor ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump pypdf from 6.2.0 to 6.7.4 ([#75](https://github.com/pythonnz/pdfbaker/pull/75),
+  [`2c90a73`](https://github.com/pythonnz/pdfbaker/commit/2c90a739ccf7ed738d5873749e18a9d188621271))
+
+Bumps [pypdf](https://github.com/py-pdf/pypdf) from 6.2.0 to 6.7.4. - [Release
+  notes](https://github.com/py-pdf/pypdf/releases) -
+  [Changelog](https://github.com/py-pdf/pypdf/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/py-pdf/pypdf/compare/6.2.0...6.7.4)
+
+--- updated-dependencies: - dependency-name: pypdf dependency-version: 6.7.4
+
+dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump python-semantic-release/publish-action
+  ([#52](https://github.com/pythonnz/pdfbaker/pull/52),
+  [`4c1b000`](https://github.com/pythonnz/pdfbaker/commit/4c1b0000a708c5122e963a041981615fbfaefe57))
+
+Bumps
+  [python-semantic-release/publish-action](https://github.com/python-semantic-release/publish-action)
+  from 10.4.1 to 10.5.1. - [Release
+  notes](https://github.com/python-semantic-release/publish-action/releases) -
+  [Changelog](https://github.com/python-semantic-release/publish-action/blob/main/releaserc.toml) -
+  [Commits](https://github.com/python-semantic-release/publish-action/compare/v10.4.1...v10.5.1)
+
+--- updated-dependencies: - dependency-name: python-semantic-release/publish-action
+  dependency-version: 10.5.1
+
+dependency-type: direct:production
+
+update-type: version-update:semver-minor ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump python-semantic-release/publish-action
+  ([#60](https://github.com/pythonnz/pdfbaker/pull/60),
+  [`d1661a8`](https://github.com/pythonnz/pdfbaker/commit/d1661a8ae89daf883181c253925b9f7665f46dc5))
+
+Bumps
+  [python-semantic-release/publish-action](https://github.com/python-semantic-release/publish-action)
+  from 10.5.1 to 10.5.3. - [Release
+  notes](https://github.com/python-semantic-release/publish-action/releases) -
+  [Changelog](https://github.com/python-semantic-release/publish-action/blob/main/releaserc.toml) -
+  [Commits](https://github.com/python-semantic-release/publish-action/compare/v10.5.1...v10.5.3)
+
+--- updated-dependencies: - dependency-name: python-semantic-release/publish-action
+  dependency-version: 10.5.3
+
+dependency-type: direct:production
+
+update-type: version-update:semver-patch ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump rich-click from 1.9.3 to 1.9.7
+  ([#70](https://github.com/pythonnz/pdfbaker/pull/70),
+  [`6318960`](https://github.com/pythonnz/pdfbaker/commit/6318960f558592229a6c8b55fcf0afc829262b09))
+
+Bumps [rich-click](https://github.com/ewels/rich-click) from 1.9.3 to 1.9.7. - [Release
+  notes](https://github.com/ewels/rich-click/releases) -
+  [Changelog](https://github.com/ewels/rich-click/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/ewels/rich-click/compare/v1.9.3...v1.9.7)
+
+--- updated-dependencies: - dependency-name: rich-click dependency-version: 1.9.7
+
+dependency-type: direct:production
+
+update-type: version-update:semver-patch ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump ruamel-yaml from 0.18.15 to 0.19.1
+  ([#66](https://github.com/pythonnz/pdfbaker/pull/66),
+  [`7c90d89`](https://github.com/pythonnz/pdfbaker/commit/7c90d89e89d7c21363378664d79de855687d9768))
+
+Bumps ruamel-yaml from 0.18.15 to 0.19.1.
+
+--- updated-dependencies: - dependency-name: ruamel-yaml dependency-version: 0.19.1
+
+dependency-type: direct:production
+
+update-type: version-update:semver-minor ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Bump urllib3 from 2.5.0 to 2.6.3 ([#77](https://github.com/pythonnz/pdfbaker/pull/77),
+  [`c96129c`](https://github.com/pythonnz/pdfbaker/commit/c96129c8a3dba663a9ca87f245d80afaff39cc0f))
+
+Bumps [urllib3](https://github.com/urllib3/urllib3) from 2.5.0 to 2.6.3. - [Release
+  notes](https://github.com/urllib3/urllib3/releases) -
+  [Changelog](https://github.com/urllib3/urllib3/blob/main/CHANGES.rst) -
+  [Commits](https://github.com/urllib3/urllib3/compare/2.5.0...2.6.3)
+
+--- updated-dependencies: - dependency-name: urllib3 dependency-version: 2.6.3
+
+dependency-type: indirect ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+
 ## v0.11.3 (2025-10-19)
 
 ### Bug Fixes

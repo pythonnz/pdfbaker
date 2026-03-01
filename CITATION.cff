@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use pdfbaker in your work, please cite it using the following metadata."
 title: "pdfbaker"
-version: 0.11.3
-date-released: 2025-10-19
+version: 0.11.4
+date-released: 2026-03-01
 repository-code: "https://github.com/pythonnz/pdfbaker"
 license: "MIT"
 authors:
