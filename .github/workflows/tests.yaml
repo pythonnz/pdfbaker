@@ -28,7 +28,7 @@ jobs:
           pytest --cov=pdfbaker --cov-report=xml --junitxml=junit.xml -o
           junit_family=legacy
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload test results to Codecov
