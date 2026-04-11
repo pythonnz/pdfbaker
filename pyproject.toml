@@ -12,6 +12,9 @@ dependencies = [
     "pydantic",
     "pypdf",
     "ruamel.yaml",
+
+    # Indirect deps security updates
+    "pygments>=2.20.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
