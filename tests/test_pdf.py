@@ -94,9 +94,16 @@ def test_combine_pdfs_multiple_files(tmp_path: Path) -> None:
 
 
 def test_combine_pdfs_broken_annotations(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """combine_pdfs: logs warning and falls back for broken annotations."""
+    """combine_pdfs: warns and falls back page-by-page on broken annotations.
+
+    Forces the missing ``/Subtype`` KeyError that older pypdf raised on
+    ``append`` so the fallback branch is exercised regardless of the installed
+    pypdf version (newer pypdf tolerates such annotations without raising).
+    """
     pdf_file = tmp_path / "test.pdf"
     pdf_file.write_bytes(
         b"%PDF-1.4\n"
@@ -107,26 +114,28 @@ def test_combine_pdfs_broken_annotations(
         b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n"
         b"endobj\n"
         b"3 0 obj\n"
-        b"<< /Type /Page /Parent 2 0 R /Resources <<>> /MediaBox [0 0 612 792] "
-        b"/Annots [4 0 R]>>\n"
-        b"endobj\n"
-        b"4 0 obj\n"
-        b"<< /Type /Annot /Rect [0 0 0 0] >>\n"
+        b"<< /Type /Page /Parent 2 0 R /Resources <<>> /MediaBox [0 0 612 792] >>\n"
         b"endobj\n"
         b"xref\n"
-        b"0 5\n"
+        b"0 4\n"
         b"0000000000 65535 f\n"
         b"0000000010 00000 n\n"
         b"0000000056 00000 n\n"
         b"0000000112 00000 n\n"
-        b"0000000168 00000 n\n"
         b"trailer\n"
-        b"<< /Size 5 /Root 1 0 R >>\n"
+        b"<< /Size 4 /Root 1 0 R >>\n"
         b"startxref\n"
-        b"220\n"
+        b"164\n"
         b"%%EOF\n"
     )
     output_file = tmp_path / "output.pdf"
+
+    def raise_missing_subtype(self: pypdf.PdfWriter, *args: object) -> None:
+        """Simulate pypdf failing on an annotation missing /Subtype."""
+        raise KeyError("/Subtype")
+
+    monkeypatch.setattr(pypdf.PdfWriter, "append", raise_missing_subtype)
+
     with caplog.at_level(logging.WARNING):
         combine_pdfs([pdf_file], output_file)
     assert "Broken annotations in PDF" in caplog.text
