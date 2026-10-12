@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 
 [[package]]
@@ -577,7 +577,7 @@ wheels = [
 
 [[package]]
 name = "pdfbaker"
-version = "0.11.4"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "cairosvg" },
