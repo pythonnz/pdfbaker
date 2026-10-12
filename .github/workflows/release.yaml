@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# semantic-release pushes its `RELEASE: {version}` commit with a PAT, which re-triggers this
+# workflow. That commit has nothing to test or release, so skip every job on it. On the RELEASE
+# commit all jobs skip; `release` needs the skipped jobs, so it skips with them, and `publish`
+# is gated on `release`'s output so it skips too.
+jobs:
+  pre-commit:
+    if: ${{ !startsWith(github.event.head_commit.message, 'RELEASE:') }}
+    uses: ./.github/workflows/pre-commit.yaml
+  tests:
+    if: ${{ !startsWith(github.event.head_commit.message, 'RELEASE:') }}
+    uses: ./.github/workflows/tests.yaml
+    secrets: inherit # tests.yaml uploads coverage with CODECOV_TOKEN
+  release:
+    name: Release
+    needs: [pre-commit, tests] # a broken build never reaches the release step
+    if: ${{ !startsWith(github.event.head_commit.message, 'RELEASE:') }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-release-${{ github.ref_name }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+      - name: Python Semantic Release
+        id: release
+        uses: python-semantic-release/python-semantic-release@v10
+        with:
+          github_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+  # Publish to PyPI only when a release was actually cut (gated on the action's structured
+  # `released` output, never log-grepping) AND tests passed. PyPI uploads are irreversible, so
+  # they wait on our strongest end-to-end check. It runs in the `pypi` environment, so the OIDC
+  # token - and thus publishing rights - is scoped to this job rather than the whole workflow.
+  # Trusted publishing means no API token, and gh-action-pypi-publish attaches sigstore
+  # attestations by default.
+  publish:
+    name: Publish to PyPI
+    needs: [release, tests]
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pdfbaker
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ needs.release.outputs.version }} # the tag semantic-release just pushed
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Build distributions
+        run: pip install uv && uv build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
