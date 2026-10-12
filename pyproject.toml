@@ -87,6 +87,7 @@ commit_message = "RELEASE: {version}"
 
 [tool.semantic_release.changelog]
 template_dir = ".templates"
+mode = "init"
 
 [tool.semantic_release.changelog_sections]
 feat = "Features"
